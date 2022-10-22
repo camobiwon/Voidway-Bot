@@ -14,7 +14,7 @@ namespace Voidway_Bot {
 		}
 
 		private static Task TimeoutHandler(GuildMemberUpdateEventArgs e) {
-			if(e.CommunicationDisabledUntilAfter.HasValue)
+			if(e.CommunicationDisabledUntilAfter.HasValue && e.CommunicationDisabledUntilAfter > DateTime.Now)
 				ModerationEmbed(e.Guild, e.Member, $"Timed Out", DiscordColor.Yellow, "Until", $"<t:{e.CommunicationDisabledUntilAfter.Value.ToUnixTimeSeconds()}:f>");
 			else if(e.CommunicationDisabledUntilBefore.HasValue && !e.CommunicationDisabledUntilAfter.HasValue)
 				ModerationEmbed(e.Guild, e.Member, $"Timeout Removed", DiscordColor.Gray);
