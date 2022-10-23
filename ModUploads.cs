@@ -4,6 +4,14 @@ using Newtonsoft.Json.Linq;
 
 namespace Voidway_Bot {
 	internal class ModUploads {
+		public enum UploadType
+		{
+			Avatar,
+			Level,
+			Spawnable,
+			Utility
+		}
+
 		//static int lastTotalMods = 0;
 
 		internal static Task HandleModUploadsAsync(DiscordClient discord) {
