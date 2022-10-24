@@ -21,7 +21,7 @@ namespace Voidway_Bot {
 			DiscordAuditLogEntry? logEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.MemberUpdate && FuzzyFilterByTime(dale, now));
 
 			if(e.CommunicationDisabledUntilAfter.HasValue && e.CommunicationDisabledUntilAfter > DateTime.Now)
-				await ModerationEmbed(e.Guild, e.Member, $"Timed Out", logEntry, DiscordColor.Yellow, "Until", $"<t:{e.CommunicationDisabledUntilAfter.Value.ToUnixTimeSeconds()}:f>");
+				await ModerationEmbed(e.Guild, e.Member, $"Timed Out Until <t:{e.CommunicationDisabledUntilAfter.Value.ToUnixTimeSeconds()}:R>", logEntry, DiscordColor.Yellow);
 			else if(e.CommunicationDisabledUntilBefore.HasValue && !e.CommunicationDisabledUntilAfter.HasValue)
 				await ModerationEmbed(e.Guild, e.Member, $"Timeout Removed", logEntry, DiscordColor.Gray);
 		}
