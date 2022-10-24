@@ -23,7 +23,7 @@ namespace Voidway_Bot {
 			if(e.CommunicationDisabledUntilAfter.HasValue && e.CommunicationDisabledUntilAfter > DateTime.Now)
 				await ModerationEmbed(e.Guild, e.Member, $"Timed Out Until <t:{e.CommunicationDisabledUntilAfter.Value.ToUnixTimeSeconds()}:R>", logEntry, DiscordColor.Yellow);
 			else if(e.CommunicationDisabledUntilBefore.HasValue && !e.CommunicationDisabledUntilAfter.HasValue)
-				await ModerationEmbed(e.Guild, e.Member, $"Timeout Removed", logEntry, DiscordColor.Gray);
+				await ModerationEmbed(e.Guild, e.Member, $"Timeout Removed", logEntry, DiscordColor.Cyan);
 		}
 
 		private static async Task KickHandler(GuildMemberRemoveEventArgs e) {
