@@ -21,14 +21,14 @@ namespace Voidway_Bot {
 			DiscordAuditLogEntry? logEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.MemberUpdate && FuzzyFilterByTime(dale, now));
 
 			if(e.CommunicationDisabledUntilAfter.HasValue && e.CommunicationDisabledUntilAfter > DateTime.Now)
-				await ModerationEmbed(e.Guild, e.Member, $"Timed Out Until <t:{e.CommunicationDisabledUntilAfter.Value.ToUnixTimeSeconds()}:R>", logEntry, DiscordColor.Yellow);
+				await ModerationEmbed(e.Guild, e.Member, $"Timed Out. Ends <t:{e.CommunicationDisabledUntilAfter.Value.ToUnixTimeSeconds()}:R>", logEntry, DiscordColor.Yellow);
 			else if(e.CommunicationDisabledUntilBefore.HasValue && !e.CommunicationDisabledUntilAfter.HasValue)
 				await ModerationEmbed(e.Guild, e.Member, $"Timeout Removed", logEntry, DiscordColor.Cyan);
 		}
 
 		private static async Task KickHandler(GuildMemberRemoveEventArgs e) {
 			DateTime now = DateTime.UtcNow;
-            DiscordAuditLogEntry? kickEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.Kick);
+			DiscordAuditLogEntry? kickEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.Kick);
 			Logger.Put($"{e.Guild.Name}, {e.Member.Username}, ke==null:{kickEntry is null}", Logger.Reason.Trace);
 			if (kickEntry is null) return;
 			if (!FuzzyFilterByTime(kickEntry, now, 10 * 1000))
@@ -43,16 +43,16 @@ namespace Voidway_Bot {
 		private static async Task BanAddHandler(GuildBanAddEventArgs e)
 		{
 			DiscordAuditLogEntry? banEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.Ban);
-            await ModerationEmbed(e.Guild, e.Member, "Banned", banEntry, DiscordColor.Red);
-        }
+			await ModerationEmbed(e.Guild, e.Member, "Banned", banEntry, DiscordColor.Red);
+		}
 
-        private static async Task BanRemoveHandler(GuildBanRemoveEventArgs e)
-        {
-            DiscordAuditLogEntry? unbanEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.Unban);
+		private static async Task BanRemoveHandler(GuildBanRemoveEventArgs e)
+		{
+			DiscordAuditLogEntry? unbanEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.Unban);
 			await ModerationEmbed(e.Guild, e.Member, "Ban Removed", unbanEntry, DiscordColor.Green);
-        }
+		}
 
-        private static Task ModerationEmbed(DiscordGuild guild, DiscordMember victim, string actionType, DiscordAuditLogEntry? logEntry, DiscordColor color, string customFieldTitle = "", string customField = "") {
+		private static Task ModerationEmbed(DiscordGuild guild, DiscordMember victim, string actionType, DiscordAuditLogEntry? logEntry, DiscordColor color, string customFieldTitle = "", string customField = "") {
 			DiscordEmbedBuilder embed = new() {
 				Title = $"User {actionType}",
 				Color = color,
@@ -100,7 +100,7 @@ namespace Voidway_Bot {
 		private static async Task<DiscordAuditLogEntry?> TryGetAuditLogEntry(DiscordGuild guild, Func<DiscordAuditLogEntry, bool> predicate)
 		{
 			//AuditLogActionType? alat = (AuditLogActionType?)auditLogType;
-            //await Task.Delay(250);
+			//await Task.Delay(250);
 
 			for (int i = 1; i < Config.GetAuditLogRetryCount() + 1; i++)
 			{
@@ -121,10 +121,10 @@ namespace Voidway_Bot {
 		{
 			//TimeSpan fuzzBy = TimeSpan.FromMilliseconds(fuzzByMs);
 			int msDiff = (int)Math.Abs(logEntry.CreationTimestamp.DateTime.Subtract(currTime).TotalMilliseconds);
-            bool ret = msDiff < fuzzByMs;
+			bool ret = msDiff < fuzzByMs;
 			// might be better to make a VS2022 debug logpoint but oh well
-            Logger.Put($"logentry creation: {logEntry.CreationTimestamp.DateTime:h:mm:ss:t}; time: {currTime:h:mm:ss:t}; diff={msDiff}ms; fuzzby: {fuzzByMs}ms; RET={ret}", Logger.Reason.Debug);
+			Logger.Put($"logentry creation: {logEntry.CreationTimestamp.DateTime:h:mm:ss:t}; time: {currTime:h:mm:ss:t}; diff={msDiff}ms; fuzzby: {fuzzByMs}ms; RET={ret}", Logger.Reason.Debug);
 			return ret;
 		}
-    }
+	}
 }
