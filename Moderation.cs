@@ -14,15 +14,26 @@ namespace Voidway_Bot {
 		}
 
 		private static async void TimeoutHandler(GuildMemberUpdateEventArgs e) {
-			// if the user's timeout status hasnt changed
-			if (e.CommunicationDisabledUntilBefore.HasValue == e.CommunicationDisabledUntilAfter.HasValue) return;
+			// if the user's timeout status truly has not changed
+			if (e.CommunicationDisabledUntilBefore == e.CommunicationDisabledUntilAfter)
+				return;
 
 			DateTime now = DateTime.UtcNow; // discord audit logs use UTC time
 			DiscordAuditLogEntry? logEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.MemberUpdate && FuzzyFilterByTime(dale, now));
 
-			if(e.CommunicationDisabledUntilAfter.HasValue && e.CommunicationDisabledUntilAfter > DateTime.Now)
+			// means timeout changed
+			if (e.CommunicationDisabledUntilBefore.HasValue && e.CommunicationDisabledUntilAfter.HasValue)
+				await Moderation.ModerationEmbed( // wrap huge call chain
+                e.Guild,
+                e.Member,
+                $"Timeout Changed | Will now end <t:{e.CommunicationDisabledUntilAfter.Value.ToUnixTimeSeconds()}:R>",
+                logEntry,
+                DiscordColor.Cyan,
+                "Old end time",
+                $"<t:{e.CommunicationDisabledUntilBefore.Value.ToUnixTimeSeconds()}:t>");
+            else if (e.CommunicationDisabledUntilAfter.HasValue && e.CommunicationDisabledUntilAfter > DateTime.Now)
 				await ModerationEmbed(e.Guild, e.Member, $"Timed Out. Ends <t:{e.CommunicationDisabledUntilAfter.Value.ToUnixTimeSeconds()}:R>", logEntry, DiscordColor.Yellow);
-			else if(e.CommunicationDisabledUntilBefore.HasValue && !e.CommunicationDisabledUntilAfter.HasValue)
+			else if (e.CommunicationDisabledUntilBefore.HasValue && !e.CommunicationDisabledUntilAfter.HasValue)
 				await ModerationEmbed(e.Guild, e.Member, $"Timeout Removed", logEntry, DiscordColor.Cyan);
 		}
 
@@ -52,35 +63,39 @@ namespace Voidway_Bot {
 			await ModerationEmbed(e.Guild, e.Member, "Ban Removed", unbanEntry, DiscordColor.Green);
 		}
 
-		private static Task ModerationEmbed(DiscordGuild guild, DiscordMember victim, string actionType, DiscordAuditLogEntry? logEntry, DiscordColor color, string customFieldTitle = "", string customField = "") {
-			DiscordEmbedBuilder embed = new() {
+        private static Task ModerationEmbed(DiscordGuild guild, DiscordMember victim, string actionType, DiscordAuditLogEntry? logEntry, DiscordColor color, string customFieldTitle = "", string customField = "") {
+			(string loggedMod, string reason) = GetDataFromReason(logEntry);
+            DiscordEmbedBuilder embed = new() {
 				Title = $"User {actionType}",
 				Color = color,
 				Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"User ID: {victim.Id}" }
 			};
 			embed.AddField("User", $"{victim.Username}", true);
-			embed.AddField("Moderator", $"{logEntry?.UserResponsible.Username ?? "*Unknown*"}", true);
-			if(!string.IsNullOrEmpty(logEntry?.Reason))
-				embed.AddField("Reason", logEntry.Reason, true);
-			else if(!string.IsNullOrEmpty(customFieldTitle))
+			embed.AddField("Moderator", $"{loggedMod}", true);
+			if (!string.IsNullOrEmpty(reason))
+				embed.AddField("Reason", reason, true);
+			else if (!string.IsNullOrEmpty(customFieldTitle))
 				embed.AddField(customFieldTitle, customField, true);
 
 			if (logEntry is null) Logger.Put("Moderation embed created with nonexistent log entry! See below.", Logger.Reason.Warn);
-			Logger.Put($"{actionType} {victim.Username}#{victim.Discriminator} ({victim.Id}) in '{guild.Name}' by {logEntry?.UserResponsible.Username ?? "Unknown"}");
+			Logger.Put($"{actionType} {victim.Username}#{victim.Discriminator} ({victim.Id}) in '{guild.Name}' by {loggedMod} (Audit log says: {logEntry?.UserResponsible.Username ?? "Unknown"})");
 			guild.GetChannel(Config.FetchModerationChannel(guild.Id)).SendMessageAsync(embed);
 			return Task.CompletedTask;
 		}
 
 		private static Task MessageEmbed(DiscordGuild guild, DiscordMessage message, string actionType, DiscordMessage? pastMessage = null) {
 			Task.Delay(1000);
-			if(message.Author.IsBot)
+			if (message.Author is null)
 				return Task.CompletedTask;
 
-			if(pastMessage != null && pastMessage.Content == message.Content)
+			if (message.Author.IsBot)
+				return Task.CompletedTask;
+
+			if (pastMessage != null && pastMessage.Content == message.Content)
 				return Task.CompletedTask;
 
 			string attachments = "";
-			foreach(DiscordAttachment attachment in message.Attachments)
+			foreach (DiscordAttachment attachment in message.Attachments)
 				attachments += $"\n{attachment.Url}";
 
 			DiscordEmbedBuilder embed = new() {
@@ -126,5 +141,21 @@ namespace Voidway_Bot {
 			Logger.Put($"logentry creation: {logEntry.CreationTimestamp.DateTime:h:mm:ss:t}; time: {currTime:h:mm:ss:t}; diff={msDiff}ms; fuzzby: {fuzzByMs}ms; RET={ret}", Logger.Reason.Debug);
 			return ret;
 		}
+
+		private static (string, string) GetDataFromReason(DiscordAuditLogEntry? logEntry)
+		{
+			DiscordUser? userResponsible = logEntry?.UserResponsible;
+			if (logEntry is null || userResponsible is null) return ("*Unknown*", logEntry?.Reason ?? "");
+			else if (userResponsible != Bot.CurrUser) return (userResponsible.Username, logEntry.Reason);
+
+			// now handle the case that the bot took action
+
+			if (SlashCommands.WasByBotCommand(logEntry.Reason, out string userResp)) {
+				int userResponsibleColonCount = userResp.Count(c => c == ':'); // in case someone's name is some shit like "Cheese grater 2: Eclectic Shitfuck"
+                string cleanReason = string.Join(':', logEntry.Reason.Split(':').Skip(1 + userResponsibleColonCount));
+                return (userResp, cleanReason);
+			}
+			else return (userResponsible.Username, logEntry.Reason);
+        }
 	}
 }
