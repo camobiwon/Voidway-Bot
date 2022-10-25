@@ -1,8 +1,15 @@
 ﻿using DSharpPlus;
+using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
+using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Logging;
 
 namespace Voidway_Bot {
 	class Bot {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+		internal static DiscordUser CurrUser { get; private set; }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+
 		static void Main() {
 			MainAsync().GetAwaiter().GetResult();
 		}
@@ -21,11 +28,14 @@ namespace Voidway_Bot {
 				Token = token,
 				TokenType = TokenType.Bot,
 				Intents = DiscordIntents.All,
-				LoggerFactory = new DiscordLogger.Factory()
+				LoggerFactory = new DiscordLogger.Factory() // comment this line if slash commands are giving you trouble
 			});
 
 			discord.Ready += Discord_Ready;
+			discord.MessageCreated += DirectMessageHandler;
 
+			var slashExtension = discord.UseSlashCommands();
+			slashExtension.RegisterCommands<SlashCommands>();
 			Moderation.HandleModeration(discord);
 			_ = ModUploads.HandleModUploadsAsync(discord);
 
@@ -58,8 +68,24 @@ namespace Voidway_Bot {
 
         private static Task Discord_Ready(DiscordClient sender, DSharpPlus.EventArgs.ReadyEventArgs e)
         {
+			CurrUser = sender.CurrentUser;
 			Logger.Put($"Discord client ready on user {sender.CurrentUser.Username}#{sender.CurrentUser.Discriminator} ({sender.CurrentUser.Id})");
 			return Task.CompletedTask;
+        }
+
+        private static Task DirectMessageHandler(DiscordClient sender, MessageCreateEventArgs e)
+        {
+			if (e.Channel.IsPrivate)
+			{
+				Logger.Put($"DM from {e.Author.Username}#{e.Author.Discriminator} ({e.Author.Id}): {e.Message.Content}");
+				if (e.Message.Attachments.Count != 0)
+					Logger.Put($"DM from {e.Author.Username} has attachments: {string.Join("\n\t", e.Message.Attachments.Select(a => a.Url))}", Logger.Reason.Normal, false);
+                // embeds are just shit that can be seen from the message content (like youtube)
+                // if (e.Message.Embeds.Count != 0) 
+                //     Logger.Put($"DM from {e.Author.Username} has embeds: {string.Join("\n\t", e.Message.Embeds.Select(e => e.Url))}", Logger.Reason.Normal, false);
+            }
+
+            return Task.CompletedTask;
         }
     }
 }
