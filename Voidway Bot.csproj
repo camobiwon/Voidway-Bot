@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="DSharpPlus" Version="4.3.0-nightly-01175" />
+    <PackageReference Include="DSharpPlus.SlashCommands" Version="4.3.0-nightly-01175" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0-rc.2.22472.3" />
     <PackageReference Include="Samboy063.Tomlet" Version="5.0.0" />
   </ItemGroup>
