@@ -88,7 +88,8 @@ namespace Voidway_Bot {
 				// try-catch in case an admin does some shit like "#CANADAFOREVER" (in which case they should not be admin because canada)
 				try
 				{
-					await m.ModifyAsync(mem => mem.Nickname = "hoist");
+					await m.ModifyAsync(mem => { mem.Nickname = "hoist"; mem.AuditLogReason = $"Hoist: name started w/ {m.DisplayName[0]}"; });
+					Logger.Put($"Hoisted {m.Username}#{m.Discriminator} ({m.Id}) for display name {m.DisplayName} in {m.Guild.Name}");
 				}
 				catch (DiscordException dex)
 				{
