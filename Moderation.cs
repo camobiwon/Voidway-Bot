@@ -1,13 +1,17 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using DSharpPlus.Exceptions;
 
 namespace Voidway_Bot {
 	internal class Moderation {
 		internal static void HandleModeration(DiscordClient discord) {
 			discord.GuildMemberRemoved += (client, e) => KickHandler(e);
 			discord.GuildMemberUpdated += (client, e) => { TimeoutHandler(e); return Task.CompletedTask; };
-			discord.GuildBanAdded += (client, e) => BanAddHandler(e);
+			discord.GuildMemberUpdated += (client, e) => HoistHandler(e.MemberAfter);
+			discord.GuildMemberAdded += (client, e) => NewAccountHandler(e);
+			discord.GuildMemberAdded += (client, e) => HoistHandler(e.Member);
+            discord.GuildBanAdded += (client, e) => BanAddHandler(e);
 			discord.GuildBanRemoved += (client, e) => BanRemoveHandler(e);
 			discord.MessageDeleted += (client, e) => MessageEmbed(e.Guild, e.Message, "Deleted");
 			discord.MessageUpdated += (client, e) => MessageEmbed(e.Guild, e.Message, "Edited", e.MessageBefore);
@@ -51,6 +55,17 @@ namespace Voidway_Bot {
 			await ModerationEmbed(e.Guild, e.Member, "Kicked", kickEntry, DiscordColor.Orange);
 		}
 
+		private static async Task NewAccountHandler(GuildMemberAddEventArgs e)
+		{
+			// used Math.Abs here because i couldnt be fucked to figure out the right subtraction order lol
+			double daysOld = Math.Abs(e.Member.CreationTimestamp.Subtract(DateTime.UtcNow).TotalDays);
+			double hoursBetweenCreationAndJoin = Math.Abs(e.Member.JoinedAt.Subtract(e.Member.CreationTimestamp).TotalHours);
+			ulong logChannel = Config.FetchNewAccountLogChannel(e.Guild.Id);
+
+			if (logChannel is not 0 && daysOld < 1 && hoursBetweenCreationAndJoin < 1)
+				await e.Guild.Channels[logChannel].SendMessageAsync($"Member <@{e.Member.Id}> ({e.Member.Username}#{e.Member.Discriminator}) has a new account & joined recently after creation.");
+		}
+
 		private static async Task BanAddHandler(GuildBanAddEventArgs e)
 		{
 			DiscordAuditLogEntry? banEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.Ban);
@@ -61,6 +76,25 @@ namespace Voidway_Bot {
 		{
 			DiscordAuditLogEntry? unbanEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.Unban);
 			await ModerationEmbed(e.Guild, e.Member, "Ban Removed", unbanEntry, DiscordColor.Green);
+		}
+
+		private static async Task HoistHandler(DiscordMember m)
+		{
+			bool isHoistServer = Config.IsHoistServer(m.Guild.Id);
+			bool needsHoist = Config.IsHoistMember(m.DisplayName[0]);
+
+			if (isHoistServer && needsHoist)
+			{
+				// try-catch in case an admin does some shit like "#CANADAFOREVER" (in which case they should not be admin because canada)
+				try
+				{
+					await m.ModifyAsync(mem => mem.Nickname = "hoist");
+				}
+				catch (DiscordException dex)
+				{
+					Logger.Warn($"Failed to hoist {m.Username}#{m.Discriminator} ({m.Id}) for display name {m.DisplayName} in {m.Guild.Name}\n\t" + dex.ToString());
+				}
+			}
 		}
 
         private static Task ModerationEmbed(DiscordGuild guild, DiscordMember victim, string actionType, DiscordAuditLogEntry? logEntry, DiscordColor color, string customFieldTitle = "", string customField = "") {
@@ -111,6 +145,7 @@ namespace Voidway_Bot {
 			guild.GetChannel(Config.FetchMessagesChannel(guild.Id)).SendMessageAsync(embed);
 			return Task.CompletedTask;
 		}
+
 
 		private static async Task<DiscordAuditLogEntry?> TryGetAuditLogEntry(DiscordGuild guild, Func<DiscordAuditLogEntry, bool> predicate)
 		{

@@ -15,15 +15,20 @@ namespace Voidway_Bot {
 			public Dictionary<string, ulong> moderationChannels = new() { { "0", 1 }, { "2", 3 } }; // init w/ default values so the user knows how its formatted
 			[TomlPrecedingComment("Key=ServerID -> Value=ChannelID; Will be used for logging message actions by users.")]
 			public Dictionary<string, ulong> messsageChannels = new() { { "4", 5 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
+			[TomlPrecedingComment("Where the bot will log suspicious joins. (<1d old & acc creation time within 1h of join time)")]
+			public Dictionary<string, ulong> newAccountChannels = new() { { "6", 7 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
             [TomlPrecedingComment("ServerID -> Upload Type -> ChannelID; Will be used for announcing recent mod.io uploads (Upload types: 'Avatar', 'Level', 'Spawnable', 'Utility').")]
             public Dictionary<string, Dictionary<ModUploads.UploadType, ulong>> modUploadChannels = new() 
 			{ 
 				{ 
-					"6", new() { { ModUploads.UploadType.Avatar, 7 } } 
+					"8", new() { { ModUploads.UploadType.Avatar, 9 } } 
 				} 
 			};
             [TomlPrecedingComment("RoleID list")]
 			public ulong[] rolesExemptFromLogging = Array.Empty<ulong>(); // ExemptRoleLog isnt called anywhere... does this need to exist?
+			[TomlPrecedingComment("Renames users to 'hoist' if their nick/name starts with one of these characterss (and is in a specified server). Backslash escape char FYI.")]
+			public string hoistCharacters = @"()-+=_][\|;',.<>/?!@#$%^&*"; // literal string literal ftw
+			public ulong[] hoistServers = new ulong[] { 10 };
         }
 
 		const string FILE_NAME = "config.toml";
@@ -32,22 +37,28 @@ namespace Voidway_Bot {
 		// static ctor
 		static Config()
 		{
-			string path = Path.Combine(AppContext.BaseDirectory, FILE_NAME);
-			string fileContents;
-			Console.WriteLine("Attempting to read config from " + path);
+            string path = Path.Combine(AppContext.BaseDirectory, FILE_NAME);
+            string fileContents;
+            Console.WriteLine("Attempting to read config from " + path);
 
-			if (!File.Exists(path))
-			{
-				TomlDocument doc = TomletMain.DocumentFrom(new ConfigValues());
-				File.WriteAllText(path, doc.SerializedValue);
-				Console.WriteLine("Config file wasn't found! An empty one was created, fill it out.");
+            if (!File.Exists(path))
+            {
+                TomlDocument doc = TomletMain.DocumentFrom(new ConfigValues());
+                File.WriteAllText(path, doc.SerializedValue);
+                Console.WriteLine("Config file wasn't found! An empty one was created, fill it out.");
                 Environment.Exit(0);
-			}
-			fileContents = File.ReadAllText(path);
-			values = TomletMain.To<ConfigValues>(fileContents);
+            }
+            fileContents = File.ReadAllText(path);
+            values = TomletMain.To<ConfigValues>(fileContents);
 
-			Logger.Put("Retrieved config values.");
-		}
+            Logger.Put("Retrieved config values.");
+
+			// write new cfg to add new fields
+			fileContents = TomletMain.DocumentFrom(values).SerializedValue;
+			File.WriteAllText(path, fileContents);
+			Logger.Put("Updated config.");
+			Logger.Put("(Updating config is harmless, just in case things changed between versions, this adds the new fields)", Logger.Reason.Trace);
+        }
 
 		internal static int GetAuditLogRetryCount() => values.auditLogRetryCount;
 		internal static int GetMaxLogFiles() => values.maxLogFiles;
@@ -111,6 +122,27 @@ namespace Voidway_Bot {
 			if (!uploadTypeToChannel.TryGetValue(uploadType, out ulong channel)) return default;
 
 			return channel;
+		}
+
+		internal static ulong FetchNewAccountLogChannel(ulong guild)
+		{
+            if (values.newAccountChannels.TryGetValue(guild.ToString(), out ulong channel)) return channel;
+            else
+            {
+				// don't log, because some servers wont want to log new users (like the SLZ server)
+                // Logger.Warn("Config values don't have a messages channel for the given guild ID: " + guild);
+                return default;
+            }
+        }
+
+		internal static bool IsHoistServer(ulong guild)
+		{
+			return values.hoistServers.Contains(guild);
+		}
+
+		internal static bool IsHoistMember(char firstChar)
+		{
+			return values.hoistCharacters.Contains(firstChar);
 		}
 	}
 }
