@@ -29,6 +29,7 @@ namespace Voidway_Bot {
 			[TomlPrecedingComment("Renames users to 'hoist' if their nick/name starts with one of these characterss (and is in a specified server). Backslash escape char FYI.")]
 			public string hoistCharacters = @"()-+=_][\|;',.<>/?!@#$%^&*"; // literal string literal ftw
 			public ulong[] hoistServers = new ulong[] { 10 };
+			public string[] ignoreDSharpPlusLogsWith = new string[] { "Unknown event:" }; // "GUILD_JOIN_REQUEST_UPDATE" SHUT THE FUCK UP
         }
 
 		const string FILE_NAME = "config.toml";
@@ -143,6 +144,16 @@ namespace Voidway_Bot {
 		internal static bool IsHoistMember(char firstChar)
 		{
 			return values.hoistCharacters.Contains(firstChar);
+		}
+
+		internal static bool IsDSharpPlusMessageIgnored(string message)
+		{
+			foreach (string ignoreWith in values.ignoreDSharpPlusLogsWith)
+			{
+				if (message.Contains(ignoreWith)) return true; // this may be a bit wasteful, speed-wise, but oh well it prevents logspam.
+			}
+
+			return false;
 		}
 	}
 }

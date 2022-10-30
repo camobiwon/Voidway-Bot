@@ -63,7 +63,10 @@ namespace Voidway_Bot
 
             string message = formatter(state, exception);
             Logger.Reason reason = ToReason(logLevel);
+            
+            if (Config.IsDSharpPlusMessageIgnored(message)) return;
             if (eventId.Name is not null) reason.name = eventId.Name;
+
             Logger.Put(catName + " => " + message, reason);
         }
     }
