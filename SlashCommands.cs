@@ -36,7 +36,7 @@ namespace Voidway_Bot
         }
 
         // Technically, this is the exact same thing as Timeout, but it's got a new command entry because it has a more user-friendly description.
-        [SlashCommand("retimeout", "Changes a user's timeout, and logs it with a reason.", false)]
+        [SlashCommand("retimeout", "Changes a user's timeout, and logs it with a reason.")]
         [SlashRequirePermissions(DSharpPlus.Permissions.ModerateMembers)]
         public async Task ChangeTimeout(
             InteractionContext ctx,
@@ -87,7 +87,7 @@ namespace Voidway_Bot
         }
 
         // this is technically redundant to discord's timeout dialogue, except that thing gives ZERO granular control.
-        [SlashCommand("timeout", "Times out a user, and logs it with a reason.", false)]
+        [SlashCommand("timeout", "Times out a user, and logs it with a reason.")]
         [SlashRequirePermissions(DSharpPlus.Permissions.ModerateMembers)]
         public async Task AddTimeout(
             InteractionContext ctx,
