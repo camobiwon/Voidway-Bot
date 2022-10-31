@@ -1,7 +1,7 @@
 ﻿using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.SlashCommands.Attributes;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Voidway_Bot
 {
@@ -25,7 +25,7 @@ namespace Voidway_Bot
         }
 
         static Dictionary<string, string> reasonsByBot = new();
-        public static bool WasByBotCommand(string reason, out string user) 
+        public static bool WasByBotCommand(string reason, out string user)
         {
             if (reasonsByBot.TryGetValue(reason, out user!))
             {
@@ -64,16 +64,28 @@ namespace Voidway_Bot
                 return;
             }
 
-            reason = $"By {ctx.User.Username}: " + reason;
-            reasonsByBot[reason] = ctx.User.Username;
-            await victim.TimeoutAsync(until, reason);
-
-            await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+            try
             {
-                IsEphemeral = true,
-                Content = $"Timed out {victim.Username}#{victim.Discriminator} until <t:{until.ToUnixTimeSeconds()}:f>"
-            });
+                reason = $"By {ctx.User.Username}: " + reason;
+                reasonsByBot[reason] = ctx.User.Username;
+                await victim.TimeoutAsync(until, reason);
 
+                await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+                {
+                    IsEphemeral = true,
+                    Content = $"Timed out {victim.Username}#{victim.Discriminator} until <t:{until.ToUnixTimeSeconds()}:f>"
+                });
+
+            }
+            catch (DiscordException ex)
+            {
+                Logger.Warn($"Unable to apply timeout to {victim.Username}#{victim.Discriminator} ({victim.Id}) in {ctx.Guild.Name}. Details below:\n\t{ex}");
+                await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+                {
+                    IsEphemeral = true,
+                    Content = $"Unable to time out {victim.Username}#{victim.Discriminator}, tell the bot owner to look for a {ex.GetType().FullName} in the logs."
+                });
+            }
             // NVM ON THIS -> Must handle moderation logging now because current Timeout handler doesn't handle timeout changes 
             //DiscordAuditLogEntry? logEntry = await Moderation.TryGetAuditLogEntry(ctx.Guild, dale => dale.Reason == reason && dale.UserResponsible == Bot.CurrUser);
             //await Moderation.ModerationEmbed(
@@ -90,20 +102,20 @@ namespace Voidway_Bot
         [SlashCommand("timeout", "Times out a user, and logs it with a reason.")]
         [SlashRequirePermissions(DSharpPlus.Permissions.ModerateMembers)]
         public async Task AddTimeout(
-            InteractionContext ctx,
-            [Option("user", "The currently timed-out user to change the timeout of")]
+                InteractionContext ctx,
+                [Option("user", "The currently timed-out user to change the timeout of")]
             DiscordUser _victim,
-            [Option("count", "The number of minutes/hours/days/etc to make the new timeout")]
+                [Option("count", "The number of minutes/hours/days/etc to make the new timeout")]
             double count,
-            [Option("timeUnit", "The unit of time to apply the timeout in")]
+                [Option("timeUnit", "The unit of time to apply the timeout in")]
             TimeType unit,
-            [Option("reason", "Why this user's timeout is being changed")]
+                [Option("reason", "Why this user's timeout is being changed")]
             string reason
-            )
+                )
         {
             DiscordMember victim = (DiscordMember)_victim;
             DateTimeOffset until = OffsetFromTimeType(unit, count);
-            // can't retime whats not yet timed
+            // dont timeout if already timed out
             if (victim.CommunicationDisabledUntil.HasValue && victim.CommunicationDisabledUntil > DateTime.Now)
             {
                 await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
@@ -114,15 +126,27 @@ namespace Voidway_Bot
                 return;
             }
 
-            reason = $"By {ctx.User.Username}: " + reason;
-            reasonsByBot[reason] = ctx.User.Username;
-            await victim.TimeoutAsync(until, reason);
-
-            await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+            try
             {
-                IsEphemeral = true,
-                Content = $"Timed out {victim.Username}#{victim.Discriminator} until <t:{until.ToUnixTimeSeconds()}:f>"
-            });
+                reason = $"By {ctx.User.Username}: " + reason;
+                reasonsByBot[reason] = ctx.User.Username;
+                await victim.TimeoutAsync(until, reason);
+
+                await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+                {
+                    IsEphemeral = true,
+                    Content = $"Timed out {victim.Username}#{victim.Discriminator} until <t:{until.ToUnixTimeSeconds()}:f>"
+                });
+            }
+            catch (DiscordException ex)
+            {
+                Logger.Warn($"Unable to apply timeout to {victim.Username}#{victim.Discriminator} ({victim.Id}) in {ctx.Guild.Name}. Details below:\n\t{ex}");
+                await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+                {
+                    IsEphemeral = true,
+                    Content = $"Unable to time out {victim.Username}#{victim.Discriminator}, tell the bot owner to look for a {ex.GetType().FullName} in the logs."
+                });
+            }
         }
 
         static DateTimeOffset OffsetFromTimeType(TimeType unit, double count)
