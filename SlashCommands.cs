@@ -104,13 +104,13 @@ namespace Voidway_Bot
         [SlashRequirePermissions(Permissions.ModerateMembers, false)]
         public async Task AddTimeout(
             InteractionContext ctx,
-            [Option("user", "The currently timed-out user to change the timeout of")]
+            [Option("user", "The user to time out")]
             DiscordUser _victim,
-            [Option("count", "The number of minutes/hours/days/etc to make the new timeout")]
+            [Option("count", "The number of minutes/hours/days/etc to time the user out for")]
             double count,
             [Option("timeUnit", "The unit of time to apply the timeout in")]
             TimeType unit,
-            [Option("reason", "Why this user's timeout is being changed")]
+            [Option("reason", "Why this user is being timed out")]
             string reason
             )
         {
