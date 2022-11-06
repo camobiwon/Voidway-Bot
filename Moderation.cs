@@ -78,7 +78,7 @@ namespace Voidway_Bot {
 			await ModerationEmbed(e.Guild, e.Member, "Ban Removed", unbanEntry, DiscordColor.Green);
 		}
 
-		private static async Task HoistHandler(DiscordMember m)
+		internal static async Task HoistHandler(DiscordMember m)
 		{
 			bool isHoistServer = Config.IsHoistServer(m.Guild.Id);
 			bool needsHoist = Config.IsHoistMember(m.DisplayName[0]);

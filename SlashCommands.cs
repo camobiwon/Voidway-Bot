@@ -1,4 +1,5 @@
-﻿using DSharpPlus.Entities;
+﻿using DSharpPlus;
+using DSharpPlus.Entities;
 using DSharpPlus.Exceptions;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.SlashCommands.Attributes;
@@ -37,7 +38,7 @@ namespace Voidway_Bot
 
         // Technically, this is the exact same thing as Timeout, but it's got a new command entry because it has a more user-friendly description.
         [SlashCommand("retimeout", "Changes a user's timeout, and logs it with a reason.")]
-        [SlashRequirePermissions(DSharpPlus.Permissions.ModerateMembers)]
+        [SlashRequirePermissions(Permissions.ModerateMembers, false)]
         public async Task ChangeTimeout(
             InteractionContext ctx,
             [Option("user", "The currently timed-out user to change the timeout of")]
@@ -56,7 +57,7 @@ namespace Voidway_Bot
             DateTimeOffset? currTimeout = victim.CommunicationDisabledUntil;
             if (!currTimeout.HasValue || currTimeout < DateTime.Now)
             {
-                await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
                 {
                     IsEphemeral = true,
                     Content = $"That user isn't timed out yet! Try using /timeout on {victim.Username}#{victim.Discriminator} first."
@@ -70,7 +71,7 @@ namespace Voidway_Bot
                 reasonsByBot[reason] = ctx.User.Username;
                 await victim.TimeoutAsync(until, reason);
 
-                await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
                 {
                     IsEphemeral = true,
                     Content = $"Timed out {victim.Username}#{victim.Discriminator} until <t:{until.ToUnixTimeSeconds()}:f>"
@@ -80,7 +81,7 @@ namespace Voidway_Bot
             catch (DiscordException ex)
             {
                 Logger.Warn($"Unable to apply timeout to {victim.Username}#{victim.Discriminator} ({victim.Id}) in {ctx.Guild.Name}. Details below:\n\t{ex}");
-                await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
                 {
                     IsEphemeral = true,
                     Content = $"Unable to time out {victim.Username}#{victim.Discriminator}, tell the bot owner to look for a {ex.GetType().FullName} in the logs."
@@ -100,25 +101,25 @@ namespace Voidway_Bot
 
         // this is technically redundant to discord's timeout dialogue, except that thing gives ZERO granular control.
         [SlashCommand("timeout", "Times out a user, and logs it with a reason.")]
-        [SlashRequirePermissions(DSharpPlus.Permissions.ModerateMembers)]
+        [SlashRequirePermissions(Permissions.ModerateMembers, false)]
         public async Task AddTimeout(
-                InteractionContext ctx,
-                [Option("user", "The currently timed-out user to change the timeout of")]
+            InteractionContext ctx,
+            [Option("user", "The currently timed-out user to change the timeout of")]
             DiscordUser _victim,
-                [Option("count", "The number of minutes/hours/days/etc to make the new timeout")]
+            [Option("count", "The number of minutes/hours/days/etc to make the new timeout")]
             double count,
-                [Option("timeUnit", "The unit of time to apply the timeout in")]
+            [Option("timeUnit", "The unit of time to apply the timeout in")]
             TimeType unit,
-                [Option("reason", "Why this user's timeout is being changed")]
+            [Option("reason", "Why this user's timeout is being changed")]
             string reason
-                )
+            )
         {
             DiscordMember victim = (DiscordMember)_victim;
             DateTimeOffset until = OffsetFromTimeType(unit, count);
             // dont timeout if already timed out
             if (victim.CommunicationDisabledUntil.HasValue && victim.CommunicationDisabledUntil > DateTime.Now)
             {
-                await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
                 {
                     IsEphemeral = true,
                     Content = $"{victim.Username}#{victim.Discriminator} is already timed out"
@@ -132,7 +133,7 @@ namespace Voidway_Bot
                 reasonsByBot[reason] = ctx.User.Username;
                 await victim.TimeoutAsync(until, reason);
 
-                await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
                 {
                     IsEphemeral = true,
                     Content = $"Timed out {victim.Username}#{victim.Discriminator} until <t:{until.ToUnixTimeSeconds()}:f>"
@@ -141,12 +142,25 @@ namespace Voidway_Bot
             catch (DiscordException ex)
             {
                 Logger.Warn($"Unable to apply timeout to {victim.Username}#{victim.Discriminator} ({victim.Id}) in {ctx.Guild.Name}. Details below:\n\t{ex}");
-                await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
                 {
                     IsEphemeral = true,
                     Content = $"Unable to time out {victim.Username}#{victim.Discriminator}, tell the bot owner to look for a {ex.GetType().FullName} in the logs."
                 });
             }
+        }
+
+        [ContextMenu(ApplicationCommandType.UserContextMenu, "Hoist", true)]
+        [SlashRequirePermissions(Permissions.ManageNicknames, false)]
+        public async Task ManualHoist(ContextMenuContext ctx)
+        {
+            bool hasManageNickPerms = ctx.TargetMember.Permissions.HasPermission(Permissions.ManageNicknames);
+            await Moderation.HoistHandler(ctx.TargetMember);
+            await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+            {
+                IsEphemeral = true,
+                Content = $"{(hasManageNickPerms ? "Probably" : "Successfully")} hoisted {ctx.TargetMember.DisplayName}."
+            });
         }
 
         static DateTimeOffset OffsetFromTimeType(TimeType unit, double count)
