@@ -15,4 +15,10 @@
     <PackageReference Include="Samboy063.Tomlet" Version="5.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Modio">
+      <HintPath>modio\Modio.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

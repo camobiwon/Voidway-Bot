@@ -1,9 +1,14 @@
 ﻿using DSharpPlus;
+using Modio;
 using DSharpPlus.Entities;
 using Newtonsoft.Json.Linq;
+using Modio.Models;
+using System.IO;
+using DSharpPlus.EventArgs;
+using System.Threading.Channels;
 
 namespace Voidway_Bot {
-	internal class ModUploads {
+	internal static class ModUploads {
 		public enum UploadType
 		{
 			Avatar,
@@ -12,41 +17,188 @@ namespace Voidway_Bot {
 			Utility
 		}
 
-		//static int lastTotalMods = 0;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+		static Dictionary<UploadType, List<DiscordChannel>> uploadChannels = new();
+		static Client client;
+		static GameClient bonelab;
+		static ModsClient bonelabMods;
+		static uint lastModioEvent;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-		internal static Task HandleModUploadsAsync(DiscordClient discord) {
-			return Task.CompletedTask;
-			/*
-			while(true) {
-				using var client = new HttpClient();
-				var content = await client.GetStringAsync("https://api.mod.io/v1/games/3809/mods?api_key=");
-				int modCount = (int)(JObject.Parse(content)["result_total"] ?? 0);
+		private static async void ModUploadWatcher()
+		{
+			while(true)
+			{
+                await Task.Delay(60 * 1000);
 
-				if(lastTotalMods == 0)
-					lastTotalMods = modCount;
+                IReadOnlyList<ModEvent> events;
+                try
+                {
+                    events = await bonelabMods.GetEvents(lastModioEvent).ToList();
+                    if (events == null) throw new NullReferenceException("Event list was null for some arbitrary reason.");
+                }
+                catch (Exception ex)
+                {
+					Logger.Warn("Failed to fetch new mods! " + ex.ToString());
+                    continue;
+                }
 
-				if(lastTotalMods != modCount) {
-					DiscordEmbedBuilder embed = new() {
-						Title = $"User {actionType}",
-						Color = DiscordColor.Blue,
-						Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"User ID: {victim.Id}" }
-					};
-					embed.AddField("User", $"{victim.Username}", true);
-					embed.AddField("Moderator", $"{log.UserResponsible.Username}", true);
-					if(!string.IsNullOrEmpty(log.Reason))
-						embed.AddField("Reason", log.Reason, true);
+                foreach (var modEvent in events)
+                {
+                    if (modEvent.Id > lastModioEvent) lastModioEvent = modEvent.Id;
 
-					//Console.WriteLine($"{actionType} {victim.Username} ({victim.Id}) in {guild.Name} by {log.UserResponsible.Username}");
-					discord.SendMessageAsync(Config.FetchModsChannel()[0], embed);
-				}
-
-				lastTotalMods = modCount;
-
-				Console.WriteLine(lastTotalMods);
-
-				Task.Delay(5000);
-			}
-			*/
+                    if (modEvent.EventType == ModEventType.MOD_AVAILABLE)
+					{
+						await NotifyNewMod(modEvent.ModId, modEvent.UserId);
+					}
+                }
+            }
 		}
-	}
+
+		// todo: FINISH THIS
+
+		internal static async void HandleModUploads(DiscordClient discord) {
+			Credentials cred;
+
+			(string token, string oa2) = Config.GetModioTokens();
+			if (string.IsNullOrEmpty(token))
+			{
+				Logger.Warn("Missing api key for mod.io, continuing without mod announcements");
+                return;
+            }
+			if (string.IsNullOrEmpty(oa2))
+			{
+				cred = new(token);
+			}
+			else cred = new(token, oa2);
+
+
+			client = new(cred);
+			User currUser = await client.User.GetCurrentUser();
+            var games = await client.Games.Search().ToList();
+			Game bonelabGame = games.First(g => g.NameId == "bonelab");
+            bonelab = client.Games[bonelabGame.Id];
+			bonelabMods = bonelab.Mods;
+			ModEvent? firstEvent = await bonelab.Mods.GetEvents().First();
+            lastModioEvent = firstEvent!.Id; // im quite certain theres at least one event
+
+			discord.GuildDownloadCompleted += (client, e) => GetAnnouncementChannels(e);
+
+			ModUploadWatcher();
+
+			Logger.Put($"Started watching for mod.io uploads in {bonelabGame.Name} (ID:{bonelabGame.Id},NameID:{bonelabGame.NameId}) on user {currUser.Username} (ID:{currUser.Id},NameID:{currUser.NameId})");
+
+            return;
+		}
+
+
+		private static async Task NotifyNewMod(uint modId, uint userId)
+		{
+            ModClient newMod = bonelabMods[modId];
+            Mod modData;
+            IReadOnlyList<Tag> tags;
+			UploadType uploadType;
+            try
+            {
+                modData = await newMod.Get();
+                tags = await newMod.Tags.Get();
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn("Failed to fetch data about mod ID:" + modId + ", Details: " + ex.ToString());
+                return;
+            }
+            Logger.Put("New mod available: ID=" + modId + "; NameID=" + modData.NameId + "; tags=" + string.Join(',', tags.Select(t => t.Name)));
+
+
+			if (IsAvatar(tags))
+				uploadType = UploadType.Avatar;
+			else if (IsLevel(tags))
+				uploadType = UploadType.Level;
+			else if (IsSpawnable(tags))
+				uploadType = UploadType.Spawnable;
+			else if (IsUtility(tags))
+				uploadType = UploadType.Utility;
+			else
+			{
+				Logger.Warn("Unrecognized mod type. It is recommended to look through tags and report to a developer (or fix this yourself).");
+				return;
+			}
+
+			await PostAnnouncements(modData, uploadType);
+        }
+
+
+		private static Task GetAnnouncementChannels(GuildDownloadCompletedEventArgs e)
+		{
+			// NESTED FOREACH SO GOOD
+			int counter = 0;
+			foreach (UploadType uType in Enum.GetValues<UploadType>())
+			{
+				uploadChannels[uType] = new();
+
+                foreach (var kvp in e.Guilds)
+				{
+					ulong channelId = Config.FetchUploadChannel(kvp.Key, uType);
+					if (channelId == 0) continue;
+
+
+					DiscordChannel channel = kvp.Value.GetChannel(channelId);
+					if (channel == null) continue;
+
+					uploadChannels[uType].Add(channel);
+					counter++;
+				}
+			}
+
+			Logger.Put($"Fetched {counter} mod.io announcement channels");
+			return Task.CompletedTask;
+		}
+
+		private static async Task PostAnnouncements(Mod mod, UploadType uploadType)
+		{
+			List<DiscordChannel> channels = uploadChannels[uploadType];
+            string? image = mod.Media.Images.FirstOrDefault()?.Original?.ToString();
+			DiscordEmbedBuilder.EmbedFooter? footer = mod.SubmittedBy is null
+				? null
+				: new DiscordEmbedBuilder.EmbedFooter() 
+				{ 
+					Text = $"Creator: {mod.SubmittedBy.Username}", 
+					IconUrl = mod.SubmittedBy.Avatar?.Thumb50x50?.ToString() 
+				};
+			//todo: make embed fancier
+            DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
+			{
+				Title = $"New {uploadType}: {mod.Name}",
+				Url = mod.ProfileUrl?.ToString(),
+				Color = DiscordColor.Blue,
+				ImageUrl = image,
+				Footer = footer,
+			};
+
+
+			foreach (DiscordChannel channel in channels)
+			{
+				await channel.SendMessageAsync(embed);
+			}
+			Logger.Put($"Announced mod upload in {channels.Count} channel(s).");
+        }
+
+        private static bool IsAvatar(IEnumerable<Tag> tags)
+		{
+			return tags != null && tags.Any(t => t.Name?.ToLower().Contains("avatar") ?? false);
+		}
+        private static bool IsSpawnable(IEnumerable<Tag> tags)
+        {
+            return tags != null && tags.Any(t => t.Name?.ToLower().Contains("spawnable") ?? false);
+        }
+        private static bool IsLevel(IEnumerable<Tag> tags)
+        {
+            return tags != null && tags.Any(t => t.Name?.ToLower().Contains("level") ?? false);
+        }
+        private static bool IsUtility(IEnumerable<Tag> tags)
+        {
+            return tags != null && tags.Any(t => t.Name?.ToLower().Contains("level") ?? false);
+        }
+    }
 }

@@ -6,8 +6,12 @@ namespace Voidway_Bot {
 	internal static class Config {
 		private class ConfigValues
 		{
-			public string token = "";
-			public string logPath = "./logs/";
+			[TomlProperty("token")] // property-ize because otherwise it throws a shitfit
+			public string discordToken { get; set; } = "";
+			public string modioToken = "";
+			[TomlPrecedingComment("Can be left blank if you only use an API key w/o OAuth2")]
+			public string modioOAuth = "";
+            public string logPath = "./logs/";
 			public int maxLogFiles = 5;
 			public int auditLogRetryCount = 5;
 			public bool logDiscordDebug = false;
@@ -18,10 +22,10 @@ namespace Voidway_Bot {
 			[TomlPrecedingComment("Where the bot will log suspicious joins. (<1d old & acc creation time within 1h of join time)")]
 			public Dictionary<string, ulong> newAccountChannels = new() { { "6", 7 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
             [TomlPrecedingComment("ServerID -> Upload Type -> ChannelID; Will be used for announcing recent mod.io uploads (Upload types: 'Avatar', 'Level', 'Spawnable', 'Utility').")]
-            public Dictionary<string, Dictionary<ModUploads.UploadType, ulong>> modUploadChannels = new() 
+            public Dictionary<string, Dictionary<string, ulong>> modUploadChannels = new() 
 			{ 
 				{ 
-					"8", new() { { ModUploads.UploadType.Avatar, 9 } } 
+					"8", new() { { nameof(ModUploads.UploadType.Avatar), 9 } } 
 				} 
 			};
             [TomlPrecedingComment("RoleID list")]
@@ -66,16 +70,24 @@ namespace Voidway_Bot {
 		internal static bool GetLogDiscordDebug() => values.logDiscordDebug;
 		internal static string GetLogPath() => Path.GetFullPath(values.logPath);
 
-
-        internal static string GetToken()
+        internal static string GetDiscordToken()
 		{
-			string temp = values.token;
-			values.token = "";
+			string temp = values.discordToken;
+			values.discordToken = "";
 			return temp;
 		}
 
-		//Yes I know this is terrible, eventually will add a proper config
-		internal static ulong FetchModerationChannel(ulong guild) {
+        internal static (string, string) GetModioTokens()
+        {
+			string temp = values.modioToken;
+			string temp2 = values.modioOAuth;
+            values.modioToken = "";
+			values.modioOAuth = "";
+            return (temp, temp2);
+        }
+
+        //Yes I know this is terrible, eventually will add a proper config
+        internal static ulong FetchModerationChannel(ulong guild) {
             if (values.moderationChannels.TryGetValue(guild.ToString(), out ulong channel)) return channel;
             else
             {
@@ -118,9 +130,11 @@ namespace Voidway_Bot {
 
 		internal static ulong FetchUploadChannel(ulong guild, ModUploads.UploadType uploadType) {
 			//return new ulong[] { 601515180232409121 /* Testing Server, #general */ };
-			if (!values.modUploadChannels.TryGetValue(guild.ToString(), out var uploadTypeToChannel)) return default;
+			if (!values.modUploadChannels.TryGetValue(guild.ToString(), out var uploadTypeToChannel))
+				return default;
 
-			if (!uploadTypeToChannel.TryGetValue(uploadType, out ulong channel)) return default;
+			if (!uploadTypeToChannel.TryGetValue(uploadType.ToString(), out ulong channel)) 
+				return default;
 
 			return channel;
 		}

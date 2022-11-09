@@ -16,7 +16,7 @@ namespace Voidway_Bot {
 
 		static async Task MainAsync() {
             SetupProcessLogs();
-            string token = Config.GetToken();
+            string token = Config.GetDiscordToken();
 			if(string.IsNullOrEmpty(token)) {
 				Logger.Put("Config file is missing a token! Paste your token in and rerun!", Logger.Reason.Fatal);
 				Console.ReadKey();
@@ -37,7 +37,7 @@ namespace Voidway_Bot {
 			var slashExtension = discord.UseSlashCommands();
 			slashExtension.RegisterCommands<SlashCommands>();
 			Moderation.HandleModeration(discord);
-			_ = ModUploads.HandleModUploadsAsync(discord);
+			ModUploads.HandleModUploads(discord);
 
 			await discord.ConnectAsync();
 			await Task.Delay(-1);

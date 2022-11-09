@@ -1,0 +1,3519 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Modio</name>
+    </assembly>
+    <members>
+        <member name="T:Modio.Client">
+            <summary>
+            A Client for the mod.io API v1.
+            </summary>
+        </member>
+        <member name="F:Modio.Client.ModioApiUrl">
+            <summary>
+            Default host url for the mod.io API v1.
+            </summary>
+        </member>
+        <member name="F:Modio.Client.ModioApiTestUrl">
+            <summary>
+            Host url for the mod.io test environment API v1.
+            </summary>
+        </member>
+        <member name="P:Modio.Client.Auth">
+            <summary>
+            Client for the Authentication API.
+            </summary>
+        </member>
+        <member name="P:Modio.Client.Games">
+            <summary>
+            Client for the Games API.
+            </summary>
+        </member>
+        <member name="P:Modio.Client.User">
+            <summary>
+            Client for the User API.
+            </summary>
+        </member>
+        <member name="M:Modio.Client.#ctor(Modio.Credentials)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.Client"/> with <paramref name="credentials"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Client.#ctor(System.Uri,Modio.Credentials)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.Client"/> with a custom host and <paramref name="credentials"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Client.SubmitReport(Modio.NewReport)">
+            <summary>
+            Report a resource on mod.io.
+            </summary>
+        </member>
+        <member name="M:Modio.Client.Download(System.UInt32,System.UInt32,System.IO.FileInfo)">
+            <summary>
+            Downloads the mod's primary file to <paramref name="dest"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Client.Download(System.UInt32,System.UInt32,System.IO.Stream)">
+            <summary>
+            Downloads the mod's primary file to <paramref name="stream"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Client.Download(System.UInt32,System.UInt32,System.UInt32,System.IO.FileInfo)">
+            <summary>
+            Downloads the mod file to <paramref name="dest"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Client.Download(System.UInt32,System.UInt32,System.UInt32,System.IO.Stream)">
+            <summary>
+            Downloads the mod file to <paramref name="stream"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Client.Download(Modio.Models.Mod,System.IO.FileInfo)">
+            <summary>
+            Downloads the mod's primary file to <paramref name="dest"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Client.Download(Modio.Models.Mod,System.IO.Stream)">
+            <summary>
+            Downloads the mod's primary file to <paramref name="stream"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Client.Download(Modio.Models.File,System.IO.FileInfo)">
+            <summary>
+            Downloads the mod file to <paramref name="dest"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Client.Download(Modio.Models.File,System.IO.Stream)">
+            <summary>
+            Downloads the mod file to <paramref name="stream"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Client.GetFileForDownload(System.UInt32,System.UInt32,System.UInt32)">
+            <summary>
+            
+            </summary>
+            <param name="gameId">The mod.io ID of the game community</param>
+            <param name="modId">mod.io ID of the mod</param>
+            <param name="fileId">mod.io ID of the file, since mods can have multiple files.</param>
+            <returns></returns>
+            <exception cref="T:Modio.DownloadException"></exception>
+        </member>
+        <member name="T:Modio.ApiClient">
+            <summary>
+            Base class for API endpoint clients.
+            </summary>
+        </member>
+        <member name="T:Modio.AuthClient">
+            <summary>
+            Auth client to request OAuth access tokens.
+            </summary>
+        </member>
+        <member name="M:Modio.AuthClient.RequestCode(System.String,System.String)">
+            <summary>
+            Request a security code be sent to the email of the user.
+            </summary>
+        </member>
+        <member name="M:Modio.AuthClient.SecurityCode(System.String,System.String)">
+            <summary>
+            Request an acccess token from for a security code.
+            </summary>
+        </member>
+        <member name="M:Modio.AuthClient.Terms(System.Nullable{Modio.AuthService})">
+            <summary>
+            Get a current Terms of Use.
+            </summary>
+        </member>
+        <member name="M:Modio.AuthClient.External(Modio.SteamAuth)">
+            <summary>
+            Request an access token on behalf of a Steam user.
+            </summary>
+        </member>
+        <member name="M:Modio.AuthClient.External(Modio.GalaxyAuth)">
+            <summary>
+            Request an access token on behalf of a GOG Galaxy user.
+            </summary>
+        </member>
+        <member name="M:Modio.AuthClient.External(Modio.ItchioAuth)">
+            <summary>
+            Request an access token on behalf of an itch.io user via the itch.io desktop app.
+            </summary>
+        </member>
+        <member name="M:Modio.AuthClient.External(Modio.OculusAuth)">
+            <summary>
+            Request an access token on behalf of an Oculus user.
+            </summary>
+        </member>
+        <member name="M:Modio.AuthClient.External(Modio.XboxAuth)">
+            <summary>
+            Request an access token on behalf of an Xbox Live user.
+            </summary>
+        </member>
+        <member name="M:Modio.AuthClient.External(Modio.SwitchAuth)">
+            <summary>
+            Request an access token on behalf of a Nintendo Switch user.
+            </summary>
+        </member>
+        <member name="M:Modio.AuthClient.External(Modio.DiscordAuth)">
+            <summary>
+            Request an access token on behalf of a Discord user.
+            </summary>
+        </member>
+        <member name="T:Modio.CommentsClient">
+            <summary>
+            Client for the Comments API.
+            </summary>
+        </member>
+        <member name="P:Modio.CommentsClient.GameId">
+            <summary>
+            The game id of the endpoint.
+            </summary>
+        </member>
+        <member name="P:Modio.CommentsClient.ModId">
+            <summary>
+            The mod id of the endpoint.
+            </summary>
+        </member>
+        <member name="M:Modio.CommentsClient.Search(Modio.Filters.Filter)">
+            <summary>
+            Get all comments posted in the mods profile.
+            </summary>
+        </member>
+        <member name="M:Modio.CommentsClient.Get(System.UInt32)">
+            <summary>
+            Get a mod comment.
+            </summary>
+        </member>
+        <member name="M:Modio.CommentsClient.Add(System.String,System.UInt32)">
+            <summary>
+            Add a mod comment.
+            </summary>
+        </member>
+        <member name="M:Modio.CommentsClient.Edit(System.UInt32,System.String)">
+            <summary>
+            Edit a mod comment.
+            </summary>
+        </member>
+        <member name="M:Modio.CommentsClient.Delete(System.UInt32)">
+            <summary>
+            Delete a comment from a mod profile.
+            </summary>
+        </member>
+        <member name="T:Modio.DependenciesClient">
+            <summary>
+            Client for the Dependencies API.
+            </summary>
+        </member>
+        <member name="P:Modio.DependenciesClient.GameId">
+            <summary>
+            The game id of the endpoint.
+            </summary>
+        </member>
+        <member name="P:Modio.DependenciesClient.ModId">
+            <summary>
+            The mod id of the endpoint.
+            </summary>
+        </member>
+        <member name="M:Modio.DependenciesClient.Get">
+            <summary>
+            Get all dependencies the mod has selected.
+            </summary>
+        </member>
+        <member name="M:Modio.DependenciesClient.Add(System.UInt32[])">
+            <summary>
+            Add mod dependencies required by the corresponding mod.
+            </summary>
+        </member>
+        <member name="M:Modio.DependenciesClient.Add(System.Collections.Generic.IEnumerable{System.UInt32})">
+            <summary>
+            Add mod dependencies required by the corresponding mod.
+            </summary>
+        </member>
+        <member name="M:Modio.DependenciesClient.Delete(System.UInt32[])">
+            <summary>
+            Delete mod dependencies the corresponding mod has selected.
+            </summary>
+        </member>
+        <member name="M:Modio.DependenciesClient.Delete(System.Collections.Generic.IEnumerable{System.UInt32})">
+            <summary>
+            Delete mod dependencies the corresponding mod has selected.
+            </summary>
+        </member>
+        <member name="T:Modio.FileClient">
+            <summary>
+            Client for a specific modfile.
+            </summary>
+        </member>
+        <member name="P:Modio.FileClient.GameId">
+            <summary>
+            The game id of the endpoint.
+            </summary>
+        </member>
+        <member name="P:Modio.FileClient.ModId">
+            <summary>
+            The mod id of the endpoint.
+            </summary>
+        </member>
+        <member name="P:Modio.FileClient.FileId">
+            <summary>
+            The file id of the endpoint.
+            </summary>
+        </member>
+        <member name="M:Modio.FileClient.Get">
+            <summary>
+            Get a file.
+            </summary>
+        </member>
+        <member name="M:Modio.FileClient.Edit(Modio.EditFile)">
+            <summary>
+            Edit the details of a published file.
+            </summary>
+        </member>
+        <member name="M:Modio.FileClient.Delete">
+            <summary>
+            Delete a modfile.
+            </summary>
+        </member>
+        <member name="T:Modio.FilesClient">
+            <summary>
+            Client for the Modfiles API.
+            </summary>
+        </member>
+        <member name="P:Modio.FilesClient.GameId">
+            <summary>
+            The game id of the endpoint.
+            </summary>
+        </member>
+        <member name="P:Modio.FilesClient.ModId">
+            <summary>
+            The mod id of the endpoint.
+            </summary>
+        </member>
+        <member name="P:Modio.FilesClient.Item(System.UInt32)">
+            <summary>
+            Gets the client for a specific modfile.
+            </summary>
+        </member>
+        <member name="M:Modio.FilesClient.Search(Modio.Filters.Filter)">
+            <summary>
+            Get all files that are published for the corresponding mod.
+            </summary>
+        </member>
+        <member name="M:Modio.FilesClient.Add(Modio.NewFile)">
+            <summary>
+            Upload a file for the corresponding mod.
+            </summary>
+        </member>
+        <member name="M:Modio.FilesClient.Edit(System.UInt32,Modio.EditFile)">
+            <summary>
+            Edit the details of a published file.
+            </summary>
+        </member>
+        <member name="M:Modio.FilesClient.Delete(System.UInt32)">
+            <summary>
+            Delete a modfile.
+            </summary>
+        </member>
+        <member name="T:Modio.GameClient">
+            <summary>
+            Client for a specific game.
+            </summary>
+        </member>
+        <member name="P:Modio.GameClient.GameId">
+            <summary>
+            The game id of the endpoint.
+            </summary>
+        </member>
+        <member name="P:Modio.GameClient.Mods">
+            <summary>
+            Client for the Mods API.
+            </summary>
+        </member>
+        <member name="P:Modio.GameClient.Tags">
+            <summary>
+            Client for the Game Tags API.
+            </summary>
+        </member>
+        <member name="M:Modio.GameClient.Get">
+            <summary>
+            Get a game.
+            </summary>
+        </member>
+        <member name="M:Modio.GameClient.Edit(Modio.EditGame)">
+            <summary>
+            Edit details for a game.
+            </summary>
+        </member>
+        <member name="M:Modio.GameClient.AddMedia(Modio.NewGameMedia)">
+            <summary>
+            Add new media to a game.
+            </summary>
+        </member>
+        <member name="T:Modio.GamesClient">
+            <summary>
+            Client for the Games API.
+            </summary>
+        </member>
+        <member name="P:Modio.GamesClient.Item(System.UInt32)">
+            <summary>
+            Gets the client for a specific game.
+            </summary>
+        </member>
+        <member name="M:Modio.GamesClient.Search(Modio.Filters.Filter)">
+            <summary>
+            Get all games.
+            </summary>
+        </member>
+        <member name="M:Modio.GamesClient.Edit(System.UInt32,Modio.EditGame)">
+            <summary>
+            Edit details for a game.
+            </summary>
+        </member>
+        <member name="T:Modio.GameTagsClient">
+            <summary>
+            Client for the Game Tags API.
+            </summary>
+        </member>
+        <member name="P:Modio.GameTagsClient.GameId">
+            <summary>
+            The game id of the endpoint.
+            </summary>
+        </member>
+        <member name="M:Modio.GameTagsClient.Get">
+            <summary>
+            Returns all tag option of the game.
+            </summary>
+        </member>
+        <member name="M:Modio.GameTagsClient.Add(Modio.NewTagOption)">
+            <summary>
+            Adds a new tag option to the game.
+            </summary>
+        </member>
+        <member name="M:Modio.GameTagsClient.Delete(Modio.DeleteTagOption)">
+            <summary>
+            Deletes a tag option from the game.
+            </summary>
+        </member>
+        <member name="T:Modio.MetadataClient">
+            <summary>
+            Client for the Metadata API.
+            </summary>
+        </member>
+        <member name="P:Modio.MetadataClient.GameId">
+            <summary>
+            The game id of the endpoint.
+            </summary>
+        </member>
+        <member name="P:Modio.MetadataClient.ModId">
+            <summary>
+            The mod id of the endpoint.
+            </summary>
+        </member>
+        <member name="M:Modio.MetadataClient.Get">
+            <summary>
+            Returns the metadata key-value pair of the mod.
+            </summary>
+        </member>
+        <member name="M:Modio.MetadataClient.Add(Modio.Models.Metadata)">
+            <summary>
+            Adds new key-value pairs to the mod's metadata.
+            </summary>
+        </member>
+        <member name="M:Modio.MetadataClient.Delete(Modio.Models.Metadata)">
+            <summary>
+            Deletes key-value pairs from the mod's metadata.
+            </summary>
+        </member>
+        <member name="T:Modio.ModClient">
+            <summary>
+            Client for a specific mod.
+            </summary>
+        </member>
+        <member name="P:Modio.ModClient.GameId">
+            <summary>
+            The game id of the endpoint.
+            </summary>
+        </member>
+        <member name="P:Modio.ModClient.ModId">
+            <summary>
+            The mod id of the endpoint.
+            </summary>
+        </member>
+        <member name="P:Modio.ModClient.Tags">
+            <summary>
+            Client for the Tags API.
+            </summary>
+        </member>
+        <member name="P:Modio.ModClient.Dependencies">
+            <summary>
+            Client for the Dependencies API.
+            </summary>
+        </member>
+        <member name="P:Modio.ModClient.Metadata">
+            <summary>
+            Client for the Metadata API.
+            </summary>
+        </member>
+        <member name="P:Modio.ModClient.Files">
+            <summary>
+            Client for the Modfiles API.
+            </summary>
+        </member>
+        <member name="P:Modio.ModClient.Comments">
+            <summary>
+            Client for the Comments API.
+            </summary>
+        </member>
+        <member name="P:Modio.ModClient.Team">
+            <summary>
+            Client for the Team API.
+            </summary>
+        </member>
+        <member name="M:Modio.ModClient.Get">
+            <summary>
+            Get a mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModClient.Edit(Modio.EditMod)">
+            <summary>
+            Edit details for a mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModClient.Delete">
+            <summary>
+            Delete a mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModClient.AddMedia(Modio.NewModMedia)">
+            <summary>
+            Upload new media to a mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModClient.DeleteMedia(Modio.DeleteModMedia)">
+            <summary>
+            Delete media from a mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModClient.GetEvents(Modio.Filters.Filter)">
+            <summary>
+            Get the event log for the mod, showing changes made sorted by latest event first.
+            </summary>
+        </member>
+        <member name="M:Modio.ModClient.GetStatistics">
+            <summary>
+            Get mod stats for the corresponding mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModClient.Subscribe">
+            <summary>
+            Subscribe the authenticated user to the corresponding mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModClient.Unsubscribe">
+            <summary>
+            Unsubscribe the authenticated user from the corresponding mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModClient.Rate(Modio.NewRating)">
+            <summary>
+            Submit a positive or negative rating for the mod.
+            </summary>
+        </member>
+        <member name="T:Modio.ModsClient">
+            <summary>
+            Client for the Mods API.
+            </summary>
+        </member>
+        <member name="P:Modio.ModsClient.GameId">
+            <summary>
+            The game id of the endpoint.
+            </summary>
+        </member>
+        <member name="P:Modio.ModsClient.Item(System.UInt32)">
+            <summary>
+            Gets the client for a specific mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModsClient.Search(Modio.Filters.Filter)">
+            <summary>
+            Get all mods for the corresponding game.
+            </summary>
+        </member>
+        <member name="M:Modio.ModsClient.GetEvents(Modio.Filters.Filter)">
+            <summary>
+            Get all mods events for the corresponding game sorted by latest event first.
+            </summary>
+        </member>
+        <member name="M:Modio.ModsClient.GetEvents(System.UInt32)">
+            <summary>
+            Get all mods events for the corresponding game after a given event ID sorted by latest event first.
+            </summary>
+        </member>
+        <member name="M:Modio.ModsClient.GetStatistics(Modio.Filters.Filter)">
+            <summary>
+            Get all mod stats for mods of the corresponding game.
+            </summary>
+        </member>
+        <member name="M:Modio.ModsClient.Add(Modio.NewMod)">
+            <summary>
+            Add a mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModsClient.Edit(System.UInt32,Modio.EditMod)">
+            <summary>
+            Edit details for a mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModsClient.Delete(System.UInt32)">
+            <summary>
+            Delete a mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModsClient.Subscribe(System.UInt32)">
+            <summary>
+            Subscribe the authenticated user to the corresponding mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModsClient.Unsubscribe(System.UInt32)">
+            <summary>
+            Unsubscribe the authenticated user from the corresponding mod.
+            </summary>
+        </member>
+        <member name="M:Modio.ModsClient.Rate(System.UInt32,Modio.NewRating)">
+            <summary>
+            Submit a positive or negative rating for the mod.
+            </summary>
+        </member>
+        <member name="T:Modio.SearchClient`1">
+            <summary>
+            Client to retrieve search results from various API endpoints.
+            </summary>
+        </member>
+        <member name="M:Modio.SearchClient`1.First">
+            <summary>
+            Returns the first result of the search.
+            </summary>
+        </member>
+        <member name="M:Modio.SearchClient`1.FirstPage">
+            <summary>
+            Returns the first page of the search result.
+            </summary>
+        </member>
+        <member name="M:Modio.SearchClient`1.ToList">
+            <summary>
+            Returns the complete search result as <see cref="T:System.Collections.Generic.IReadOnlyList`1"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.SearchClient`1.ToEnumerable">
+            <summary>
+            Returns the complete search result as <see cref="T:System.Collections.Generic.IAsyncEnumerable`1"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.SearchClient`1.ToPagedEnumerable">
+            <summary>
+            Returns the complete search result by page as <see cref="T:System.Collections.Generic.IAsyncEnumerable`1"/>.
+            </summary>
+        </member>
+        <member name="T:Modio.TagsClient">
+            <summary>
+            Client for the Tags API.
+            </summary>
+        </member>
+        <member name="P:Modio.TagsClient.GameId">
+            <summary>
+            The game id of the endpoint.
+            </summary>
+        </member>
+        <member name="P:Modio.TagsClient.ModId">
+            <summary>
+            The mod id of the endpoint.
+            </summary>
+        </member>
+        <member name="M:Modio.TagsClient.Get">
+            <summary>
+            Get all tags for the corresponding mod.
+            </summary>
+        </member>
+        <member name="M:Modio.TagsClient.Add(System.String[])">
+            <summary>
+            Add tags to a mod's profile.
+            </summary>
+        </member>
+        <member name="M:Modio.TagsClient.Add(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Add tags to a mod's profile.
+            </summary>
+        </member>
+        <member name="M:Modio.TagsClient.Delete(System.String[])">
+            <summary>
+            Delete tags from a mod's profile.
+            </summary>
+        </member>
+        <member name="M:Modio.TagsClient.Delete(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Delete tags from a mod's profile.
+            </summary>
+        </member>
+        <member name="T:Modio.TeamsClient">
+            <summary>
+            Client for the Team API.
+            </summary>
+        </member>
+        <member name="P:Modio.TeamsClient.GameId">
+            <summary>
+            The game id of the endpoint.
+            </summary>
+        </member>
+        <member name="P:Modio.TeamsClient.ModId">
+            <summary>
+            The mod id of the endpoint.
+            </summary>
+        </member>
+        <member name="M:Modio.TeamsClient.Search(Modio.Filters.Filter)">
+            <summary>
+            Get all users that are part of a mod team.
+            </summary>
+        </member>
+        <member name="M:Modio.TeamsClient.Add(System.String,Modio.Models.TeamLevel,System.String)">
+            <summary>
+            Add a user to a mod team.
+            </summary>
+        </member>
+        <member name="M:Modio.TeamsClient.Edit(System.UInt32,Modio.Models.TeamLevel,System.String)">
+            <summary>
+            Edit a mod team members details.
+            </summary>
+        </member>
+        <member name="M:Modio.TeamsClient.Delete(System.UInt32)">
+            <summary>
+            Delete a user from a mod team.
+            </summary>
+        </member>
+        <member name="T:Modio.UserClient">
+            <summary>
+            Client for the User API.
+            </summary>
+        </member>
+        <member name="M:Modio.UserClient.GetCurrentUser">
+            <summary>
+            Get the authenticated user details.
+            </summary>
+        </member>
+        <member name="M:Modio.UserClient.GetSubscriptions(Modio.Filters.Filter)">
+            <summary>
+            Get all mod's the authenticated user is subscribed to.
+            </summary>
+        </member>
+        <member name="M:Modio.UserClient.GetEvents(Modio.Filters.Filter)">
+            <summary>
+            Get events that have been fired specific to the user.
+            </summary>
+        </member>
+        <member name="M:Modio.UserClient.GetGames(Modio.Filters.Filter)">
+            <summary>
+            Get all games the authenticated user added or is a team member of.
+            </summary>
+        </member>
+        <member name="M:Modio.UserClient.GetMods(Modio.Filters.Filter)">
+            <summary>
+            Get all mods the authenticated user added or is a team member of.
+            </summary>
+        </member>
+        <member name="M:Modio.UserClient.GetFiles(Modio.Filters.Filter)">
+            <summary>
+            Get all modfiles the authenticated user uploaded.
+            </summary>
+        </member>
+        <member name="M:Modio.UserClient.GetRatings(Modio.Filters.Filter)">
+            <summary>
+            Get all mod rating's submitted by the authenticated user.
+            </summary>
+        </member>
+        <member name="T:Modio.ApiException">
+            <summary>
+            Represents errors that occur from the mod.io API.
+            </summary>
+        </member>
+        <member name="P:Modio.ApiException.StatusCode">
+            <summary>
+            The HTTP status code associated with the response.
+            </summary>
+        </member>
+        <member name="P:Modio.ApiException.ApiError">
+            <summary>
+            The raw exception payload from the response.
+            </summary>
+        </member>
+        <member name="M:Modio.ApiException.#ctor(System.Net.Http.HttpResponseMessage)">
+            <summary>
+            Creates a new instance of ApiException.
+            </summary>
+        </member>
+        <member name="P:Modio.ApiException.Message">
+            <inheritdoc/>
+        </member>
+        <member name="T:Modio.ApiValidationException">
+            <summary>
+            Represents a HTTP 422 - Unprocessable Entity response returned from the API.
+            </summary>
+        </member>
+        <member name="M:Modio.ApiValidationException.#ctor(System.Net.Http.HttpResponseMessage)">
+            <summary>
+            Initializes a new instance of ApiValidationException.
+            </summary>
+        </member>
+        <member name="P:Modio.ApiValidationException.Errors">
+            <summary>
+            Validation errors.
+            </summary>
+        </member>
+        <member name="T:Modio.DownloadException">
+            <summary>
+            Represents errors that occur when downloading mod files.
+            </summary>
+        </member>
+        <member name="M:Modio.DownloadException.#ctor">
+            <summary>
+            Creates a new instance of DownloadException.
+            </summary>
+        </member>
+        <member name="M:Modio.DownloadException.#ctor(System.String,System.Exception)">
+            <summary>
+            Creates a new instance of DownloadException.
+            </summary>
+        </member>
+        <member name="T:Modio.ForbiddenException">
+            <summary>
+            Represents a HTTP 403 - Forbidden response returned from the API.
+            </summary>
+        </member>
+        <member name="M:Modio.ForbiddenException.#ctor(System.Net.Http.HttpResponseMessage)">
+            <summary>
+            Initializes a new instance of ForbiddenException.
+            </summary>
+        </member>
+        <member name="T:Modio.NoPrimaryFileException">
+            <summary>
+            Exception thrown when mod has no primary file to download.
+            </summary>
+        </member>
+        <member name="T:Modio.NotFoundException">
+            <summary>
+            Represents a HTTP 404 - Not Found response returned from the API.
+            </summary>
+        </member>
+        <member name="M:Modio.NotFoundException.#ctor(System.Net.Http.HttpResponseMessage)">
+            <summary>
+            Initializes a new instance of NotFoundException.
+            </summary>
+        </member>
+        <member name="T:Modio.RateLimitExceededException">
+            <summary>
+            Exception thrown when mod.io API Rate limits are exceeded.
+            </summary>
+        </member>
+        <member name="P:Modio.RateLimitExceededException.Limit">
+            <summary>
+            The maximum number of requests that the consumer is permitted to make per minute.
+            </summary>
+        </member>
+        <member name="P:Modio.RateLimitExceededException.Remaining">
+            <summary>
+            The number of requests remaining in the current rate limit window.
+            </summary>
+        </member>
+        <member name="P:Modio.RateLimitExceededException.RetryAfter">
+            <summary>
+            The number of seconds until the current rate limit window resets.
+            </summary>
+        </member>
+        <member name="M:Modio.RateLimitExceededException.#ctor(System.Net.Http.HttpResponseMessage)">
+            <summary>
+            Creates a new instance of RateLimitExceededException.
+            </summary>
+        </member>
+        <member name="T:Modio.TermsAcceptanceRequiredException">
+             <summary>
+             The acceptance of the Terms of Use is required.
+            
+             Represents a HTTP 400 with a error ref code <code>11051</code>.
+             </summary>
+        </member>
+        <member name="M:Modio.TermsAcceptanceRequiredException.#ctor(System.Net.HttpStatusCode,Modio.Models.ApiError)">
+            <summary>
+            Creates a new instance of TermsAcceptanceRequiredException.
+            </summary>
+        </member>
+        <member name="T:Modio.UnauthorizedException">
+            <summary>
+            Represents a HTTP 401 - Unauthorized response returned from the API.
+            </summary>
+        </member>
+        <member name="M:Modio.UnauthorizedException.#ctor(System.Net.Http.HttpResponseMessage)">
+            <summary>
+            Creates a new instance of UnauthorizedException.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.CommentFilter">
+            <summary>
+            Used to filter comments.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.CommentFilter.Id">
+            <summary>
+            Filter for comment id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.CommentFilter.SubmittedBy">
+            <summary>
+            Filter for user id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.CommentFilter.Content">
+            <summary>
+            Filter for content of the comment.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.ModEventFilter">
+            <summary>
+            Used to filter mod events.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModEventFilter.Id">
+            <summary>
+            Filter for event id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModEventFilter.ModId">
+            <summary>
+            Filter for mod id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModEventFilter.UserId">
+            <summary>
+            Filter for user id who performed the action.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModEventFilter.DateAdded">
+            <summary>
+            Filter for unix timestamp of date the mod event occured.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModEventFilter.EventType">
+            <summary>
+            Filter for type of mod event that occured.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.UserEventFilter">
+            <summary>
+            Used to filter user events.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.UserEventFilter.Id">
+            <summary>
+            Filter for event id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.UserEventFilter.GameId">
+            <summary>
+            Filter for game id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.UserEventFilter.ModId">
+            <summary>
+            Filter for mod id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.UserEventFilter.UserId">
+            <summary>
+            Filter for user id who performed the action.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.UserEventFilter.DateAdded">
+            <summary>
+            Filter for unix timestamp of date the user event occured.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.UserEventFilter.EventType">
+            <summary>
+            Filter for type of user event that occured.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.FileFilter">
+            <summary>
+            Used to filter mod files.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.FileFilter.Id">
+            <summary>
+            Filter for file id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.FileFilter.Filename">
+            <summary>
+            Filter for filename.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.FileFilter.Filesize">
+            <summary>
+            Filter for file size.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.FileFilter.Filehash">
+            <summary>
+            Filter for MD5 hash.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.FileFilter.Version">
+            <summary>
+            Filter for file version.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.FileFilter.Changelog">
+            <summary>
+            Filter for changelog.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.FileFilter.MetadataBlob">
+            <summary>
+            Filter for metadata.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.Filter">
+            <summary>
+            Used to filter search results for several endpoints.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.Filter.Custom(System.String,Modio.Filters.Operator,System.String)">
+            <summary>
+            Initializes a new custom instance of <see cref="T:Modio.Filters.Filter"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.Filter.WithLimit(System.UInt32)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.Filters.Filter"/> with <paramref name="limit"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.Filter.WithOffset(System.UInt32)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.Filters.Filter"/> with <paramref name="offset"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.Filter.And(Modio.Filters.Filter)">
+            <summary>
+            Returns a new filter that combines this filter and <paramref name="other"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.Filter.Limit(System.UInt32)">
+            <summary>
+            Sets the limit for the filter.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.Filter.Offset(System.UInt32)">
+            <summary>
+            Sets the offset for the filter.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.FilterField">
+            <summary>
+            Base class for the different types of filters.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.FilterField.Field">
+            <summary>
+            Name of the filter.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.FilterField.Asc">
+            <summary>
+            Returns a new sorting filter in ascending order.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.FilterField.Desc">
+            <summary>
+            Returns a new sorting filter in descending order.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.SortField">
+            <summary>
+            Represents a special sorting field.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.SortField.Asc">
+            <summary>
+            Returns a new sorting filter in ascending order.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.SortField.Desc">
+            <summary>
+            Returns a new sorting filter in descending order.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.NumericField`1">
+            <summary>
+            Specialized field for numeric filters.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.NumericField`1.Asc">
+            <inheritdoc/>
+        </member>
+        <member name="M:Modio.Filters.NumericField`1.Desc">
+            <inheritdoc/>
+        </member>
+        <member name="M:Modio.Filters.NumericField`1.Eq(`0)">
+            <summary>
+            Returns a new filter that <b>equals</b> to <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.NumericField`1.Not(`0)">
+            <summary>
+            Returns a new filter that is <b>not</b> <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.NumericField`1.In(System.Collections.Generic.IEnumerable{`0[]})">
+            <summary>
+            Returns a new filter that is <b>in</b> <paramref name="values"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.NumericField`1.NotIn(System.Collections.Generic.IEnumerable{`0})">
+            <summary>
+            Returns a new filter that is <b>not in</b> <paramref name="values"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.NumericField`1.In(`0[])">
+            <summary>
+            Returns a new filter that is <b>in</b> <paramref name="values"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.NumericField`1.NotIn(`0[])">
+            <summary>
+            Returns a new filter that is <b>not in</b> <paramref name="values"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.NumericField`1.LessThan(`0)">
+            <summary>
+            Returns a new filter that is <b>less than</b> <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.NumericField`1.LessOrEqual(`0)">
+            <summary>
+            Returns a new filter that is <b>less or equal</b> to <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.NumericField`1.GreaterThan(`0)">
+            <summary>
+            Returns a new filter that is <b>greater than</b> <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.NumericField`1.GreaterOrEqual(`0)">
+            <summary>
+            Returns a new filter that is <b>greater or equal</b> to <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.NumericField`1.BitwiseAnd(`0)">
+            <summary>
+            Returns a new filter that <b>bitwise and</b> checks to <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.FullTextField">
+            <summary>
+            Specialized field for the fulltext filter.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.FullTextField.Eq(System.String)">
+            <summary>
+            Returns a new filter that is a lenient search filter that is only available
+            if the endpoint you are querying contains a <c>name</c> column.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.TextField">
+            <summary>
+            Specialized field for text filters.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.TextField.Asc">
+            <inheritdoc/>
+        </member>
+        <member name="M:Modio.Filters.TextField.Desc">
+            <inheritdoc/>
+        </member>
+        <member name="M:Modio.Filters.TextField.Eq(System.String)">
+            <summary>
+            Returns a new filter that <b>equals</b> to <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.TextField.Not(System.String)">
+            <summary>
+            Returns a new filter that is <b>not</b> <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.TextField.Like(System.String)">
+            <summary>
+            Returns a new filter that is <b>like</b> <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.TextField.NotLike(System.String)">
+            <summary>
+            Returns a new filter that is <b>not like</b> <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.TextField.In(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Returns a new filter that is <b>in</b> <paramref name="values"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.TextField.NotIn(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Returns a new filter that is <b>not in</b> <paramref name="values"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.TextField.In(System.String[])">
+            <summary>
+            Returns a new filter that is <b>in</b> <paramref name="values"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.TextField.NotIn(System.String[])">
+            <summary>
+            Returns a new filter that is <b>not in</b> <paramref name="values"/>.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.GenericTextField`1">
+            <summary>
+            Specialized field for generic text filters.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.GenericTextField`1.Eq(`0)">
+            <summary>
+            Returns a new filter that <b>equals</b> to <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.GenericTextField`1.Not(`0)">
+            <summary>
+            Returns a new filter that is <b>not</b> <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.GenericTextField`1.Like(`0)">
+            <summary>
+            Returns a new filter that is <b>like</b> <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.GenericTextField`1.NotLike(`0)">
+            <summary>
+            Returns a new filter that is <b>not like</b> <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.GenericTextField`1.In(System.Collections.Generic.IEnumerable{`0})">
+            <summary>
+            Returns a new filter that is <b>in</b> <paramref name="values"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.GenericTextField`1.NotIn(System.Collections.Generic.IEnumerable{`0})">
+            <summary>
+            Returns a new filter that is <b>in not</b> <paramref name="values"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.GenericTextField`1.In(`0[])">
+            <summary>
+            Returns a new filter that is <b>in</b> <paramref name="values"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.GenericTextField`1.NotIn(`0[])">
+            <summary>
+            Returns a new filter that is <b>not in</b> <paramref name="values"/>.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.Operator">
+             <summary>
+             Filter operators of mod.io
+             </summary>
+            
+             <seealso>https://docs.mod.io/#filtering</seealso>
+        </member>
+        <member name="F:Modio.Filters.Operator.Equal">
+            <summary>
+            Equal to (`id=1`)
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.Operator.NotEqual">
+            <summary>
+            Equal to (`id-not=1`)
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.Operator.Like">
+            <summary>
+            Equivalent to SQL's `LIKE`. `*` is equivalent to SQL's `%`. (`name-lk=foo*`)
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.Operator.NotLike">
+            <summary>
+            Equivalent to SQL's `NOT LIKE` (`name-not-lk=foo*`)
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.Operator.In">
+            <summary>
+            Equivalent to SQL's `IN` (`id-in=1,3,5`)
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.Operator.NotIn">
+            <summary>
+            Equivalent to SQL's `NOT IN` (`id-not-in=1,3,5`)
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.Operator.LessThan">
+            <summary>
+            Less than (`id-st=10`)
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.Operator.LessOrEqual">
+            <summary>
+            Less than or equal to (`id-max=10`)
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.Operator.GreaterThan">
+            <summary>
+            Greater than (`id-gt=5`)
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.Operator.GreaterOrEqual">
+            <summary>
+            Greater than or equal to (`id-min=5`)
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.Operator.BitwiseAnd">
+            <summary>
+            Match bits (`maturity_option-bitwise-and=5`)
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.GameFilter">
+            <summary>
+            Used to filter games.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.GameFilter.FullText">
+            <summary>
+            Full-text filter for the name field.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.GameFilter.Id">
+            <summary>
+            Filter for game id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.GameFilter.Name">
+            <summary>
+            Filter for name.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.GameFilter.NameId">
+            <summary>
+            Filter for name_id.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.ModFilter">
+            <summary>
+            Used to filter mods.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.FullText">
+            <summary>
+            Full-text filter for the name field.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.Id">
+            <summary>
+            Filter for mod id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.GameId">
+            <summary>
+            Filter for game id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.Status">
+            <summary>
+            Filter for status.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.Visible">
+            <summary>
+            Filter for visble.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.SubmitterId">
+            <summary>
+            Filter for submitted_by.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.DateAdded">
+            <summary>
+            Filter for date_added.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.DateUpdated">
+            <summary>
+            Filter for date_updated.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.DateLive">
+            <summary>
+            Filter for date_live.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.MaturityOption">
+            <summary>
+            Filter for maturity_option.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.Name">
+            <summary>
+            Filter for name.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.NameId">
+            <summary>
+            Filter for name_id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.Summary">
+            <summary>
+            Filter for summary.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.Description">
+            <summary>
+            Filter for description.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.HomepageUrl">
+            <summary>
+            Filter for homepage_url.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.ModfileId">
+            <summary>
+            Filter for modfile.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.MetadataBlob">
+            <summary>
+            Filter for metadata_blob.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.MetadataKeyValue">
+            <summary>
+            Filter for metadata_kvp.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.Tags">
+            <summary>
+            Filter for tags.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.Downloads">
+            <summary>
+            Sort results by most downloads.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.Popular">
+            <summary>
+            Sort results by popularity.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.Rating">
+            <summary>
+            Sort results by weighted rating.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.ModFilter.Subscribers">
+            <summary>
+            Sort results by most subscribers.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.MetadataField">
+            <summary>
+            Specialized field for the `metadata_kvp` filter.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.MetadataField.HasKeyValue(System.String,System.String)">
+            <summary>
+            Returns a new Filter for <paramref name="key"/> and <paramref name="value"/>.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.MetadataField.HasKeyValue(System.Collections.Generic.IEnumerable{System.ValueTuple{System.String,System.String}})">
+            <summary>
+            Returns a new Filter for the tuples.
+            </summary>
+        </member>
+        <member name="M:Modio.Filters.MetadataField.HasKeyValue(System.Collections.Generic.IDictionary{System.String,System.String})">
+            <summary>
+            Returns a new Filter for entries of the dictionary.
+            </summary>
+        </member>
+        <member name="T:Modio.Filters.TeamFilter">
+            <summary>
+            Used to filter team members.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.TeamFilter.Id">
+            <summary>
+            Filter for member id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.TeamFilter.UserId">
+            <summary>
+            Filter for user id.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.TeamFilter.Username">
+            <summary>
+            Filter for username.
+            </summary>
+        </member>
+        <member name="F:Modio.Filters.TeamFilter.Level">
+            <summary>
+            Filter for team level.
+            </summary>
+        </member>
+        <member name="T:Modio.Credentials">
+            <summary>
+            Credentials used for API authentication.
+            </summary>
+        </member>
+        <member name="P:Modio.Credentials.ApiKey">
+            <summary>
+            The required API key.
+            </summary>
+        </member>
+        <member name="P:Modio.Credentials.Token">
+            <summary>
+            The Optional OAuth2 access token.
+            </summary>
+        </member>
+        <member name="M:Modio.Credentials.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.Credentials"/> with an API key.
+            </summary>
+        </member>
+        <member name="M:Modio.Credentials.#ctor(System.String,System.String)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.Credentials"/> with an API key
+            and an OAuth2 access token.
+            </summary>
+        </member>
+        <member name="T:Modio.AuthService">
+            <summary>
+            The 3rd party authentication service that will be used after
+            the user agrees to the terms of use and consent to an account being created.
+            </summary>
+        </member>
+        <member name="F:Modio.AuthService.Steam">
+            
+        </member>
+        <member name="F:Modio.AuthService.Gog">
+            
+        </member>
+        <member name="F:Modio.AuthService.Itchio">
+            
+        </member>
+        <member name="F:Modio.AuthService.Xbox">
+            
+        </member>
+        <member name="F:Modio.AuthService.Switch">
+            
+        </member>
+        <member name="F:Modio.AuthService.Oculus">
+            
+        </member>
+        <member name="F:Modio.AuthService.Discord">
+            
+        </member>
+        <member name="T:Modio.DiscordAuth">
+             <summary>
+             See <see cref="M:Modio.AuthClient.External(Modio.DiscordAuth)"/>.
+             </summary>
+            
+             <seealso>https://docs.mod.io/#authenticate-via-discord</seealso>
+        </member>
+        <member name="P:Modio.DiscordAuth.Token">
+            <summary>
+            The access token of the user provided by Discord.
+            </summary>
+        </member>
+        <member name="P:Modio.DiscordAuth.Email">
+            <summary>
+            The users email address.
+            </summary>
+        </member>
+        <member name="P:Modio.DiscordAuth.TermsAccepted">
+            <summary>
+            Has the user accepted the Terms of Use.
+            </summary>
+        </member>
+        <member name="P:Modio.DiscordAuth.ExpiredAt">
+            <summary>
+            Unix timestamp of date in which the returned token will expire.
+            </summary>
+        </member>
+        <member name="M:Modio.DiscordAuth.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.DiscordAuth"/> with the required data.
+            </summary>
+        </member>
+        <member name="T:Modio.GalaxyAuth">
+             <summary>
+             See <see cref="M:Modio.AuthClient.External(Modio.GalaxyAuth)"/>.
+             </summary>
+            
+             <seealso>https://docs.mod.io/#authenticate-via-gog-galaxy</seealso>
+        </member>
+        <member name="P:Modio.GalaxyAuth.AppData">
+            <summary>
+            GOG Galaxy's Encrypted App Ticket
+            </summary>
+        </member>
+        <member name="P:Modio.GalaxyAuth.Email">
+            <summary>
+            The users email address.
+            </summary>
+        </member>
+        <member name="P:Modio.GalaxyAuth.TermsAccepted">
+            <summary>
+            Has the user accepted the Terms of Use.
+            </summary>
+        </member>
+        <member name="P:Modio.GalaxyAuth.ExpiredAt">
+            <summary>
+            Unix timestamp of date in which the returned token will expire.
+            </summary>
+        </member>
+        <member name="M:Modio.GalaxyAuth.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.GalaxyAuth"/> with the required Encrypted App Ticket.
+            </summary>
+        </member>
+        <member name="T:Modio.ItchioAuth">
+             <summary>
+             See <see cref="M:Modio.AuthClient.External(Modio.ItchioAuth)"/>.
+             </summary>
+            
+             <seealso>https://docs.mod.io/#authenticate-via-itch-io</seealso>
+        </member>
+        <member name="P:Modio.ItchioAuth.Token">
+            <summary>
+            The JWT Token provided by the itch.io desktop app.
+            </summary>
+        </member>
+        <member name="P:Modio.ItchioAuth.Email">
+            <summary>
+            The users email address.
+            </summary>
+        </member>
+        <member name="P:Modio.ItchioAuth.TermsAccepted">
+            <summary>
+            Has the user accepted the Terms of Use.
+            </summary>
+        </member>
+        <member name="P:Modio.ItchioAuth.ExpiredAt">
+            <summary>
+            Unix timestamp of date in which the returned token will expire.
+            </summary>
+        </member>
+        <member name="M:Modio.ItchioAuth.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.ItchioAuth"/> with the required JWT Token.
+            </summary>
+        </member>
+        <member name="T:Modio.OculusAuth">
+             <summary>
+             See <see cref="M:Modio.AuthClient.External(Modio.OculusAuth)"/>.
+             </summary>
+            
+             <seealso>https://docs.mod.io/#authenticate-via-oculus</seealso>
+        </member>
+        <member name="P:Modio.OculusAuth.Token">
+            <summary>
+            The user's access token, providing by calling <c>ovr_User_GetAccessToken()</c> from the Oculus SDK.
+            </summary>
+        </member>
+        <member name="P:Modio.OculusAuth.UserId">
+            <summary>
+            The user's Oculus id providing by calling <c>ovr_GetLoggedInUserID()</c> from the Oculus SDK.
+            </summary>
+        </member>
+        <member name="P:Modio.OculusAuth.Nonce">
+            <summary>
+            The nonce provided by calling <c>ovr_User_GetUserProof()</c> from the Oculus SDK.
+            </summary>
+        </member>
+        <member name="P:Modio.OculusAuth.Email">
+            <summary>
+            The users email address.
+            </summary>
+        </member>
+        <member name="P:Modio.OculusAuth.TermsAccepted">
+            <summary>
+            Has the user accepted the Terms of Use.
+            </summary>
+        </member>
+        <member name="P:Modio.OculusAuth.ExpiredAt">
+            <summary>
+            Unix timestamp of date in which the returned token will expire.
+            </summary>
+        </member>
+        <member name="M:Modio.OculusAuth.#ctor(System.String,System.UInt32,System.String)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.OculusAuth"/> with the required data.
+            </summary>
+        </member>
+        <member name="T:Modio.SteamAuth">
+             <summary>
+             See <see cref="M:Modio.AuthClient.External(Modio.SteamAuth)"/>.
+             </summary>
+            
+             <seealso>https://docs.mod.io/#authenticate-via-steam</seealso>
+        </member>
+        <member name="P:Modio.SteamAuth.AppData">
+            <summary>
+            base64-encoded string of Steam's Encrypted App Ticket
+            </summary>
+        </member>
+        <member name="P:Modio.SteamAuth.Email">
+            <summary>
+            The users email address.
+            </summary>
+        </member>
+        <member name="P:Modio.SteamAuth.TermsAccepted">
+            <summary>
+            Has the user accepted the Terms of Use.
+            </summary>
+        </member>
+        <member name="P:Modio.SteamAuth.ExpiredAt">
+            <summary>
+            Unix timestamp of date in which the returned token will expire.
+            </summary>
+        </member>
+        <member name="M:Modio.SteamAuth.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.SteamAuth"/> with the required Encrypted App Ticket.
+            </summary>
+        </member>
+        <member name="T:Modio.SwitchAuth">
+             <summary>
+             See <see cref="M:Modio.AuthClient.External(Modio.SwitchAuth)"/>.
+             </summary>
+            
+             <seealso>https://docs.mod.io/#authenticate-via-switch</seealso>
+        </member>
+        <member name="P:Modio.SwitchAuth.IdToken">
+            <summary>
+            The NSA ID supplied by the Nintendo Switch SDK.
+            </summary>
+        </member>
+        <member name="P:Modio.SwitchAuth.Email">
+            <summary>
+            The users email address.
+            </summary>
+        </member>
+        <member name="P:Modio.SwitchAuth.TermsAccepted">
+            <summary>
+            Has the user accepted the Terms of Use.
+            </summary>
+        </member>
+        <member name="P:Modio.SwitchAuth.ExpiredAt">
+            <summary>
+            Unix timestamp of date in which the returned token will expire.
+            </summary>
+        </member>
+        <member name="M:Modio.SwitchAuth.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.SwitchAuth"/> with the required NSA ID.
+            </summary>
+        </member>
+        <member name="T:Modio.XboxAuth">
+             <summary>
+             See <see cref="M:Modio.AuthClient.External(Modio.XboxAuth)"/>.
+             </summary>
+            
+             <seealso>https://docs.mod.io/#authenticate-via-xbox-live</seealso>
+        </member>
+        <member name="P:Modio.XboxAuth.Token">
+            <summary>
+            The Xbox Live token returned from calling <c>GetTokenAndSignatureAsync("POST", "https://api.mod.io")</c>.
+            </summary>
+        </member>
+        <member name="P:Modio.XboxAuth.Email">
+            <summary>
+            The users email address.
+            </summary>
+        </member>
+        <member name="P:Modio.XboxAuth.TermsAccepted">
+            <summary>
+            Has the user accepted the Terms of Use.
+            </summary>
+        </member>
+        <member name="P:Modio.XboxAuth.ExpiredAt">
+            <summary>
+            Unix timestamp of date in which the returned token will expire.
+            </summary>
+        </member>
+        <member name="M:Modio.XboxAuth.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.XboxAuth"/> with the required data.
+            </summary>
+        </member>
+        <member name="T:Modio.DeleteModMedia">
+            <summary>
+            Used to delete media from a mod.
+            </summary>
+        </member>
+        <member name="P:Modio.DeleteModMedia.Images">
+            <summary>
+            Images to delete.
+            </summary>
+        </member>
+        <member name="P:Modio.DeleteModMedia.YouTube">
+            <summary>
+            YouTube links to delete.
+            </summary>
+        </member>
+        <member name="P:Modio.DeleteModMedia.Sketchfab">
+            <summary>
+            Sketchfab links to delete.
+            </summary>
+        </member>
+        <member name="T:Modio.DeleteTagOption">
+            <summary>
+            Used to delete TagOption's.
+            </summary>
+        </member>
+        <member name="P:Modio.DeleteTagOption.Name">
+            <summary>
+            Name of the tag group.
+            </summary>
+        </member>
+        <member name="P:Modio.DeleteTagOption.Tags">
+            <summary>
+            Tags to delete from the tag group. (Empty when deleting the whole group.)
+            </summary>
+        </member>
+        <member name="M:Modio.DeleteTagOption.All(System.String)">
+            <summary>
+            Delete the whole TagOption.
+            </summary>
+        </member>
+        <member name="M:Modio.DeleteTagOption.Some(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Delete tags from the TagOption.
+            </summary>
+        </member>
+        <member name="T:Modio.EditFile">
+            <summary>
+            Used to edit a File.
+            </summary>
+        </member>
+        <member name="P:Modio.EditFile.Version">
+            <summary>
+            Version of the file release.
+            </summary>
+        </member>
+        <member name="P:Modio.EditFile.Changelog">
+            <summary>
+            Changelog of this release.
+            </summary>
+        </member>
+        <member name="P:Modio.EditFile.Active">
+            <summary>
+            Flag this upload as the current release.
+            </summary>
+        </member>
+        <member name="P:Modio.EditFile.MetadataBlob">
+            <summary>
+            Metadata stored by the game developer for this release.
+            </summary>
+        </member>
+        <member name="T:Modio.EditGame">
+            <summary>
+            Used to edit a Game.
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.Status">
+            <summary>
+            Status of the game.
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.Name">
+            <summary>
+            Name of the game. Cannot exceed 80 characters.
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.NameId">
+            <summary>
+            Subdomain for the game on mod.io. For example: https://gamename.mod.io.
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.Summary">
+            <summary>
+            Summary of the game.
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.Instructions">
+            <summary>
+            Instructions and links creators should follow to upload mods.
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.InstructionsUrl">
+            <summary>
+            Link to a mod.io guide, the modding wiki or a page where modders can learn
+            how to make and submit mods to the games profile.
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.UgcName">
+            <summary>
+            Word used to describe user-generated content (mods, items, addons etc).
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.PresentationOption">
+            <summary>
+            Presentation style of the game on the mod.io website.
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.SubmissionOption">
+            <summary>
+            Submission process the modders must follow.
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.CurationOption">
+            <summary>
+            Curation process the team follows to approve mods.
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.CommunityOptions">
+            <summary>
+            Community features enabled on the mod.io website.
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.RevenueOptions">
+            <summary>
+            Revenue capabilities mods can enable.
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.ApiAccessOptions">
+            <summary>
+            Level of API access the game allows.
+            </summary>
+        </member>
+        <member name="P:Modio.EditGame.MaturityOptions">
+            <summary>
+            Enable the maturity options mods can choose.
+            </summary>
+        </member>
+        <member name="T:Modio.EditMod">
+            <summary>
+            Used to edit a Mod.
+            </summary>
+        </member>
+        <member name="P:Modio.EditMod.Status">
+            <summary>
+            Status of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.EditMod.Visible">
+            <summary>
+            Visibility of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.EditMod.Name">
+            <summary>
+            Name of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.EditMod.NameId">
+            <summary>
+            Path for the mod on mod.io. For example: https://gamename.mod.io/mod-name-id-here.
+            </summary>
+        </member>
+        <member name="P:Modio.EditMod.Summary">
+            <summary>
+            Summary for the mod, giving a brief overview of what it's about.
+            </summary>
+        </member>
+        <member name="P:Modio.EditMod.Description">
+            <summary>
+            Description of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.EditMod.HomepageUrl">
+            <summary>
+            Official homepage for the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.EditMod.Stock">
+            <summary>
+            Maximium number of subscribers for this mod.
+            </summary>
+        </member>
+        <member name="P:Modio.EditMod.MaturityOption">
+            <summary>
+            Maturity options of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.EditMod.MetadataBlob">
+            <summary>
+            Metadata blob of the mod.
+            </summary>
+        </member>
+        <member name="T:Modio.NewFile">
+            <summary>
+            Used to upload a new File.
+            </summary>
+        </member>
+        <member name="P:Modio.NewFile.File">
+            <summary>
+            File to upload.
+            </summary>
+        </member>
+        <member name="P:Modio.NewFile.Version">
+            <summary>
+            Version of the file.
+            </summary>
+        </member>
+        <member name="P:Modio.NewFile.Changelog">
+            <summary>
+            Changelog of the file.
+            </summary>
+        </member>
+        <member name="P:Modio.NewFile.Active">
+            <summary>
+            Primary file of the mod. (default: <c>True</c>)
+            </summary>
+        </member>
+        <member name="P:Modio.NewFile.Filehash">
+            <summary>
+            Precalculated md5 hash which is checked after upload.
+            </summary>
+        </member>
+        <member name="P:Modio.NewFile.MetadataBlob">
+            <summary>
+            Metadata blob of the file.
+            </summary>
+        </member>
+        <member name="M:Modio.NewFile.#ctor(System.IO.FileInfo)">
+            <summary>
+            Create a new File.
+            </summary>
+        </member>
+        <member name="T:Modio.NewGameMedia">
+            <summary>
+            Used to upload new media to a game.
+            </summary>
+        </member>
+        <member name="P:Modio.NewGameMedia.Logo">
+            <summary>
+            Logo file to upload.
+            </summary>
+        </member>
+        <member name="P:Modio.NewGameMedia.Icon">
+            <summary>
+            Icon file to upload.
+            </summary>
+        </member>
+        <member name="P:Modio.NewGameMedia.Header">
+            <summary>
+            Header image file to upload.
+            </summary>
+        </member>
+        <member name="T:Modio.NewMod">
+            <summary>
+            Used to create a new Mod.
+            </summary>
+        </member>
+        <member name="P:Modio.NewMod.Name">
+            <summary>
+            Name of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.NewMod.Summary">
+            <summary>
+            Summary for the mod, giving a brief overview of what it's about.
+            </summary>
+        </member>
+        <member name="P:Modio.NewMod.Logo">
+            <summary>
+            Image file which will represent your mods logo.
+            </summary>
+        </member>
+        <member name="P:Modio.NewMod.Visible">
+            <summary>
+            Visibility of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.NewMod.NameId">
+            <summary>
+            Path for the mod on mod.io. For example: https://gamename.mod.io/mod-name-id-here.
+            </summary>
+        </member>
+        <member name="P:Modio.NewMod.Description">
+            <summary>
+            Description of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.NewMod.HomepageUrl">
+            <summary>
+            Official homepage for your mod. Must be a valid URL.
+            </summary>
+        </member>
+        <member name="P:Modio.NewMod.Stock">
+            <summary>
+            Maximium number of subscribers for this mod.
+            </summary>
+        </member>
+        <member name="P:Modio.NewMod.MaturityOption">
+            <summary>
+            MaturityOption of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.NewMod.MetadataBlob">
+            <summary>
+            Metadata blob of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.NewMod.Tags">
+            <summary>
+            An array of strings that represent what the mod has been tagged as.
+            </summary>
+        </member>
+        <member name="M:Modio.NewMod.#ctor(System.String,System.String,System.IO.FileInfo)">
+            <summary>
+            Creates a new mod.
+            </summary>
+        </member>
+        <member name="T:Modio.NewModMedia">
+            <summary>
+            Used to upload new media to a mod.
+            </summary>
+        </member>
+        <member name="P:Modio.NewModMedia.Logo">
+            <summary>
+            Image file which will represent the mods logo.
+            </summary>
+        </member>
+        <member name="P:Modio.NewModMedia.ImagesZip">
+            <summary>
+            Zip archive of images to add to the mods gallery.
+            </summary>
+        </member>
+        <member name="P:Modio.NewModMedia.Images">
+            <summary>
+            Images to add to the mods gallery.
+            </summary>
+        </member>
+        <member name="P:Modio.NewModMedia.YouTube">
+            <summary>
+            YouTube links to add to the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.NewModMedia.Sketchfab">
+            <summary>
+            Sketchfab links to add to the mod.
+            </summary>
+        </member>
+        <member name="T:Modio.NewRating">
+            <summary>
+            Used to rate a Mod.
+            </summary>
+        </member>
+        <member name="F:Modio.NewRating.Positive">
+            <summary>
+            Submits a positive rating.
+            </summary>
+        </member>
+        <member name="F:Modio.NewRating.Negative">
+            <summary>
+            Submits a negative rating.
+            </summary>
+        </member>
+        <member name="F:Modio.NewRating.None">
+            <summary>
+            Reset a rating.
+            </summary>
+        </member>
+        <member name="T:Modio.NewGameReport">
+            <summary>
+            Used to report a game.
+            </summary>
+        </member>
+        <member name="M:Modio.NewGameReport.#ctor(System.UInt32,Modio.ReportType)">
+            <summary>
+            Creates a new instance of NewGameReport.
+            </summary>
+        </member>
+        <member name="T:Modio.NewModReport">
+            <summary>
+            Used to report a mod.
+            </summary>
+        </member>
+        <member name="M:Modio.NewModReport.#ctor(System.UInt32,Modio.ReportType)">
+            <summary>
+            Creates a new instance of NewModReport.
+            </summary>
+        </member>
+        <member name="T:Modio.NewUserReport">
+            <summary>
+            Used to report a user.
+            </summary>
+        </member>
+        <member name="M:Modio.NewUserReport.#ctor(System.UInt32,Modio.ReportType)">
+            <summary>
+            Creates a new instance of NewUserReport.
+            </summary>
+        </member>
+        <member name="T:Modio.NewReport">
+            <summary>
+            Base class for the different report types.
+            </summary>
+        </member>
+        <member name="P:Modio.NewReport.Resource">
+            <summary>
+            Type of resource that is reported.
+            </summary>
+        </member>
+        <member name="P:Modio.NewReport.Id">
+            <summary>
+            Unique id of the resource that is reported.
+            </summary>
+        </member>
+        <member name="P:Modio.NewReport.Type">
+            <summary>
+            Type of report.
+            </summary>
+        </member>
+        <member name="P:Modio.NewReport.Name">
+            <summary>
+            Name of the user submitting the report.
+            </summary>
+        </member>
+        <member name="P:Modio.NewReport.Contact">
+            <summary>
+            Contact details of the user submitting the report.
+            </summary>
+        </member>
+        <member name="P:Modio.NewReport.Summary">
+            <summary>
+            Detailed description of your report.
+            </summary>
+        </member>
+        <member name="T:Modio.ReportType">
+            <summary>
+            Type of report.
+            </summary>
+        </member>
+        <member name="F:Modio.ReportType.Generic">
+            <summary>
+            Generic
+            </summary>
+        </member>
+        <member name="F:Modio.ReportType.DMCA">
+            <summary>
+            DMCA
+            </summary>
+        </member>
+        <member name="F:Modio.ReportType.NotWorking">
+            <summary>
+            Not Working
+            </summary>
+        </member>
+        <member name="F:Modio.ReportType.RudeContent">
+            <summary>
+            Rude Content
+            </summary>
+        </member>
+        <member name="F:Modio.ReportType.IllegalContent">
+            <summary>
+            Illegal Content
+            </summary>
+        </member>
+        <member name="F:Modio.ReportType.StolenContent">
+            <summary>
+            Stolen Content
+            </summary>
+        </member>
+        <member name="F:Modio.ReportType.FalseInformation">
+            <summary>
+            False Information
+            </summary>
+        </member>
+        <member name="F:Modio.ReportType.Other">
+            <summary>
+            Other
+            </summary>
+        </member>
+        <member name="T:Modio.NewTagOption">
+            <summary>
+            Used to create a new TagOption.
+            </summary>
+        </member>
+        <member name="P:Modio.NewTagOption.Name">
+            <summary>
+            Name of the tag group.
+            </summary>
+        </member>
+        <member name="P:Modio.NewTagOption.Type">
+            <summary>
+            Type of the tag group.
+            </summary>
+        </member>
+        <member name="P:Modio.NewTagOption.Tags">
+            <summary>
+            Tags of the tag group.
+            </summary>
+        </member>
+        <member name="P:Modio.NewTagOption.Hidden">
+            <summary>
+            Defines the tag group as hidden.
+            </summary>
+        </member>
+        <member name="M:Modio.NewTagOption.CreateCheckbox(System.String,System.Collections.Generic.IEnumerable{System.String},System.Nullable{System.Boolean})">
+            <summary>
+            Creates a new <c>checkbox</c> TagOption.
+            </summary>
+        </member>
+        <member name="M:Modio.NewTagOption.CreateDropdown(System.String,System.Collections.Generic.IEnumerable{System.String},System.Nullable{System.Boolean})">
+            <summary>
+            Creates a new <c>dropdown</c> TagOption.
+            </summary>
+        </member>
+        <member name="T:Modio.AccessToken">
+            The user's access token and its expiry date.
+        </member>
+        <member name="P:Modio.AccessToken.Value">
+            The user's access token.
+        </member>
+        <member name="P:Modio.AccessToken.ExpiredAt">
+            Unix timestamp of the date this token will expire.
+            Default is one year from issue date.
+        </member>
+        <member name="T:Modio.Models.ApiError">
+            <remarks>
+            https://docs.mod.io/#error-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.ApiError.ErrorRef">
+            <summary>
+            The mod.io error code.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.ApiError.Message">
+            <summary>
+            Error message returned by the mod.io API.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.ApiError.Errors">
+            <summary>
+            Validation errors
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Terms">
+            <remarks>
+            https://docs.mod.io/#terms-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Terms.Plaintext">
+            <summary>
+            Terms text in plaintext formatting.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Terms.Html">
+            <summary>
+            Terms text in HTML formatting.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Terms.Links">
+            <summary>
+            Links to embed into the Terms.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Links">
+            <remarks>
+            https://docs.mod.io/#terms-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Links.Website">
+            <summary>
+            Link to the mod.io website
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Links.Terms">
+            <summary>
+            Link to the Terms of Use.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Links.Privacy">
+            <summary>
+            Link to the privacy policy.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Links.Manage">
+            <summary>
+            Link to manage the user account.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Link">
+            <remarks>
+            https://docs.mod.io/#terms-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Link.Text">
+            <summary>
+            Text for the link.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Link.Url">
+            <summary>
+            The link to the website.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Link.Required">
+            <summary>
+            Is the link required.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Comment">
+            <remarks>
+            https://docs.mod.io/#comment-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Comment.Id">
+            <summary>
+            Unique id of the comment.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Comment.ModId">
+            <summary>
+            Unique id of the parent mod.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Comment.SubmittedBy">
+            <summary>
+            User details of the author.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Comment.DateAdded">
+            <summary>
+            Unix timestamp of date the comment was posted.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Comment.ReplyId">
+            <summary>
+            Id of the parent comment this comment is replying to.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Comment.ThreadPosition">
+            <summary>
+            Levels of nesting in a comment thread.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Comment.Karma">
+            <summary>
+            Karma received for the comment.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Comment.Content">
+            <summary>
+            Content of the comment.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.User">
+            <remarks>
+            https://docs.mod.io/#user-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.User.Id">
+            <summary>
+            Unique id of the user.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.User.NameId">
+            <summary>
+            Path for the user on mod.io. For example: https://mod.io/members/name-id-here
+            </summary>
+        </member>
+        <member name="P:Modio.Models.User.Username">
+            <summary>
+            Username of the user.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.User.Avatar">
+            <summary>
+            The user's avatar data.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.User.ProfileUrl">
+            <summary>
+            URL to the user's mod.io profile.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Avatar">
+            <summary>
+            The user's avatar data.
+            </summary>
+            <remarks>
+            https://docs.mod.io/#avatar-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Avatar.Filename">
+            <summary>
+            Avatar filename including extension.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Avatar.Original">
+            <summary>
+            URL to the full-sized avatar.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Avatar.Thumb50x50">
+            <summary>
+            URL to the small avatar thumbnail.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Avatar.Thumb100x100">
+            <summary>
+            URL to the medium avatar thumbnail.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Logo">
+            <remarks>
+            https://docs.mod.io/#logo-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Logo.Filename">
+            <summary>
+            Logo filename including extension.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Logo.Original">
+            <summary>
+            URL to the full-sized logo.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Logo.Thumb320x180">
+            <summary>
+            URL to the small logo thumbnail.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Logo.Thumb640x360">
+            <summary>
+            URL to the medium logo thumbnail.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Logo.Thumb1280x720">
+            <summary>
+            URL to the large logo thumbnail.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Status">
+            <summary>
+            Status of the game or mod.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.Status.NotAccepted">
+            <summary>
+            Resource is not accepted and not returned when browsing.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.Status.Accepted">
+            <summary>
+            Resource is accepted and returned via all endpoints.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.Status.Deleted">
+            <summary>
+            Resource is deleted and only returned via the <see cref="T:Modio.UserClient">User</see> endpoints.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.File">
+            <remarks>
+            https://docs.mod.io/#modfile-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.File.Id">
+            <summary>
+            Unique modfile id.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.ModId">
+            <summary>
+            Unique mod id.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.DateAdded">
+            <summary>
+            Unix timestamp of date file was added.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.DateScanned">
+            <summary>
+            Unix timestamp of date file was virus scanned.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.VirusStatus">
+            <summary>
+            Current virus scan status of the file.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.VirusPositive">
+            <summary>
+            Result of the virus scan.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.VirusTotalHash">
+            <summary>
+            VirusTotal proprietary hash to view the scan results.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.FileSize">
+            <summary>
+            Size of the file in bytes.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.FileHash">
+            <summary>
+            MD5 hash of the file.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.Filename">
+            <summary>
+            Filename including extension.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.Version">
+            <summary>
+            Release version this file represents.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.Changelog">
+            <summary>
+            Changelog for the file.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.MetadataBlob">
+            <summary>
+            Metadata stored by the game developer for this file.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.Download">
+            <summary>
+            Download details of the file.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.File.Platforms">
+            <summary>
+            Contains modfile platform data.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.FileHash">
+            <remarks>
+            https://docs.mod.io/#filehash-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.FileHash.Md5">
+            <summary>
+            MD5 hash of the file.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Download">
+            <remarks>
+            https://docs.mod.io/#download-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Download.BinaryUrl">
+            <summary>
+            URL to download the file from the mod.io CDN.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Download.ExpiredAt">
+            <summary>
+            Unix timestamp of when the <c>BinaryUrl</c> will expire.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.ModfilePlatform">
+            <summary>
+            https://docs.mod.io/#modfile-platform-object
+            </summary>
+        </member>
+        <member name="P:Modio.Models.ModfilePlatform.Platform">
+            <summary>
+            The platform (ex. "windows", "android") the mod file targets.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.ModfilePlatform.FileId">
+            <summary>
+            The file ID of the live mod file.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Game">
+            <remarks>
+            https://docs.mod.io/#game-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Game.Id">
+            <summary>
+            Unique game id.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.Status">
+            <summary>
+            Status of the game.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.SubmittedBy">
+            <summary>
+            The creator of the game.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.DateAdded">
+            <summary>
+            Unix timestamp of date game was registered.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.DateUpdated">
+            <summary>
+            Unix timestamp of date game was updated.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.DateLive">
+            <summary>
+            Unix timestamp of date game was set live.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.Name">
+            <summary>
+            Name of the game.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.NameId">
+            <summary>
+            Subdomain for the game on mod.io. For example: https://gamename.mod.io
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.UgcName">
+            <summary>
+            Word used to describe user-generated content (mods, items, addons etc).
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.Summary">
+            <summary>
+            Summary of the games mod support.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.Instructions">
+            <summary>
+            A guide about creating and uploading mods for this game to mod.io.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.InstructionsUrl">
+            <summary>
+            Link to a mod.io guide, your modding wiki or a page where modders can learn how to make and submit mods to your games profile.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.ProfileUrl">
+            <summary>
+            URL to the game's mod.io page.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.Icon">
+            <summary>
+            The game's icon data.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.Logo">
+            <summary>
+            The game's logo data.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.Header">
+            <summary>
+            The game's header data.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.PresentationOption">
+            <summary>
+            Presentation style used on the mod.io website.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.SubmissionOption">
+            <summary>
+            Submission process modders must follow.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.CurationOption">
+            <summary>
+            Curation process used to approve mods.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.CommunityOptions">
+            <summary>
+            Community features enabled on the mod.io website.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.MaturityOptions">
+            <summary>
+            Switch to allow developers to select if they flag their mods as containing mature content.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.RevenueOptions">
+            <summary>
+            Revenue capabilities mods can enable.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.ApiAccessOptions">
+            <summary>
+            Level of API access allowed by this game.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Game.TagOptions">
+            <summary>
+            Groups of tags configured by the game developer, that mods can select.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Icon">
+            <remarks>
+            https://docs.mod.io/#icon-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Icon.Filename">
+            <summary>
+            Icon filename including extension.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Icon.Original">
+            <summary>
+            URL to the full-sized icon.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Icon.Thumb64x64">
+            <summary>
+            URL to the small icon thumbnail.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Icon.Thumb128x128">
+            <summary>
+            URL to the medium icon thumbnail.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Icon.Thumb256x256">
+            <summary>
+            URL to the large icon thumbnail.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Header">
+            <remarks>
+            https://docs.mod.io/#header-image-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Header.Filename">
+            <summary>
+            Header image filename including extension.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Header.Original">
+            <summary>
+            URL to the full-sized header image.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.PresentationOption">
+            <summary>
+            Presentation style used on the mod.io website.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.PresentationOption.GridView">
+            <summary>
+            Displays mods in a grid.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.PresentationOption.TableView">
+            <summary>
+            Displays mods in a table.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.SubmissionOption">
+            <summary>
+            Submission process modders must follow.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.SubmissionOption.ApiOnly">
+            <summary>
+            Mod uploads must occur via the API using a tool created by the game developers.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.SubmissionOption.Anywhere">
+            <summary>
+            Mod uploads can occur from anywhere, including the website and API.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.CurationOption">
+            <summary>
+            Curation process used to approve mods.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CurationOption.No">
+            <summary>
+            No curation: Mods are immediately available to play.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CurationOption.Paid">
+            <summary>
+            Paid curation: Mods are immediately available to play unless they choose to receive donations. These mods must be accepted to be listed.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CurationOption.Full">
+            <summary>
+            Full curation: All mods must be accepted by someone to be listed.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.MaturityOptions">
+            <summary>
+            Switch to allow developers to select if they flag their mods as containing mature content.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.MaturityOptions.NotAllowed">
+            <summary>
+            Don't allow (default).
+            </summary>
+        </member>
+        <member name="F:Modio.Models.MaturityOptions.Allowed">
+            <summary>
+            Allow
+            </summary>
+        </member>
+        <member name="T:Modio.Models.CommunityOptions">
+            <summary>
+            Community features enabled on the mod.io website.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CommunityOptions.NONE">
+            <summary>
+            All of the options below are disabled.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CommunityOptions.COMMENTS">
+            <summary>
+            Enable comments.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CommunityOptions.GUIDES">
+            <summary>
+            Enable guides.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CommunityOptions.DISABLE_SUBSCRIBE">
+            <summary>
+            Disable website "subscribe to install" text.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.RevenueOptions">
+            <summary>
+            Revenue capabilities mods can enable.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.RevenueOptions.NONE">
+            <summary>
+            All of the options below are disabled.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.RevenueOptions.SELL">
+            <summary>
+            Allow mods to be sold.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.RevenueOptions.DONATIONS">
+            <summary>
+            Allow mods to receive donations.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.RevenueOptions.TRADE">
+            <summary>
+            Allow mods to be traded.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.RevenueOptions.SCARCITY">
+            <summary>
+            Allow mods to control supply and scarcity.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.ApiAccessOptions">
+            <summary>
+            Level of API access allowed by a game.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.ApiAccessOptions.NONE">
+            <summary>
+            All of the options below are disabled.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.ApiAccessOptions.ALLOW_THIRD_PARTY">
+            <summary>
+            Allow 3rd parties to access this games API endpoints.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.ApiAccessOptions.ALLOW_DIRECT_DOWNLOADS">
+            <summary>
+            Allow mods to be downloaded directly.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.TagOption">
+            <remarks>
+            https://docs.mod.io/#game-tag-option-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.TagOption.Name">
+            <summary>
+            Name of the tag group.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.TagOption.Type">
+            <summary>
+            Can multiple tags be selected via 'checkboxes' or should only a single tag be selected via a 'dropdown'.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.TagOption.Hidden">
+            <summary>
+            Hidden tag group.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.TagOption.Tags">
+            <summary>
+            List of tags in this group
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Metadata">
+            <remarks>
+            https://docs.mod.io/#metadata-kvp-object
+            </remarks>
+        </member>
+        <member name="T:Modio.Models.Mod">
+            <remarks>
+            https://docs.mod.io/#mod-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Mod.Id">
+            <summary>
+            Unique mod id.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.GameId">
+            <summary>
+            Unique game id.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.Status">
+            <summary>
+            Status of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.Visible">
+            <summary>
+            Visibility of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.SubmittedBy">
+            <summary>
+            The creator of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.DateAdded">
+            <summary>
+            Unix timestamp of date mod was registered.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.DateUpdated">
+            <summary>
+            Unix timestamp of date mod was updated.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.DateLive">
+            <summary>
+            Unix timestamp of date mod was set live.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.Name">
+            <summary>
+            Name of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.NameId">
+            <summary>
+            Path for the mod on mod.io. For example: https://gamename.mod.io/mod-name-id-here
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.Description">
+            <summary>
+            Detailed description of the mod which allows HTML.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.DescriptionPlaintext">
+            <summary>
+            <c>Description</c> property converted into plaintext.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.Summary">
+            <summary>
+            Summary of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.Logo">
+            <summary>
+            The mod's logo data.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.ProfileUrl">
+            <summary>
+            URL to the mod's mod.io profile.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.HomepageUrl">
+            <summary>
+            Official homepage of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.MaturityOption">
+            <summary>
+            Maturity options flagged by the mod developer.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.Metadata">
+            <summary>
+            Key-value metadata.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.MetadataBlob">
+            <summary>
+            Metadata stored by the game developer.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.Media">
+            <summary>
+            The mod's media links.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.Tags">
+            <summary>
+            List of tags assigned to the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.Stats">
+            <summary>
+            The mod's statistics.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Mod.Modfile">
+            <summary>
+            The mod's primary mod file.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Visibility">
+            <summary>
+            Visibility of the mod.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.Visibility.Hidden">
+            <summary>
+            Hidden
+            </summary>
+        </member>
+        <member name="F:Modio.Models.Visibility.Public">
+            <summary>
+            Public
+            </summary>
+        </member>
+        <member name="T:Modio.Models.MaturityOption">
+            <summary>
+            Maturity options flagged by the mod developer.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.MaturityOption.None">
+            <summary>
+            None set (default)
+            </summary>
+        </member>
+        <member name="F:Modio.Models.MaturityOption.Alcohol">
+            <summary>
+            Alcohol
+            </summary>
+        </member>
+        <member name="F:Modio.Models.MaturityOption.Drugs">
+            <summary>
+            Drugs
+            </summary>
+        </member>
+        <member name="F:Modio.Models.MaturityOption.Violence">
+            <summary>
+            Violence
+            </summary>
+        </member>
+        <member name="F:Modio.Models.MaturityOption.Explicit">
+            <summary>
+            Explicit
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Media">
+            <summary>
+            The mod's media links.
+            </summary>
+            <remarks>
+            https://docs.mod.io/#mod-media-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Media.YouTube">
+            <summary>
+            List of YouTube links.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Media.Sketchfab">
+            <summary>
+            List of SketchFab links.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Media.Images">
+            <summary>
+            List of image objects (a gallery).
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Image">
+            <summary>
+            The mod's image object (a gallery).
+            </summary>
+            <remarks>
+            https://docs.mod.io/#image-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Image.Filename">
+            <summary>
+            Image filename including extension.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Image.Original">
+            <summary>
+            URL to the full-sized image.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Image.Thumb320x180">
+            <summary>
+            URL to the image thumbnail.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Dependency">
+            <remarks>
+            https://docs.mod.io/#mod-dependencies-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Dependency.ModId">
+            <summary>
+            Unique id of the mod that is the dependency.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Dependency.DateAdded">
+            <summary>
+            Unix timestamp of date the dependency was added.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Tag">
+            <remarks>
+            https://docs.mod.io/#mod-tag-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Tag.Name">
+            <summary>
+            Tag name.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Tag.DateAdded">
+            <summary>
+            Unix timestamp of date tag was applied.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Statistics">
+            <remarks>
+            https://docs.mod.io/#mod-stats-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Statistics.ModId">
+            <summary>
+            Unique mod id.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Statistics.TotalDownloads">
+            <summary>
+            Number of total mod downloads.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Statistics.TotalSubscribers">
+            <summary>
+            Number of total users who have subscribed to the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Statistics.PopularityRank">
+            <summary>
+            Current rank of the mod.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Statistics.PopularityTotal">
+            <summary>
+            Number of ranking spots the current rank is measured against.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Statistics.TotalRatings">
+            <summary>
+            Number of times this mod has been rated.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Statistics.PositiveRatings">
+            <summary>
+            Number of positive ratings.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Statistics.NegativeRatings">
+            <summary>
+            Number of negative ratings.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Statistics.PrecentageScore">
+            <summary>
+            Number of positive ratings, divided by the total ratings to determine it’s percentage score.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Statistics.WeightedAggregate">
+            <summary>
+            Overall rating of this item calculated using the Wilson score confidence interval.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Statistics.DisplayText">
+            <summary>
+            Textual representation of the rating in format:
+            - Overwhelmingly Positive
+            - Very Positive
+            - Positive
+            - Mostly Positive
+            - Mixed
+            - Negative
+            - Mostly Negative
+            - Very Negative
+            - Overwhelmingly Negative
+            - Unrated
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Statistics.ExpiredAt">
+            <summary>
+            Unix timestamp until this mods's statistics are considered stale.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.ModEvent">
+            See <see cref="M:Modio.ModClient.GetEvents(Modio.Filters.Filter)"/>.
+            See <see cref="M:Modio.ModsClient.GetEvents(Modio.Filters.Filter)"/>.
+        </member>
+        <member name="P:Modio.Models.ModEvent.Id">
+            <summary>
+            Unique id of the event object.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.ModEvent.ModId">
+            <summary>
+            Unique id of the parent mod.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.ModEvent.UserId">
+            <summary>
+            Unique id of the user who performed the action.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.ModEvent.DateAdded">
+            <summary>
+            Unix timestamp of date the event occurred.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.ModEvent.EventType">
+            <summary>
+            Type of event that was triggered.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.ModEventType">
+            <summary>
+            Type of mod event that was triggered.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.ModEventType.MODFILE_CHANGED">
+            <summary>
+            The primary mod file of the mod was changed.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.ModEventType.MOD_AVAILABLE">
+            <summary>
+            A new mod is available.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.ModEventType.MOD_UNAVAILABLE">
+            <summary>
+            A mod is  no longer available.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.ModEventType.MOD_EDITED">
+            <summary>
+            A mod was edited.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.ModEventType.MOD_DELETED">
+            <summary>
+            A mod was deleted.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.ModEventType.MOD_TEAM_CHANGED">
+            <summary>
+            A user has joined or left the mod team.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.ModEventType.MOD_COMMENT_ADDED">
+            <summary>
+            A new comment was left on the mod.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.ModEventType.MOD_COMMENT_DELETED">
+            <summary>
+            A comment was deleted from a mod.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.Rating">
+            <remarks>
+            https://docs.mod.io/#rating-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.Rating.GameId">
+            <summary>
+            Unique game id.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Rating.ModId">
+            <summary>
+            Unique mod id.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Rating.Value">
+            <summary>
+            Mod rating value.
+             1 = Positive Rating
+            -1 = Negative Rating
+            </summary>
+        </member>
+        <member name="P:Modio.Models.Rating.DateAdded">
+            <summary>
+            Unix timestamp of date rating was submitted.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.TeamMember">
+            <remarks>
+            https://docs.mod.io/#team-member-object
+            </remarks>
+        </member>
+        <member name="P:Modio.Models.TeamMember.Id">
+            <summary>
+            Unique team member id.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.TeamMember.DateAdded">
+            <summary>
+            Unix timestamp of the date the user was added to the team.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.TeamMember.User">
+            <summary>
+            User details of the team member.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.TeamMember.Level">
+            <summary>
+            Level of permission the user has.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.TeamMember.Position">
+            <summary>
+            Custom title given to the user in this team.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.TeamLevel">
+            <summary>
+            Level of permission the user has.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.TeamLevel.Moderator">
+            <summary>
+            Moderators can moderate comments and content attached.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.TeamLevel.Manager">
+            <summary>
+            Moderator access, including uploading builds and editing settings except supply and team members.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.TeamLevel.Admin">
+            <summary>
+            Full access, including editing the supply and team.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.UserEvent">
+            See <see cref="M:Modio.UserClient.GetEvents(Modio.Filters.Filter)"/>.
+        </member>
+        <member name="P:Modio.Models.UserEvent.Id">
+            <summary>
+            Unique id of the event object.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.UserEvent.GameId">
+            <summary>
+            Unique id of the parent game.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.UserEvent.ModId">
+            <summary>
+            Unique id of the parent mod.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.UserEvent.UserId">
+            <summary>
+            Unique id of the user who performed the action.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.UserEvent.DateAdded">
+            <summary>
+            Unix timestamp of date mod was updated.
+            </summary>
+        </member>
+        <member name="P:Modio.Models.UserEvent.EventType">
+            <summary>
+            Type of change that occurred.
+            </summary>
+        </member>
+        <member name="T:Modio.Models.UserEventType">
+            <summary>
+            Type of user event that occurred.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.UserEventType.USER_TEAM_JOIN">
+            <summary>
+            The user has joined a mod team.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.UserEventType.USER_TEAM_LEAVE">
+            <summary>
+            The user has left a mod team.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.UserEventType.USER_SUBSCRIBE">
+            <summary>
+            The user has subscribed to a mod.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.UserEventType.USER_UNSUBSCRIBE">
+            <summary>
+            The user has un-subscribed from a mod.
+            </summary>
+        </member>
+    </members>
+</doc>
