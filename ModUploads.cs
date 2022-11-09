@@ -32,14 +32,11 @@ namespace Voidway_Bot {
                 await Task.Delay(60 * 1000);
 
                 IReadOnlyList<ModEvent> events;
-                try
-                {
-                    events = await bonelabMods.GetEvents(lastModioEvent).ToList();
-                    if (events == null) throw new NullReferenceException("Event list was null for some arbitrary reason.");
-                }
-                catch (Exception ex)
-                {
-					Logger.Warn("Failed to fetch new mods! " + ex.ToString());
+				try {
+					events = await bonelabMods.GetEvents(lastModioEvent).ToList();
+					if(events == null) throw new NullReferenceException("Event list was null for some arbitrary reason.");
+				} catch(Exception ex) {
+					Logger.Warn($"Failed to fetch new mods! {ex}");
                     continue;
                 }
 
@@ -98,18 +95,21 @@ namespace Voidway_Bot {
             Mod modData;
             IReadOnlyList<Tag> tags;
 			UploadType uploadType;
-            try
-            {
-                modData = await newMod.Get();
-                tags = await newMod.Tags.Get();
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn("Failed to fetch data about mod ID:" + modId + ", Details: " + ex.ToString());
+			try {
+				modData = await newMod.Get();
+				tags = await newMod.Tags.Get();
+			} catch(Exception ex) {
+				Logger.Warn($"Failed to fetch data about mod ID:{modId}, Details: {ex}");
                 return;
             }
-            Logger.Put("New mod available: ID=" + modId + "; NameID=" + modData.NameId + "; tags=" + string.Join(',', tags.Select(t => t.Name)));
+            Logger.Put($"New mod available: ID= {modId}; NameID= {modData.NameId}; tags= {string.Join(',', tags.Select(t => t.Name))}");
 
+
+			if(modData.MaturityOption == MaturityOption.Explicit)
+			{
+				Logger.Warn($"Bailing on posting mod: {modData.NameId}({modId}) as mod is NSFW");
+				return;
+			}
 
 			if (IsAvatar(tags))
 				uploadType = UploadType.Avatar;
