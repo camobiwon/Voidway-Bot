@@ -6,6 +6,7 @@ using Modio.Models;
 using System.IO;
 using DSharpPlus.EventArgs;
 using System.Threading.Channels;
+using static Voidway_Bot.ModUploads;
 
 namespace Voidway_Bot {
 	internal static class ModUploads {
@@ -20,6 +21,8 @@ namespace Voidway_Bot {
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		static Dictionary<UploadType, List<DiscordChannel>> uploadChannels = new();
+		static List<string> uploadTypeNames = Enum.GetNames<UploadType>().ToList(); // List has IndexOf, Array does not
+		static UploadType[] uploadTypeValues = Enum.GetValues<UploadType>();
 		static Client client;
 		static GameClient bonelab;
 		static ModsClient bonelabMods;
@@ -112,10 +115,7 @@ namespace Voidway_Bot {
 				return;
 			}
 
-			List<string> uploadTags = Enum.GetNames(typeof(UploadType)).ToList();
-			foreach(Tag tag in tags)
-				if(!string.IsNullOrEmpty(tag.Name) && uploadTags.Contains(tag.Name))
-					uploadType = (UploadType)(uploadTags.IndexOf(tag.Name) - 1);
+			uploadType = IdentifyUpload(tags);
 
 			if (uploadType == UploadType.Unknown)
 			{
@@ -131,7 +131,7 @@ namespace Voidway_Bot {
 		{
 			// NESTED FOREACH SO GOOD
 			int counter = 0;
-			foreach (UploadType uType in Enum.GetValues<UploadType>())
+			foreach (UploadType uType in uploadTypeValues)
 			{
 				uploadChannels[uType] = new();
 
@@ -180,6 +180,21 @@ namespace Voidway_Bot {
 				await channel.SendMessageAsync(embed);
 			}
 			Logger.Put($"Announced mod upload in {channels.Count} channel(s).");
+        }
+
+		static UploadType IdentifyUpload(IEnumerable<Tag> tags)
+		{
+            foreach (Tag tag in tags)
+			{
+				int uploadTypeIndex;
+                if (string.IsNullOrEmpty(tag.Name)) continue; // ignore empty tags
+
+				uploadTypeIndex = uploadTypeNames.IndexOf(tag.Name);
+
+				if (uploadTypeIndex != -1)
+					return uploadTypeValues[uploadTypeIndex];
+			}
+			return UploadType.Unknown;
         }
     }
 }
