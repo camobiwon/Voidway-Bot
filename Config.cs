@@ -51,6 +51,7 @@ namespace Voidway_Bot {
                 TomlDocument doc = TomletMain.DocumentFrom(new ConfigValues());
                 File.WriteAllText(path, doc.SerializedValue);
                 Console.WriteLine("Config file wasn't found! An empty one was created, fill it out.");
+				Console.ReadKey();
                 Environment.Exit(0);
             }
             fileContents = File.ReadAllText(path);

@@ -11,6 +11,7 @@ namespace Voidway_Bot {
 	internal static class ModUploads {
 		public enum UploadType
 		{
+			Unknown,
 			Avatar,
 			Level,
 			Spawnable,
@@ -94,7 +95,7 @@ namespace Voidway_Bot {
             ModClient newMod = bonelabMods[modId];
             Mod modData;
             IReadOnlyList<Tag> tags;
-			UploadType uploadType;
+			UploadType uploadType = UploadType.Unknown;
 			try {
 				modData = await newMod.Get();
 				tags = await newMod.Tags.Get();
@@ -105,21 +106,18 @@ namespace Voidway_Bot {
             Logger.Put($"New mod available: ID= {modId}; NameID= {modData.NameId}; tags= {string.Join(',', tags.Select(t => t.Name))}");
 
 
-			if(modData.MaturityOption == MaturityOption.Explicit)
+			if (modData.MaturityOption == MaturityOption.Explicit)
 			{
 				Logger.Warn($"Bailing on posting mod: {modData.NameId}({modId}) as mod is NSFW");
 				return;
 			}
 
-			if (IsAvatar(tags))
-				uploadType = UploadType.Avatar;
-			else if (IsLevel(tags))
-				uploadType = UploadType.Level;
-			else if (IsSpawnable(tags))
-				uploadType = UploadType.Spawnable;
-			else if (IsUtility(tags))
-				uploadType = UploadType.Utility;
-			else
+			List<string> uploadTags = Enum.GetNames(typeof(UploadType)).ToList();
+			foreach(Tag tag in tags)
+				if(!string.IsNullOrEmpty(tag.Name) && uploadTags.Contains(tag.Name))
+					uploadType = (UploadType)(uploadTags.IndexOf(tag.Name) - 1);
+
+			if (uploadType == UploadType.Unknown)
 			{
 				Logger.Warn("Unrecognized mod type. It is recommended to look through tags and report to a developer (or fix this yourself).");
 				return;
@@ -182,23 +180,6 @@ namespace Voidway_Bot {
 				await channel.SendMessageAsync(embed);
 			}
 			Logger.Put($"Announced mod upload in {channels.Count} channel(s).");
-        }
-
-        private static bool IsAvatar(IEnumerable<Tag> tags)
-		{
-			return tags != null && tags.Any(t => t.Name?.ToLower().Contains("avatar") ?? false);
-		}
-        private static bool IsSpawnable(IEnumerable<Tag> tags)
-        {
-            return tags != null && tags.Any(t => t.Name?.ToLower().Contains("spawnable") ?? false);
-        }
-        private static bool IsLevel(IEnumerable<Tag> tags)
-        {
-            return tags != null && tags.Any(t => t.Name?.ToLower().Contains("level") ?? false);
-        }
-        private static bool IsUtility(IEnumerable<Tag> tags)
-        {
-            return tags != null && tags.Any(t => t.Name?.ToLower().Contains("level") ?? false);
         }
     }
 }
