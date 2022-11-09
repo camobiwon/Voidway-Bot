@@ -167,7 +167,7 @@ namespace Voidway_Bot {
 			//todo: make embed fancier
             DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
 			{
-				Title = $"New {uploadType}: {mod.Name}",
+				Title = $"{mod.Name}",
 				Url = mod.ProfileUrl?.ToString(),
 				Color = DiscordColor.Blue,
 				ImageUrl = image,
