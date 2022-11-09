@@ -165,9 +165,9 @@ namespace Voidway_Bot {
 					IconUrl = mod.SubmittedBy.Avatar?.Thumb50x50?.ToString() 
 				};
 			//todo: make embed fancier
-            DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
-			{
+			DiscordEmbedBuilder embed = new DiscordEmbedBuilder() {
 				Title = $"{mod.Name}",
+				Description = mod.Summary,
 				Url = mod.ProfileUrl?.ToString(),
 				Color = DiscordColor.Blue,
 				ImageUrl = image,
