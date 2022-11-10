@@ -161,24 +161,26 @@ namespace Voidway_Bot {
 
 		private static async Task PostAnnouncements(Mod mod, UploadType uploadType)
 		{
-            string? image = mod.MaturityOption == MaturityOption.None //
+            string? image = mod.MaturityOption == MaturityOption.None //Hide mature images, maybe not needed cause NSFW is blocked above?
 				? mod.Media.Images.FirstOrDefault()?.Original?.ToString() 
 				: null;
-			DiscordEmbedBuilder.EmbedFooter? footer = mod.SubmittedBy is not null
-				? new DiscordEmbedBuilder.EmbedFooter() 
+			DiscordEmbedBuilder.EmbedAuthor? author = mod.SubmittedBy is not null
+				? new DiscordEmbedBuilder.EmbedAuthor() 
 				{ 
-					Text = $"Creator: {mod.SubmittedBy.Username}", 
-					IconUrl = mod.SubmittedBy.Avatar?.Thumb50x50?.ToString() 
+					Name = mod.SubmittedBy.Username?.ToString(), 
+					IconUrl = mod.SubmittedBy.Avatar?.Thumb50x50?.ToString(),
+					Url = mod.SubmittedBy.ProfileUrl?.ToString()
 				}
 				: null;
 			//todo: make embed fancier
 			DiscordEmbedBuilder embed = new DiscordEmbedBuilder() {
+				Author = author,
 				Title = $"{mod.Name}",
 				Description = mod.Summary,
 				Url = mod.ProfileUrl?.ToString(),
 				Color = DiscordColor.Azure,
 				ImageUrl = image,
-				Footer = footer,
+				Footer = new DiscordEmbedBuilder.EmbedFooter { Text = $"<t:{mod.DateLive}:d> | ID:{mod.Id}" },
 			};
 
 
