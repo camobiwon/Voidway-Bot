@@ -7,23 +7,26 @@ using System.IO;
 using DSharpPlus.EventArgs;
 using System.Threading.Channels;
 using static Voidway_Bot.ModUploads;
+using DSharpPlus.Exceptions;
 
 namespace Voidway_Bot {
 	internal static class ModUploads {
-		public enum UploadType
+		[Flags]
+		public enum UploadType // use bitshift operator to act as a bitfield
 		{
-			Unknown,
-			Avatar,
-			Level,
-			Spawnable,
-			Utility
-		}
+			Unknown = 0,
+			Avatar = 1 << 0,
+			Level = 1 << 1,
+			Spawnable = 1 << 2,
+			Utility = 1 << 3,
+        }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		static Dictionary<UploadType, List<DiscordChannel>> uploadChannels = new();
 		static List<string> uploadTypeNames = Enum.GetNames<UploadType>().ToList(); // List has IndexOf, Array does not
 		static UploadType[] uploadTypeValues = Enum.GetValues<UploadType>();
-		static Client client;
+		static UploadType[] uploadTypeValuesNoUnk = Enum.GetValues<UploadType>().Skip(1).ToArray(); // skip needs to be changed if Unknown is moved
+        static Client client;
 		static GameClient bonelab;
 		static ModsClient bonelabMods;
 		static uint lastModioEvent;
@@ -50,7 +53,7 @@ namespace Voidway_Bot {
 
                     if (modEvent.EventType == ModEventType.MOD_AVAILABLE)
 					{
-						await NotifyNewMod(modEvent.ModId, modEvent.UserId);
+						NotifyNewMod(modEvent.ModId, modEvent.UserId);
 					}
                 }
             }
@@ -93,8 +96,11 @@ namespace Voidway_Bot {
 		}
 
 
-		private static async Task NotifyNewMod(uint modId, uint userId)
+		private static async void NotifyNewMod(uint modId, uint userId)
 		{
+            // give the uploader 30 extra seconds to upload a thumbnail/change metadata/add tags
+            await Task.Delay(30 * 1000);
+
             ModClient newMod = bonelabMods[modId];
             Mod modData;
             IReadOnlyList<Tag> tags;
@@ -111,7 +117,7 @@ namespace Voidway_Bot {
 
 			if (modData.MaturityOption == MaturityOption.Explicit)
 			{
-				Logger.Warn($"Bailing on posting mod: {modData.NameId}({modId}) as mod is NSFW");
+				Logger.Warn($"Bailing on posting mod: {modData.NameId} ({modId}) as mod is NSFW");
 				return;
 			}
 
@@ -155,35 +161,53 @@ namespace Voidway_Bot {
 
 		private static async Task PostAnnouncements(Mod mod, UploadType uploadType)
 		{
-			List<DiscordChannel> channels = uploadChannels[uploadType];
-            string? image = mod.Media.Images.FirstOrDefault()?.Original?.ToString();
-			DiscordEmbedBuilder.EmbedFooter? footer = mod.SubmittedBy is null
-				? null
-				: new DiscordEmbedBuilder.EmbedFooter() 
+            string? image = mod.MaturityOption == MaturityOption.None //
+				? mod.Media.Images.FirstOrDefault()?.Original?.ToString() 
+				: null;
+			DiscordEmbedBuilder.EmbedFooter? footer = mod.SubmittedBy is not null
+				? new DiscordEmbedBuilder.EmbedFooter() 
 				{ 
 					Text = $"Creator: {mod.SubmittedBy.Username}", 
 					IconUrl = mod.SubmittedBy.Avatar?.Thumb50x50?.ToString() 
-				};
+				}
+				: null;
 			//todo: make embed fancier
 			DiscordEmbedBuilder embed = new DiscordEmbedBuilder() {
 				Title = $"{mod.Name}",
 				Description = mod.Summary,
 				Url = mod.ProfileUrl?.ToString(),
-				Color = DiscordColor.Blue,
+				Color = DiscordColor.Azure,
 				ImageUrl = image,
 				Footer = footer,
 			};
 
 
-			foreach (DiscordChannel channel in channels)
+			int count = 0;
+			foreach (UploadType flag in uploadTypeValuesNoUnk)
 			{
-				await channel.SendMessageAsync(embed);
+				if (!uploadType.HasFlag(flag)) return;
+
+				List<DiscordChannel> channels = uploadChannels[flag];
+				foreach (DiscordChannel channel in channels)
+                {
+					try
+					{
+						await channel.SendMessageAsync(embed);
+						count++;
+					} 
+					catch (DiscordException ex)
+					{
+						Logger.Warn($"Failed to post announcement for {mod.NameId} ({mod.Id}) in #{channel.Name} (guild {channel.Guild.Name}). Details below.");
+						Logger.Warn(ex.ToString());
+                    }
+				}
 			}
-			Logger.Put($"Announced mod upload in {channels.Count} channel(s).");
+			Logger.Put($"Announced mod upload in {count} channel(s).");
         }
 
 		static UploadType IdentifyUpload(IEnumerable<Tag> tags)
 		{
+			UploadType ret = UploadType.Unknown;
             foreach (Tag tag in tags)
 			{
 				int uploadTypeIndex;
@@ -192,9 +216,9 @@ namespace Voidway_Bot {
 				uploadTypeIndex = uploadTypeNames.IndexOf(tag.Name);
 
 				if (uploadTypeIndex != -1)
-					return uploadTypeValues[uploadTypeIndex];
+					ret |= uploadTypeValues[uploadTypeIndex]; // support the use of Flags by using bitwise operations
 			}
-			return UploadType.Unknown;
+			return ret;
         }
     }
 }
