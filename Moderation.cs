@@ -6,8 +6,8 @@ using DSharpPlus.Exceptions;
 namespace Voidway_Bot {
 	internal class Moderation {
 		internal static void HandleModeration(DiscordClient discord) {
-			discord.GuildMemberRemoved += (client, e) => KickHandler(e);
-			discord.GuildMemberUpdated += (client, e) => { TimeoutHandler(e); return Task.CompletedTask; };
+			discord.GuildMemberRemoved += (client, e) => { KickHandler(e); return Task.CompletedTask; }; // "An event handler for GUILD_MEMBER_REMOVED took too long to execute" GOD DAMN I DO NOT CAAAARREEEEEEE
+            discord.GuildMemberUpdated += (client, e) => { TimeoutHandler(e); return Task.CompletedTask; };
 			discord.GuildMemberUpdated += (client, e) => HoistHandler(e.MemberAfter);
 			discord.GuildMemberAdded += (client, e) => NewAccountHandler(e);
 			discord.GuildMemberAdded += (client, e) => HoistHandler(e.Member);
@@ -41,7 +41,7 @@ namespace Voidway_Bot {
 				await ModerationEmbed(e.Guild, e.Member, $"Timeout Removed", logEntry, DiscordColor.Cyan);
 		}
 
-		private static async Task KickHandler(GuildMemberRemoveEventArgs e) {
+		private static async void KickHandler(GuildMemberRemoveEventArgs e) {
 			DateTime now = DateTime.UtcNow;
 			DiscordAuditLogEntry? kickEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.Kick);
 			Logger.Put($"{e.Guild.Name}, {e.Member.Username}, ke==null:{kickEntry is null}", Logger.Reason.Trace);
