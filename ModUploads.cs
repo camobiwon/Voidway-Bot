@@ -173,6 +173,8 @@ namespace Voidway_Bot {
 				}
 				: null;
 			//todo: make embed fancier
+			DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+			DateTime date = start.AddMilliseconds(mod.DateLive / 10).ToLocalTime();
 			DiscordEmbedBuilder embed = new DiscordEmbedBuilder() {
 				Author = author,
 				Title = $"{mod.Name}",
@@ -180,7 +182,7 @@ namespace Voidway_Bot {
 				Url = mod.ProfileUrl?.ToString(),
 				Color = DiscordColor.Azure,
 				ImageUrl = image,
-				Footer = new DiscordEmbedBuilder.EmbedFooter { Text = $"<t:{mod.DateLive}:d> | ID:{mod.Id}" },
+				Footer = new DiscordEmbedBuilder.EmbedFooter { Text = $"{date.ToString("mm/dd/yyyy")} | ID:{mod.Id}" },
 			};
 
 
