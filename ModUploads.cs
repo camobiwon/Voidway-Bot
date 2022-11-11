@@ -98,17 +98,20 @@ namespace Voidway_Bot {
 
 		private static async void NotifyNewMod(uint modId, uint userId)
 		{
-            // give the uploader 30 extra seconds to upload a thumbnail/change metadata/add tags
-            await Task.Delay(30 * 1000);
+            // give the uploader 60 extra seconds to upload a thumbnail/change metadata/add tags
+			await Task.Delay(60 * 1000);
 
             ModClient newMod = bonelabMods[modId];
             Mod modData;
             IReadOnlyList<Tag> tags;
 			UploadType uploadType = UploadType.Unknown;
-			try {
+			try 
+			{
 				modData = await newMod.Get();
 				tags = await newMod.Tags.Get();
-			} catch(Exception ex) {
+			} 
+			catch(Exception ex) 
+			{
 				Logger.Warn($"Failed to fetch data about mod ID:{modId}, Details: {ex}");
                 return;
             }
@@ -162,7 +165,7 @@ namespace Voidway_Bot {
 		private static async Task PostAnnouncements(Mod mod, UploadType uploadType)
 		{
             string? image = mod.MaturityOption == MaturityOption.None //
-				? mod.Media.Images.FirstOrDefault()?.Original?.ToString() 
+				? mod.Media.Images.FirstOrDefault()?.Original?.ToString() ?? mod.Media.Images.FirstOrDefault()?.Thumb320x180?.ToString()
 				: null;
 			DiscordEmbedBuilder.EmbedFooter? footer = mod.SubmittedBy is not null
 				? new DiscordEmbedBuilder.EmbedFooter() 
