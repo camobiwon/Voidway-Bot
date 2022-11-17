@@ -185,7 +185,7 @@ namespace Voidway_Bot {
 				Url = mod.ProfileUrl?.ToString(),
 				Color = DiscordColor.Azure,
 				ImageUrl = image,
-				Footer = new DiscordEmbedBuilder.EmbedFooter { Text = $"{date.ToString("mm/dd/yyyy")} | ID:{mod.Id}" },
+				Footer = new DiscordEmbedBuilder.EmbedFooter { Text = $"ID: {mod.Id}" },
 			};
 
 
