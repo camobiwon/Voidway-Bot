@@ -192,7 +192,7 @@ namespace Voidway_Bot {
 			int count = 0;
 			foreach (UploadType flag in uploadTypeValuesNoUnk)
 			{
-				if (!uploadType.HasFlag(flag)) return;
+				if (!uploadType.HasFlag(flag)) continue;
 
 				List<DiscordChannel> channels = uploadChannels[flag];
 				foreach (DiscordChannel channel in channels)
