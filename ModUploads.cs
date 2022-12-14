@@ -8,6 +8,7 @@ using DSharpPlus.EventArgs;
 using System.Threading.Channels;
 using static Voidway_Bot.ModUploads;
 using DSharpPlus.Exceptions;
+using System.Runtime.CompilerServices;
 
 namespace Voidway_Bot {
 	internal static class ModUploads {
@@ -19,47 +20,53 @@ namespace Voidway_Bot {
 			Level = 1 << 1,
 			Spawnable = 1 << 2,
 			Utility = 1 << 3,
-        }
+		}
+        // possible todo: alias "gun", "NPC" to spawnable
+
+        public enum CensorCriteriaBehavior
+		{
+			All,
+			One
+		}
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		static Dictionary<UploadType, List<DiscordChannel>> uploadChannels = new();
 		static List<string> uploadTypeNames = Enum.GetNames<UploadType>().ToList(); // List has IndexOf, Array does not
 		static UploadType[] uploadTypeValues = Enum.GetValues<UploadType>();
 		static UploadType[] uploadTypeValuesNoUnk = Enum.GetValues<UploadType>().Skip(1).ToArray(); // skip needs to be changed if Unknown is moved
-        static Client client;
+		static Client client;
 		static GameClient bonelab;
 		static ModsClient bonelabMods;
 		static uint lastModioEvent;
+		// static Dictionary<uint, bool> censorModCache = new(); is it worth extra alloc's and shit to cache the result of WillCensor? my guess is nope.
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
 		private static async void ModUploadWatcher()
 		{
-			while(true)
+			while (true)
 			{
-                await Task.Delay(60 * 1000);
+				await Task.Delay(60 * 1000);
 
-                IReadOnlyList<ModEvent> events;
+				IReadOnlyList<ModEvent> events;
 				try {
 					events = await bonelabMods.GetEvents(lastModioEvent).ToList();
-					if(events == null) throw new NullReferenceException("Event list was null for some arbitrary reason.");
-				} catch(Exception ex) {
+					if (events == null) throw new NullReferenceException("Event list was null for some arbitrary reason.");
+				} catch (Exception ex) {
 					Logger.Warn($"Failed to fetch new mods! {ex}");
-                    continue;
-                }
+					continue;
+				}
 
-                foreach (var modEvent in events)
-                {
-                    if (modEvent.Id > lastModioEvent) lastModioEvent = modEvent.Id;
+				foreach (var modEvent in events)
+				{
+					if (modEvent.Id > lastModioEvent) lastModioEvent = modEvent.Id;
 
-                    if (modEvent.EventType == ModEventType.MOD_AVAILABLE)
+					if (modEvent.EventType == ModEventType.MOD_AVAILABLE)
 					{
 						NotifyNewMod(modEvent.ModId, modEvent.UserId);
 					}
-                }
-            }
+				}
+			}
 		}
-
-		// todo: FINISH THIS
 
 		internal static async void HandleModUploads(DiscordClient discord) {
 			Credentials cred;
@@ -68,8 +75,8 @@ namespace Voidway_Bot {
 			if (string.IsNullOrEmpty(token))
 			{
 				Logger.Warn("Missing api key for mod.io, continuing without mod announcements");
-                return;
-            }
+				return;
+			}
 			if (string.IsNullOrEmpty(oa2))
 			{
 				cred = new(token);
@@ -79,12 +86,12 @@ namespace Voidway_Bot {
 
 			client = new(cred);
 			User currUser = await client.User.GetCurrentUser();
-            var games = await client.Games.Search().ToList();
+			var games = await client.Games.Search().ToList();
 			Game bonelabGame = games.First(g => g.NameId == "bonelab");
-            bonelab = client.Games[bonelabGame.Id];
+			bonelab = client.Games[bonelabGame.Id];
 			bonelabMods = bonelab.Mods;
 			ModEvent? firstEvent = await bonelab.Mods.GetEvents().First();
-            lastModioEvent = firstEvent!.Id; // im quite certain theres at least one event
+			lastModioEvent = firstEvent!.Id; // im quite certain theres at least one event
 
 			discord.GuildDownloadCompleted += (client, e) => GetAnnouncementChannels(e);
 
@@ -92,30 +99,30 @@ namespace Voidway_Bot {
 
 			Logger.Put($"Started watching for mod.io uploads in {bonelabGame.Name} (ID:{bonelabGame.Id},NameID:{bonelabGame.NameId}) on user {currUser.Username} (ID:{currUser.Id},NameID:{currUser.NameId})");
 
-            return;
+			return;
 		}
 
 
 		private static async void NotifyNewMod(uint modId, uint userId)
 		{
-            // give the uploader 60 extra seconds to upload a thumbnail/change metadata/add tags
+			// give the uploader 60 extra seconds to upload a thumbnail/change metadata/add tags
 			await Task.Delay(60 * 1000);
 
-            ModClient newMod = bonelabMods[modId];
-            Mod modData;
-            IReadOnlyList<Tag> tags;
+			ModClient newMod = bonelabMods[modId];
+			Mod modData;
+			IReadOnlyList<Tag> tags;
 			UploadType uploadType = UploadType.Unknown;
-			try 
+			try
 			{
 				modData = await newMod.Get();
 				tags = await newMod.Tags.Get();
-			} 
-			catch(Exception ex) 
+			}
+			catch (Exception ex)
 			{
 				Logger.Warn($"Failed to fetch data about mod ID:{modId}, Details: {ex}");
-                return;
-            }
-            Logger.Put($"New mod available: ID= {modId}; NameID= {modData.NameId}; tags= {string.Join(',', tags.Select(t => t.Name))}");
+				return;
+			}
+			Logger.Put($"New mod available: ID= {modId}; NameID= {modData.NameId}; tags= {string.Join(',', tags.Select(t => t.Name))}");
 
 
 			if (modData.MaturityOption == MaturityOption.Explicit)
@@ -133,7 +140,7 @@ namespace Voidway_Bot {
 			}
 
 			await PostAnnouncements(modData, uploadType);
-        }
+		}
 
 
 		private static Task GetAnnouncementChannels(GuildDownloadCompletedEventArgs e)
@@ -144,7 +151,7 @@ namespace Voidway_Bot {
 			{
 				uploadChannels[uType] = new();
 
-                foreach (var kvp in e.Guilds)
+				foreach (var kvp in e.Guilds)
 				{
 					ulong channelId = Config.FetchUploadChannel(kvp.Key, uType);
 					if (channelId == 0) continue;
@@ -164,13 +171,11 @@ namespace Voidway_Bot {
 
 		private static async Task PostAnnouncements(Mod mod, UploadType uploadType)
 		{
-            string? image = mod.MaturityOption == MaturityOption.None //Hide mature images, maybe not needed cause NSFW is blocked above?
-				? mod.Media.Images.FirstOrDefault()?.Original?.ToString() 
-				: null;
+			string? image = mod.Media.Images.FirstOrDefault()?.Original?.ToString();
 			DiscordEmbedBuilder.EmbedAuthor? author = mod.SubmittedBy is not null
-				? new DiscordEmbedBuilder.EmbedAuthor() 
-				{ 
-					Name = mod.SubmittedBy.Username?.ToString(), 
+				? new DiscordEmbedBuilder.EmbedAuthor()
+				{
+					Name = mod.SubmittedBy.Username?.ToString(),
 					IconUrl = mod.SubmittedBy.Avatar?.Thumb50x50?.ToString(),
 					Url = mod.SubmittedBy.ProfileUrl?.ToString()
 				}
@@ -178,7 +183,7 @@ namespace Voidway_Bot {
 			//todo: make embed fancier
 			DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 			DateTime date = start.AddMilliseconds(mod.DateLive / 10).ToLocalTime();
-			DiscordEmbedBuilder embed = new DiscordEmbedBuilder() {
+			DiscordEmbedBuilder baseEmbed = new DiscordEmbedBuilder() {
 				Author = author,
 				Title = $"{mod.Name}",
 				Description = mod.Summary,
@@ -193,32 +198,53 @@ namespace Voidway_Bot {
 			foreach (UploadType flag in uploadTypeValuesNoUnk)
 			{
 				if (!uploadType.HasFlag(flag)) continue;
+				if (!uploadChannels.TryGetValue(flag, out List<DiscordChannel>? channels)) continue;
 
-				List<DiscordChannel> channels = uploadChannels[flag];
 				foreach (DiscordChannel channel in channels)
-                {
-					try
+				{
+					DiscordEmbedBuilder deb = new(baseEmbed);
+					if (ShouldHideDesc(mod, channel.GuildId ?? 1UL))
 					{
-						await channel.SendMessageAsync(embed);
+						Logger.Put($"Hiding mod summary for {mod.NameId}");
+                        deb.Description = null;
+                    }
+                    //Hide mature images
+                    if (ShouldHideImage(mod, channel.GuildId ?? 1UL))
+					{
+						Logger.Put($"Hiding mod image for {mod.NameId}");
+                        deb.ImageUrl = null;
+                    }
+
+                    try
+					{
+						await channel.SendMessageAsync(baseEmbed);
 						count++;
-					} 
+					}
 					catch (DiscordException ex)
 					{
 						Logger.Warn($"Failed to post announcement for {mod.NameId} ({mod.Id}) in #{channel.Name} (guild {channel.Guild.Name}). Details below.");
 						Logger.Warn(ex.ToString());
-                    }
+					}
 				}
 			}
 			Logger.Put($"Announced mod upload in {count} channel(s).");
-        }
+		}
 
-		static UploadType IdentifyUpload(IEnumerable<Tag> tags)
+        private static bool ShouldHideImage(Mod mod, ulong server) 
+			=> mod.MaturityOption != MaturityOption.None 
+			|| WillCensor(mod, server);
+
+		private static bool ShouldHideDesc(Mod mod, ulong server)
+			=> mod.MaturityOption.HasFlag(MaturityOption.Explicit)
+			|| WillCensor(mod, server);
+
+        static UploadType IdentifyUpload(IEnumerable<Tag> tags)
 		{
 			UploadType ret = UploadType.Unknown;
-            foreach (Tag tag in tags)
+			foreach (Tag tag in tags)
 			{
 				int uploadTypeIndex;
-                if (string.IsNullOrEmpty(tag.Name)) continue; // ignore empty tags
+				if (string.IsNullOrEmpty(tag.Name)) continue; // ignore empty tags
 
 				uploadTypeIndex = uploadTypeNames.IndexOf(tag.Name);
 
@@ -226,6 +252,22 @@ namespace Voidway_Bot {
 					ret |= uploadTypeValues[uploadTypeIndex]; // support the use of Flags by using bitwise operations
 			}
 			return ret;
+		}
+
+		// "Censor" sounds 1984-y but this doesnt outright censor
+		private static bool WillCensor(Mod mod, ulong server)
+		{
+			if (!Config.IsServerCensoringMods(server)) return false;
+
+			bool desc = Config.IsModSummaryCensored(mod.DescriptionPlaintext);
+			bool title = Config.IsModTitleCensored(mod.Name);
+
+            return Config.GetCriteriaBehavior() switch
+            {
+                CensorCriteriaBehavior.All => desc || title,
+                CensorCriteriaBehavior.One => desc && title,
+                _ => throw new InvalidDataException($"Unrecognized {nameof(CensorCriteriaBehavior)}: {Config.GetCriteriaBehavior()}. Please input a valid value in the config."),
+            };
         }
-    }
+	}
 }
