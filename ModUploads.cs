@@ -1,14 +1,9 @@
 ﻿using DSharpPlus;
 using Modio;
 using DSharpPlus.Entities;
-using Newtonsoft.Json.Linq;
 using Modio.Models;
-using System.IO;
 using DSharpPlus.EventArgs;
-using System.Threading.Channels;
-using static Voidway_Bot.ModUploads;
 using DSharpPlus.Exceptions;
-using System.Runtime.CompilerServices;
 
 namespace Voidway_Bot {
 	internal static class ModUploads {
