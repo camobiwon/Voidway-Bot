@@ -108,7 +108,7 @@ namespace Voidway_Bot {
 			// give the uploader 60 extra seconds to upload a thumbnail/change metadata/add tags
 			await Task.Delay(60 * 1000);
 
-			ModClient newMod = bonelabMods[modId];
+            ModClient newMod = bonelabMods[modId];
 			Mod modData;
 			IReadOnlyList<Tag> tags;
 			UploadType uploadType = UploadType.Unknown;
@@ -127,7 +127,7 @@ namespace Voidway_Bot {
 
 			if (modData.MaturityOption == MaturityOption.Explicit)
 			{
-				Logger.Warn($"Bailing on posting mod: {modData.NameId} ({modId}) as mod is NSFW");
+				Logger.Put($"Bailing on posting mod: {modData.NameId} ({modId}) as mod is NSFW");
 				return;
 			}
 
@@ -138,6 +138,12 @@ namespace Voidway_Bot {
 				Logger.Warn("Unrecognized mod type. It is recommended to look through tags and report to a developer (or fix this yourself).");
 				return;
 			}
+
+			if (Config.GetIgnoreTagspam() && modData.Tags.Count > 15)
+			{
+				Logger.Put($"Mod has over 15 tags. Ignoring as it is likely a tagspam mod.");
+                return;
+            }
 
 			await PostAnnouncements(modData, uploadType);
 		}

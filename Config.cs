@@ -1,4 +1,6 @@
-﻿using Tomlet;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using Tomlet;
 using Tomlet.Attributes;
 using Tomlet.Models;
 
@@ -37,6 +39,7 @@ namespace Voidway_Bot {
 			public string[] censorModsWithSummaryContaining = new string[] { "ten point five" };
 			public string[] censorModsWithTitlesContaining = new string[] { "eleven and no fraction", "This will never be hit because T is uppercase." };
 			public string[] censorModsWithTag = new string[] { "ELEVEN POINT FIVE THAT WONT BE HIT CUZ CAPS", "adult 18+", "other tag" };
+			public bool ignoreTagspamMods = true;
             [TomlPrecedingComment("Renames users to 'hoist' if their nick/name starts with one of these characterss (and is in a specified server). Backslash escape char FYI.")]
 			public string hoistCharacters = @"()-+=_][\|;',.<>/?!@#$%^&*"; // literal string literal ftw
 			public ulong[] hoistServers = new ulong[] { 12 };
@@ -44,13 +47,13 @@ namespace Voidway_Bot {
         }
 
 		const string FILE_NAME = "config.toml";
-		static readonly ConfigValues values;
+		static readonly FileSystemWatcher watcher;
+		static ConfigValues values;
 
-		// static ctor
-		static Config()
+        // static ctor
+        static Config()
 		{
             string path = Path.Combine(AppContext.BaseDirectory, FILE_NAME);
-            string fileContents;
             Console.WriteLine("Attempting to read config from " + path);
 
             if (!File.Exists(path))
@@ -61,39 +64,50 @@ namespace Voidway_Bot {
 				Console.ReadKey();
                 Environment.Exit(0);
             }
-            fileContents = File.ReadAllText(path);
-            values = TomletMain.To<ConfigValues>(fileContents);
 
-            Logger.Put("Retrieved config values.");
+			UpdateConfig();
 
 			// write new cfg to add new fields
-			fileContents = TomletMain.DocumentFrom(values).SerializedValue;
+			string fileContents = TomletMain.DocumentFrom(values).SerializedValue;
 			File.WriteAllText(path, fileContents);
 			Logger.Put("Updated config.");
 			Logger.Put("(Updating config is harmless, just in case things changed between versions, this adds the new fields)", Logger.Reason.Trace);
+			Logger.Put("Starting config watcher.");
+			watcher = new FileSystemWatcher(AppContext.BaseDirectory)
+			{
+				Filter = "*.toml",
+				IncludeSubdirectories = false,
+				EnableRaisingEvents = true,
+			};
+            watcher.Changed += WatcherChanged;
+			Logger.Put("Watcher started successfully.");
         }
 
-		internal static int GetAuditLogRetryCount() => values.auditLogRetryCount;
+        private static async void WatcherChanged(object sender, FileSystemEventArgs e)
+        {
+			// wait 25ms to avoid race conditions about reading while another process has access
+			await Task.Delay(25);
+			UpdateConfig();
+        }
+
+        [MemberNotNull(nameof(values))]
+		private static void UpdateConfig()
+		{
+            string path = Path.Combine(AppContext.BaseDirectory, FILE_NAME);
+            string fileContents;
+            fileContents = File.ReadAllText(path);
+            values = TomletMain.To<ConfigValues>(fileContents);
+            Logger.Put("Retrieved config values.");
+        }
+
+        internal static int GetAuditLogRetryCount() => values.auditLogRetryCount;
 		internal static int GetMaxLogFiles() => values.maxLogFiles;
 		internal static bool GetLogDiscordDebug() => values.logDiscordDebug;
 		internal static string GetLogPath() => Path.GetFullPath(values.logPath);
 		internal static ModUploads.CensorCriteriaBehavior GetCriteriaBehavior() => values.censorCriteriaBehavior;
-
-        internal static string GetDiscordToken()
-		{
-			string temp = values.discordToken;
-			values.discordToken = "";
-			return temp;
-		}
-
-        internal static (string, string) GetModioTokens()
-        {
-			string temp = values.modioToken;
-			string temp2 = values.modioOAuth;
-            values.modioToken = "";
-			values.modioOAuth = "";
-            return (temp, temp2);
-        }
+		internal static bool GetIgnoreTagspam() => values.ignoreTagspamMods;
+        internal static string GetDiscordToken() => values.discordToken;
+		internal static (string, string) GetModioTokens() => (values.modioToken, values.modioOAuth);
 
         //Yes I know this is terrible, eventually will add a proper config
         internal static ulong FetchModerationChannel(ulong guild) {
