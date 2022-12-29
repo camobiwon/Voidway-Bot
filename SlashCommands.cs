@@ -27,9 +27,6 @@ namespace Voidway_Bot
             //MONTHS discord silently fails to apply a monthlong timeout
         }
 
-        const string ATTACH_BTN_ID = "attachDebugger";
-        const string NOP_BTN_ID = "nop";
-
         static Dictionary<string, string> reasonsByBot = new();
         public static bool WasByBotCommand(string reason, out string user)
         {
@@ -39,30 +36,6 @@ namespace Voidway_Bot
                 return true;
             }
             else return false;
-        }
-
-        private static Dictionary<string, Action> componentInteractionResponses = new()
-        {
-            {ATTACH_BTN_ID, () => System.Diagnostics.Debugger.Launch()}
-        };
-
-        internal static Task ComponentInteractionCreated(DiscordClient sender, ComponentInteractionCreateEventArgs e)
-        {
-            //e.Handled = componentInteractionResponses.TryGetValue(e.Id, out Action? res);
-            //if (e.Handled) res!(); this works but it looks nonstandard and kludgy
-            Logger.Put($"Recieved ComponentInteractionCreated event callback: ID={e.Id}, {e.User}, {e.Guild}", Logger.Reason.Debug);
-
-            if (componentInteractionResponses.TryGetValue(e.Id, out Action? res))
-            {
-                try
-                {
-                    res!();
-                }
-                catch { }
-                e.Handled = true;
-            }
-
-            return Task.CompletedTask;
         }
 
         // Technically, this is the exact same thing as Timeout, but it's got a new command entry because it has a more user-friendly description.
@@ -218,39 +191,10 @@ namespace Voidway_Bot
             [Option("UserID", "Mod.io user ID")]
             long userId
             )
-        {
-            bool askedDebugger = false;
-            if (!System.Diagnostics.Debugger.IsAttached)
-            {
-                DiscordButtonComponent[] buttons = new DiscordButtonComponent[]
-                {
-                    new(ButtonStyle.Primary, ATTACH_BTN_ID, "Attach debugger", emoji: new DiscordComponentEmoji("🔌")),
-                    new(ButtonStyle.Danger, NOP_BTN_ID, "Continue without debugger", emoji: new DiscordComponentEmoji("⚠️")),
-                };
-                DiscordActionRowComponent darc = new(buttons);
-
-                var builder = new DiscordInteractionResponseBuilder()
-                    .WithContent("It doesn't seem there's a debugger attached. Do you want to try attaching a debugger?")
-                    .AddComponents(darc)
-                    .AsEphemeral(true);
-
-                await ctx.CreateResponseAsync(builder);
-                
-                askedDebugger = true;
-                // Bot.CurrClient.GetInteractivity().
-            }
-            
+        {   
             ModUploads.NotifyNewMod((uint)modId, (uint)userId);
 
-            if (askedDebugger)
-            {
-                var builder2 = new DiscordFollowupMessageBuilder()
-                    .WithContent($"Tested mod uploads with mod ID {modId} and user ID {userId}")
-                    .AsEphemeral(true);
-                await ctx.FollowUpAsync(builder2);
-            }
-            else
-                await ctx.CreateResponseAsync($"Tested mod uploads with mod ID {modId} and user ID {userId}", true);
+            await ctx.CreateResponseAsync($"Tested mod uploads with mod ID {modId} and user ID {userId}", true);
         }
     }
 }
