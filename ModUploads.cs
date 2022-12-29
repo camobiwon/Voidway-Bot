@@ -88,7 +88,7 @@ namespace Voidway_Bot {
 			ModEvent? firstEvent = await bonelab.Mods.GetEvents().First();
 			lastModioEvent = firstEvent!.Id; // im quite certain theres at least one event
 
-			discord.GuildDownloadCompleted += (client, e) => GetAnnouncementChannels(e);
+			discord.GuildDownloadCompleted += (client, e) => GetAnnouncementChannels(e.Guilds);
 
 			ModUploadWatcher();
 
@@ -98,10 +98,11 @@ namespace Voidway_Bot {
 		}
 
 
-		private static async void NotifyNewMod(uint modId, uint userId)
+		internal static async void NotifyNewMod(uint modId, uint userId)
 		{
 			// give the uploader 60 extra seconds to upload a thumbnail/change metadata/add tags
 			await Task.Delay(60 * 1000);
+			if (uploadChannels is null || uploadChannels.Count is 0) FallbackGetChannels();
 
             ModClient newMod = bonelabMods[modId];
 			Mod modData;
@@ -127,6 +128,7 @@ namespace Voidway_Bot {
 			}
 
 			uploadType = IdentifyUpload(tags);
+			Logger.Put($" - Mod {modData.NameId} has identified as: {uploadType}");
 
 			if (uploadType == UploadType.Unknown)
 			{
@@ -144,7 +146,7 @@ namespace Voidway_Bot {
 		}
 
 
-		private static Task GetAnnouncementChannels(GuildDownloadCompletedEventArgs e)
+		private static Task GetAnnouncementChannels(IEnumerable<KeyValuePair<ulong, DiscordGuild>> keyValues)
 		{
 			// NESTED FOREACH SO GOOD
 			int counter = 0;
@@ -152,14 +154,14 @@ namespace Voidway_Bot {
 			{
 				uploadChannels[uType] = new();
 
-				foreach (var kvp in e.Guilds)
+				foreach (var kvp in keyValues)
 				{
 					ulong channelId = Config.FetchUploadChannel(kvp.Key, uType);
 					if (channelId == 0) continue;
 
 
 					DiscordChannel channel = kvp.Value.GetChannel(channelId);
-					if (channel == null) continue;
+					if (channel is null) continue;
 
 					uploadChannels[uType].Add(channel);
 					counter++;
@@ -176,21 +178,21 @@ namespace Voidway_Bot {
 			DiscordEmbedBuilder.EmbedAuthor? author = mod.SubmittedBy is not null
 				? new DiscordEmbedBuilder.EmbedAuthor()
 				{
-					Name = mod.SubmittedBy.Username?.ToString(),
-					IconUrl = mod.SubmittedBy.Avatar?.Thumb50x50?.ToString(),
-					Url = mod.SubmittedBy.ProfileUrl?.ToString()
+					Name = mod.SubmittedBy.Username?.ToString()!,
+					IconUrl = mod.SubmittedBy.Avatar?.Thumb50x50?.ToString()!,
+					Url = mod.SubmittedBy.ProfileUrl?.ToString()!
 				}
 				: null;
 			//todo: make embed fancier
 			DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 			DateTime date = start.AddMilliseconds(mod.DateLive / 10).ToLocalTime();
 			DiscordEmbedBuilder baseEmbed = new DiscordEmbedBuilder() {
-				Author = author,
+				Author = author!,
 				Title = $"{mod.Name}",
-				Description = mod.Summary,
-				Url = mod.ProfileUrl?.ToString(),
+				Description = mod.Summary!,
+				Url = mod.ProfileUrl?.ToString()!,
 				Color = DiscordColor.Azure,
-				ImageUrl = image,
+				ImageUrl = image!,
 				Footer = new DiscordEmbedBuilder.EmbedFooter { Text = $"ID: {mod.Id}" },
 			};
 
@@ -207,18 +209,18 @@ namespace Voidway_Bot {
 					if (ShouldHideDesc(mod, channel.GuildId ?? 1UL))
 					{
 						Logger.Put($"Hiding mod summary for {mod.NameId}");
-                        deb.Description = null;
+                        deb.Description = "";
                     }
                     //Hide mature images
                     if (ShouldHideImage(mod, channel.GuildId ?? 1UL))
 					{
 						Logger.Put($"Hiding mod image for {mod.NameId}");
-                        deb.ImageUrl = null;
+                        deb.ImageUrl = "";
                     }
 
                     try
 					{
-						await channel.SendMessageAsync(baseEmbed);
+						await channel.SendMessageAsync(deb);
 						count++;
 					}
 					catch (DiscordException ex)
@@ -265,10 +267,19 @@ namespace Voidway_Bot {
 
             return Config.GetCriteriaBehavior() switch
             {
-                CensorCriteriaBehavior.All => desc || title,
-                CensorCriteriaBehavior.One => desc && title,
+                CensorCriteriaBehavior.All => desc && title,
+                CensorCriteriaBehavior.One => desc || title,
                 _ => throw new InvalidDataException($"Unrecognized {nameof(CensorCriteriaBehavior)}: {Config.GetCriteriaBehavior()}. Please input a valid value in the config."),
             };
         }
-	}
+
+		static void FallbackGetChannels()
+		{
+			// have to do this because dsharpplus doesnt fire guilddownloadscompleted (or whatever the event is called) on .NET 7, for whatever reason
+			Logger.Put("The list of mod upload announcement channels is empty! Attempting to rectify this now.", Logger.Reason.Debug);
+
+			GetAnnouncementChannels(Bot.CurrClient.Guilds);
+		}
+
+    }
 }
