@@ -1,6 +1,8 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Logging;
 
@@ -8,6 +10,7 @@ namespace Voidway_Bot {
     class Bot {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         internal static DiscordUser CurrUser { get; private set; }
+        internal static DiscordClient CurrClient { get; private set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         static void Main() {
@@ -30,12 +33,20 @@ namespace Voidway_Bot {
                 Intents = DiscordIntents.All,
                 LoggerFactory = new DiscordLogger.Factory() // comment this line if slash commands are giving you trouble
             });
+            CurrClient = discord;
 
             discord.Ready += Discord_Ready;
             discord.MessageCreated += DirectMessageHandler;
 
             var slashExtension = discord.UseSlashCommands();
             slashExtension.RegisterCommands<SlashCommands>();
+            discord.ComponentInteractionCreated += SlashCommands.ComponentInteractionCreated;
+            discord.UseInteractivity(new InteractivityConfiguration()
+            {
+                Timeout = TimeSpan.FromSeconds(30)
+            });
+            // setup interactivity now. will likely be useful later
+
             Moderation.HandleModeration(discord);
             ModUploads.HandleModUploads(discord);
 
@@ -66,7 +77,7 @@ namespace Voidway_Bot {
         }
 
 
-        private static Task Discord_Ready(DiscordClient sender, DSharpPlus.EventArgs.ReadyEventArgs e)
+        private static Task Discord_Ready(DiscordClient sender, ReadyEventArgs e)
         {
             CurrUser = sender.CurrentUser;
             Logger.Put($"Discord client ready on user {sender.CurrentUser.Username}#{sender.CurrentUser.Discriminator} ({sender.CurrentUser.Id})");
