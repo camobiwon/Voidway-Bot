@@ -4,6 +4,7 @@ using DSharpPlus.Entities;
 using Modio.Models;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
+using System.Threading.Channels;
 
 namespace Voidway_Bot {
 	internal static class ModUploads {
@@ -26,6 +27,7 @@ namespace Voidway_Bot {
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		static Dictionary<UploadType, List<DiscordChannel>> uploadChannels = new();
+		static Dictionary<uint, List<DiscordMessage>> announcementMessages = new(); // modio mod id to message
 		static List<string> uploadTypeNames = Enum.GetNames<UploadType>().ToList(); // List has IndexOf, Array does not
 		static UploadType[] uploadTypeValues = Enum.GetValues<UploadType>();
 		static UploadType[] uploadTypeValuesNoUnk = Enum.GetValues<UploadType>().Skip(1).ToArray(); // skip needs to be changed if Unknown is moved
@@ -55,15 +57,22 @@ namespace Voidway_Bot {
 				{
 					if (modEvent.Id > lastModioEvent) lastModioEvent = modEvent.Id;
 
-					if (modEvent.EventType == ModEventType.MOD_AVAILABLE)
+					switch (modEvent.EventType)
 					{
-						NotifyNewMod(modEvent.ModId, modEvent.UserId);
+						case ModEventType.MOD_AVAILABLE:
+							NotifyNewMod(modEvent.ModId, modEvent.UserId);
+							break;
+						case ModEventType.MOD_EDITED:
+							UpdateAnnouncements(modEvent.ModId);
+							break;
+						default:
+							break;
 					}
 				}
 			}
 		}
 
-		internal static async void HandleModUploads(DiscordClient discord) {
+        internal static async void HandleModUploads(DiscordClient discord) {
 			Credentials cred;
 
 			(string token, string oa2) = Config.GetModioTokens();
@@ -97,14 +106,68 @@ namespace Voidway_Bot {
 			return;
 		}
 
+        private static async void UpdateAnnouncements(uint modId)
+        {
+			bool hasMessages = announcementMessages.TryGetValue(modId, out List<DiscordMessage>? messages) && messages.Any();
+			if (!hasMessages) return;
+			bool embedsHaveImage = string.IsNullOrEmpty(messages![0].Embeds[0].Image.Url.ToString());
+			if (embedsHaveImage) return;
 
-		internal static async void NotifyNewMod(uint modId, uint userId)
+			Mod mod;
+			try
+			{
+				mod = await bonelabMods[modId].Get();
+			}
+			catch(Exception ex)
+			{
+				Logger.Warn($"Failed to fetch edited data about mod ID:{modId}, Details: {ex}");
+				return;
+			}
+
+			if (mod.MaturityOption.HasFlag(MaturityOption.Explicit) || mod.Tags.Any(t => t.Name == "Adult 18+"))
+			{
+				Logger.Put($"Bailing on updating announcements of mod ID:{modId} because it's explicit/has the Adult tag.");
+                return;
+            }
+
+			DiscordEmbedBuilder baseEmbed = CreateEmbed(mod);
+
+			foreach (DiscordMessage msg in messages)
+			{
+                DiscordEmbedBuilder deb = new(baseEmbed);
+
+                if (ShouldHideDesc(mod, msg.Channel.GuildId ?? 1UL))
+                {
+                    Logger.Put($"Hiding mod summary for {mod.NameId}");
+                    deb.Description = "";
+                }
+				//Hide mature images
+                if (ShouldHideImage(mod, msg.Channel.GuildId ?? 1UL))
+                {
+                    Logger.Put($"Hiding mod image for {mod.NameId}");
+                    deb.ImageUrl = "";
+                }
+
+				try
+				{
+					await msg.ModifyAsync(deb.Build());
+					Logger.Put($"Successfully edited message in guild {msg.Channel.Guild.Name} #{msg.Channel.Name} (msg ID:{msg.Id}) for mod {mod.Name} (mod ID:{modId}) to add image");
+				}
+				catch (Exception ex)
+				{
+					Logger.Warn($"Failed to edit mod announcement in guild {msg.Channel.Guild.Name} #{msg.Channel.Name} (msg ID:{msg.Id}) for mod {mod.Name} (mod ID:{modId}), Details: {ex}");
+				}
+            }
+
+        }
+
+        internal static async void NotifyNewMod(uint modId, uint userId)
 		{
 			// give the uploader 60 extra seconds to upload a thumbnail/change metadata/add tags
-			await Task.Delay(60 * 1000);
+			await Task.Delay(15 * 1000);
 			if (uploadChannels is null || uploadChannels.Count is 0) FallbackGetChannels();
 
-            ModClient newMod = bonelabMods[modId];
+			ModClient newMod = bonelabMods[modId];
 			Mod modData;
 			IReadOnlyList<Tag> tags;
 			UploadType uploadType = UploadType.Unknown;
@@ -121,7 +184,7 @@ namespace Voidway_Bot {
 			Logger.Put($"New mod available: ID= {modId}; NameID= {modData.NameId}; tags= {string.Join(',', tags.Select(t => t.Name))}");
 
 
-			if (modData.MaturityOption == MaturityOption.Explicit)
+			if (modData.MaturityOption == MaturityOption.Explicit || tags.Any(t => t.Name == "Adult 18+"))
 			{
 				Logger.Put($"Bailing on posting mod: {modData.NameId} ({modId}) as mod is NSFW");
 				return;
@@ -176,65 +239,73 @@ namespace Voidway_Bot {
 		}
 
 		private static async Task PostAnnouncements(Mod mod, UploadType uploadType)
-		{
-			string? image = mod.Media.Images.FirstOrDefault()?.Original?.ToString();
-			DiscordEmbedBuilder.EmbedAuthor? author = mod.SubmittedBy is not null
-				? new DiscordEmbedBuilder.EmbedAuthor()
-				{
-					Name = mod.SubmittedBy.Username?.ToString()!,
-					IconUrl = mod.SubmittedBy.Avatar?.Thumb50x50?.ToString()!,
-					Url = mod.SubmittedBy.ProfileUrl?.ToString()!
-				}
-				: null;
-			//todo: make embed fancier
-			DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-			DateTime date = start.AddMilliseconds(mod.DateLive / 10).ToLocalTime();
-			DiscordEmbedBuilder baseEmbed = new DiscordEmbedBuilder() {
-				Author = author!,
-				Title = $"{mod.Name}",
-				Description = mod.Summary!,
-				Url = mod.ProfileUrl?.ToString()!,
-				Color = DiscordColor.Azure,
-				ImageUrl = image!,
-				Footer = new DiscordEmbedBuilder.EmbedFooter { Text = $"ID: {mod.Id}" },
-			};
+        {
+            announcementMessages[mod.Id] ??= new();
+            List<DiscordMessage> messages = announcementMessages[mod.Id];
+            DiscordEmbedBuilder baseEmbed = CreateEmbed(mod);
 
+            int count = 0;
+            foreach (UploadType flag in uploadTypeValuesNoUnk)
+            {
+                if (!uploadType.HasFlag(flag)) continue;
+                if (!uploadChannels.TryGetValue(flag, out List<DiscordChannel>? channels)) continue;
 
-			int count = 0;
-			foreach (UploadType flag in uploadTypeValuesNoUnk)
-			{
-				if (!uploadType.HasFlag(flag)) continue;
-				if (!uploadChannels.TryGetValue(flag, out List<DiscordChannel>? channels)) continue;
-
-				foreach (DiscordChannel channel in channels)
-				{
-					DiscordEmbedBuilder deb = new(baseEmbed);
-					if (ShouldHideDesc(mod, channel.GuildId ?? 1UL))
-					{
-						Logger.Put($"Hiding mod summary for {mod.NameId}");
+                foreach (DiscordChannel channel in channels)
+                {
+                    DiscordEmbedBuilder deb = new(baseEmbed);
+                    if (ShouldHideDesc(mod, channel.GuildId ?? 1UL))
+                    {
+                        Logger.Put($"Hiding mod summary for {mod.NameId}");
                         deb.Description = "";
                     }
                     //Hide mature images
                     if (ShouldHideImage(mod, channel.GuildId ?? 1UL))
-					{
-						Logger.Put($"Hiding mod image for {mod.NameId}");
+                    {
+                        Logger.Put($"Hiding mod image for {mod.NameId}");
                         deb.ImageUrl = "";
                     }
 
                     try
-					{
-						await channel.SendMessageAsync(deb);
-						count++;
-					}
-					catch (DiscordException ex)
-					{
-						Logger.Warn($"Failed to post announcement for {mod.NameId} ({mod.Id}) in #{channel.Name} (guild {channel.Guild.Name}). Details below.");
-						Logger.Warn(ex.ToString());
-					}
-				}
-			}
-			Logger.Put($"Announced mod upload in {count} channel(s).");
-		}
+                    {
+                        messages.Add(await channel.SendMessageAsync(deb));
+                        count++;
+                    }
+                    catch (DiscordException ex)
+                    {
+                        Logger.Warn($"Failed to post announcement for {mod.NameId} ({mod.Id}) in #{channel.Name} (guild {channel.Guild.Name}). Details below.");
+                        Logger.Warn(ex.ToString());
+                    }
+                }
+            }
+            Logger.Put($"Announced mod upload in {count} channel(s).");
+        }
+
+        private static DiscordEmbedBuilder CreateEmbed(Mod mod)
+        {
+            string? image = mod.Media.Images.FirstOrDefault()?.Original?.ToString();
+            DiscordEmbedBuilder.EmbedAuthor? author = mod.SubmittedBy is not null
+                ? new DiscordEmbedBuilder.EmbedAuthor()
+                {
+                    Name = mod.SubmittedBy.Username?.ToString()!,
+                    IconUrl = mod.SubmittedBy.Avatar?.Thumb50x50?.ToString()!,
+                    Url = mod.SubmittedBy.ProfileUrl?.ToString()!
+                }
+                : null;
+            //todo: make embed fancier
+            DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime date = start.AddMilliseconds(mod.DateLive / 10).ToLocalTime();
+            DiscordEmbedBuilder baseEmbed = new DiscordEmbedBuilder()
+            {
+                Author = author!,
+                Title = $"{mod.Name}",
+                Description = mod.Summary!,
+                Url = mod.ProfileUrl?.ToString()!,
+                Color = DiscordColor.Azure,
+                ImageUrl = image!,
+                Footer = new DiscordEmbedBuilder.EmbedFooter { Text = $"ID: {mod.Id}" },
+            };
+            return baseEmbed;
+        }
 
         private static bool ShouldHideImage(Mod mod, ulong server) 
 			=> mod.MaturityOption != MaturityOption.None 
