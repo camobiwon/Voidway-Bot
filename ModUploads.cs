@@ -157,7 +157,10 @@ namespace Voidway_Bot {
 				foreach (var kvp in keyValues)
 				{
 					ulong channelId = Config.FetchUploadChannel(kvp.Key, uType);
-					if (channelId == 0) continue;
+					if(channelId == 0)
+						channelId = Config.FetchAllModsChannel(kvp.Key);
+					if(channelId == 0) //Dumb but works
+						continue;
 
 
 					DiscordChannel channel = kvp.Value.GetChannel(channelId);

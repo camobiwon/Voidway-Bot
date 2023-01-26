@@ -23,17 +23,19 @@ namespace Voidway_Bot {
             public Dictionary<string, ulong> messsageChannels = new() { { "4", 5 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
             [TomlPrecedingComment("Where the bot will log suspicious joins. (<1d old & acc creation time within 1h of join time)")]
             public Dictionary<string, ulong> newAccountChannels = new() { { "6", 7 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
+            [TomlPrecedingComment("Where ALL mod uploads get posted to, useful for seeing an entire list for moderation")]
+            public Dictionary<string, ulong> allModUploads = new() { { "8", 9 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
             [TomlPrecedingComment("ServerID -> Upload Type -> ChannelID; Will be used for announcing recent mod.io uploads (Upload types: 'Avatar', 'Level', 'Spawnable', 'Utility').")]
             public Dictionary<string, Dictionary<string, ulong>> modUploadChannels = new() 
             { 
                 { 
-                    "8", new() { { nameof(ModUploads.UploadType.Avatar), 9 } } 
+                    "10", new() { { nameof(ModUploads.UploadType.Avatar), 11 } } 
                 } 
             };
             [TomlPrecedingComment("RoleID list")]
 			public ulong[] rolesExemptFromLogging = Array.Empty<ulong>(); // ExemptRoleLog isnt called anywhere... does this need to exist?
 			[TomlPrecedingComment("Will hide image & desc of mod announcements when posted in these servers AS LONG AS THEY MATCH THE SPECIFIED CRITERIA")]
-			public ulong[] censorModAnnouncementsIn = new ulong[] { 10 };
+			public ulong[] censorModAnnouncementsIn = new ulong[] { 12 };
 			[TomlPrecedingComment("Determines if 'All' criteria, or just 'One' criterion must be met before a mod's announcement is censored. All criteria are in LOWERCASE, and can be set to '*' to match every mod (for censorCriteriaBehavior = All)")]
 			public ModUploads.CensorCriteriaBehavior censorCriteriaBehavior = ModUploads.CensorCriteriaBehavior.One;
 			public string[] censorModsWithSummaryContaining = new string[] { "ten point five" };
@@ -42,7 +44,7 @@ namespace Voidway_Bot {
 			public bool ignoreTagspamMods = true;
             [TomlPrecedingComment("Renames users to 'hoist' if their nick/name starts with one of these characterss (and is in a specified server). Backslash escape char FYI.")]
             public string hoistCharacters = @"()-+=_][\|;',.<>/?!@#$%^&*"; // literal string literal ftw
-            public ulong[] hoistServers = new ulong[] { 12 };
+            public ulong[] hoistServers = new ulong[] { 13 };
             public string[] ignoreDSharpPlusLogsWith = new string[] { "Unknown event:" }; // "GUILD_JOIN_REQUEST_UPDATE" SHUT THE FUCK UP
         }
 
@@ -131,7 +133,15 @@ namespace Voidway_Bot {
             return values.rolesExemptFromLogging.Contains(roleID);
         }
 
-        internal static ulong FetchUploadChannel(ulong guild, ModUploads.UploadType uploadType) {
+		internal static ulong FetchAllModsChannel(ulong guild) {
+			if(values.allModUploads.TryGetValue(guild.ToString(), out ulong channel)) return channel;
+			else {
+				Logger.Warn("Config values don't have a all mod uploads channel for the given guild ID: " + guild);
+				return default;
+			}
+		}
+
+		internal static ulong FetchUploadChannel(ulong guild, ModUploads.UploadType uploadType) {
             if (!values.modUploadChannels.TryGetValue(guild.ToString(), out var uploadTypeToChannel))
                 return default;
 
