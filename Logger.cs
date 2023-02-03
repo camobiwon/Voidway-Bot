@@ -84,6 +84,7 @@ namespace Voidway_Bot
 
 
         public static void Error(string str) => Put(str, Reason.Fatal, false);
+        public static void Error(string str, Exception ex) => Put(str + "\n\t" + ex.ToString(), Reason.Fatal, false);
 
         public static void Warn(string str) => Put(str, Reason.Warn, false);
 
@@ -111,6 +112,13 @@ namespace Voidway_Bot
                 logFile.WriteLine($"{starter}{reasonStr} -> {str}");
                 logFile.Flush();
             }
+        }
+
+        public static string EnsureShorterThan(string str, int maxLen)
+        {
+            if (str.Length < maxLen) return str;
+
+            return str[..(maxLen - 3)] + "...";
         }
 
         static string GetPutTime() => DateTime.Now.ToString(PUT_DATE_FORMAT).PadLeft(maxPutDateLength);
