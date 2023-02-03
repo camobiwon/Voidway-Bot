@@ -9,7 +9,7 @@ namespace Voidway_Bot {
         private class ConfigValues
         {
             [TomlProperty("token")] // property-ize because otherwise it throws a shitfit
-            public string discordToken { get; set; } = "";
+            public string DiscordToken { get; set; } = "";
             public string modioToken = "";
             [TomlPrecedingComment("Can be left blank if you only use an API key w/o OAuth2")]
             public string modioOAuth = "";
@@ -17,6 +17,10 @@ namespace Voidway_Bot {
             public int maxLogFiles = 5;
             public int auditLogRetryCount = 5;
             public bool logDiscordDebug = false;
+            [TomlPrecedingComment("Allows thread creators to PIN messages in threads they created.")]
+            public bool threadCreatorPinMessages = true;
+            [TomlPrecedingComment("Allows thread creators to DELETE messages in threads they created.")]
+            public bool threadCreatorDeleteMessages = false;
             [TomlPrecedingComment("Key=ServerID -> Value=ChannelID; Will be used for logging actions taken by moderators.")]
             public Dictionary<string, ulong> moderationChannels = new() { { "0", 1 }, { "2", 3 } }; // init w/ default values so the user knows how its formatted
             [TomlPrecedingComment("Key=ServerID -> Value=ChannelID; Will be used for logging message actions by users.")]
@@ -105,10 +109,12 @@ namespace Voidway_Bot {
         internal static int GetAuditLogRetryCount() => values.auditLogRetryCount;
 		internal static int GetMaxLogFiles() => values.maxLogFiles;
 		internal static bool GetLogDiscordDebug() => values.logDiscordDebug;
-		internal static string GetLogPath() => Path.GetFullPath(values.logPath);
+		internal static bool GetThreadCreatorPinMessages() => values.threadCreatorPinMessages;
+		internal static bool GetThreadCreatorDeleteMessages() => values.threadCreatorDeleteMessages;
+        internal static string GetLogPath() => Path.GetFullPath(values.logPath);
 		internal static ModUploads.CensorCriteriaBehavior GetCriteriaBehavior() => values.censorCriteriaBehavior;
 		internal static bool GetIgnoreTagspam() => values.ignoreTagspamMods;
-        internal static string GetDiscordToken() => values.discordToken;
+        internal static string GetDiscordToken() => values.DiscordToken;
 		internal static (string, string) GetModioTokens() => (values.modioToken, values.modioOAuth);
 
         internal static ulong FetchModerationChannel(ulong guild) {

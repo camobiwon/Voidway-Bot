@@ -40,6 +40,7 @@ namespace Voidway_Bot {
 
             var slashExtension = discord.UseSlashCommands();
             slashExtension.RegisterCommands<SlashCommands>();
+            slashExtension.RegisterCommands<ContextActions>();
             discord.UseInteractivity(new InteractivityConfiguration()
             {
                 Timeout = TimeSpan.FromSeconds(30)

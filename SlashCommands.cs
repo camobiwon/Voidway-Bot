@@ -152,19 +152,6 @@ namespace Voidway_Bot
             }
         }
 
-        [ContextMenu(ApplicationCommandType.UserContextMenu, "Hoist", true)]
-        [SlashRequirePermissions(Permissions.ManageNicknames, false)]
-        public async Task ManualHoist(ContextMenuContext ctx)
-        {
-            bool hasManageNickPerms = ctx.TargetMember.Permissions.HasPermission(Permissions.ManageNicknames);
-            await Moderation.HoistHandler(ctx.TargetMember);
-            await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
-            {
-                IsEphemeral = true,
-                Content = $"{(hasManageNickPerms ? "Probably" : "Successfully")} hoisted {ctx.TargetMember.DisplayName}."
-            });
-        }
-
         static DateTimeOffset OffsetFromTimeType(TimeType unit, double count)
         {
             DateTime now = DateTime.UtcNow;
