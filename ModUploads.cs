@@ -206,10 +206,13 @@ namespace Voidway_Bot {
             }
 
 			await PostAnnouncements(modData, uploadType);
-		}
+			// force recheck after 1min, thanks modio api for working predictably :) (SARCASM)
+			await Task.Delay(60000);
+            UpdateAnnouncements(modId);
+        }
 
 
-		private static Task GetAnnouncementChannels(IEnumerable<KeyValuePair<ulong, DiscordGuild>> keyValues)
+        private static Task GetAnnouncementChannels(IEnumerable<KeyValuePair<ulong, DiscordGuild>> keyValues)
 		{
 			// NESTED FOREACH SO GOOD
 			int counter = 0;
@@ -224,7 +227,6 @@ namespace Voidway_Bot {
 						channelId = Config.FetchAllModsChannel(kvp.Key);
 					if(channelId == 0) //Dumb but works
 						continue;
-
 
 					DiscordChannel channel = kvp.Value.GetChannel(channelId);
 					if (channel is null) continue;
