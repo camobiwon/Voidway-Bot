@@ -87,6 +87,7 @@ namespace Voidway_Bot
         public static void Error(string str, Exception ex) => Put(str + "\n\t" + ex.ToString(), Reason.Fatal, false);
 
         public static void Warn(string str) => Put(str, Reason.Warn, false);
+        public static void Warn(string str, Exception ex) => Put(str + "\n\t" + ex.ToString(), Reason.Warn, false);
 
         public static void Put(string str) => Put(str, Reason.Normal);
 
