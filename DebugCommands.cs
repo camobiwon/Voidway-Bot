@@ -92,10 +92,10 @@ namespace Voidway_Bot
                         git.StartInfo.Arguments = $"rev-list {BRANCH_NAME} --not origin/{BRANCH_NAME}";
                     else
                         git.StartInfo.Arguments = $"rev-list origin/{BRANCH_NAME} --not {BRANCH_NAME}";
-                    aheadCountOutput = git.StandardOutput.ReadToEnd().TrimEnd();
                     Logger.Put($"Executing command: {git.StartInfo.FileName} {git.StartInfo.Arguments}", Logger.Reason.Debug);
                     git.Start();
                     git.WaitForExit();
+                    commitNames = git.StandardOutput.ReadToEnd().TrimEnd();
                     Logger.Put($"Output from {git.StartInfo.FileName} {git.StartInfo.Arguments}: {aheadCountOutput}", Logger.Reason.Debug);
                 }
                 catch (Exception ex)

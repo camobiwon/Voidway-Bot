@@ -242,8 +242,11 @@ namespace Voidway_Bot {
 
 		private static async Task PostAnnouncements(Mod mod, UploadType uploadType)
         {
-            announcementMessages[mod.Id] ??= new();
-            List<DiscordMessage> messages = announcementMessages[mod.Id];
+			if (!announcementMessages.TryGetValue(mod.Id, out List<DiscordMessage>? messages))
+			{
+				messages = new();
+                announcementMessages[mod.Id] = messages;
+            }
             DiscordEmbedBuilder baseEmbed = CreateEmbed(mod);
 
             int count = 0;
