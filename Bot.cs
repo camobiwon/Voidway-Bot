@@ -11,16 +11,21 @@ namespace Voidway_Bot {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         internal static DiscordUser CurrUser { get; private set; }
         internal static DiscordClient CurrClient { get; private set; }
+        internal static string[] Args { get; private set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-        static void Main() {
+        static void Main(string[] args)
+        {
+            Args = args;
             MainAsync().GetAwaiter().GetResult();
         }
 
-        static async Task MainAsync() {
+        static async Task MainAsync() 
+        {
             SetupProcessLogs();
             string token = Config.GetDiscordToken();
-            if(string.IsNullOrEmpty(token)) {
+            if(string.IsNullOrEmpty(token)) 
+            {
                 Logger.Put("Config file is missing a token! Paste your token in and rerun!", Logger.Reason.Fatal);
                 Console.ReadKey();
                 Environment.Exit(0);
@@ -40,6 +45,7 @@ namespace Voidway_Bot {
 
             var slashExtension = discord.UseSlashCommands();
             slashExtension.RegisterCommands<SlashCommands>();
+            slashExtension.RegisterCommands<DebugCommands>();
             slashExtension.RegisterCommands<ContextActions>();
             discord.UseInteractivity(new InteractivityConfiguration()
             {
@@ -49,6 +55,8 @@ namespace Voidway_Bot {
 
             Moderation.HandleModeration(discord);
             ModUploads.HandleModUploads(discord);
+
+            DebugCommands.HandleRelaunch();
 
             await discord.ConnectAsync();
             await Task.Delay(-1);
@@ -72,7 +80,6 @@ namespace Voidway_Bot {
             Console.WriteLine();
             var exc = e.ExceptionObject as Exception;
             Logger.Error(exc?.ToString() ?? "Unknown exception");
-            Console.ReadKey();
             Environment.Exit(0);
         }
 

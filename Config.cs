@@ -1,12 +1,14 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Reflection;
 using Tomlet;
 using Tomlet.Attributes;
 using Tomlet.Models;
 
 namespace Voidway_Bot {
     internal static class Config {
-        private class ConfigValues
+        internal class ConfigValues
         {
             [TomlProperty("token")] // property-ize because otherwise it throws a shitfit
             public string DiscordToken { get; set; } = "";
@@ -49,33 +51,34 @@ namespace Voidway_Bot {
             [TomlPrecedingComment("Renames users to 'hoist' if their nick/name starts with one of these characterss (and is in a specified server). Backslash escape char FYI.")]
             public string hoistCharacters = @"()-+=_][\|;',.<>/?!@#$%^&*"; // literal string literal ftw
             public ulong[] hoistServers = new ulong[] { 13 };
+            [TomlPrecedingComment("Not necessarily able to bypass permissions (like Slash Commands) checks, just able to access debug commands/")]
+            public ulong[] owners = new ulong[] { 14 };
             public string[] ignoreDSharpPlusLogsWith = new string[] { "Unknown event:" }; // "GUILD_JOIN_REQUEST_UPDATE" SHUT THE FUCK UP
         }
 
 		const string FILE_NAME = "config.toml";
 		static readonly FileSystemWatcher watcher;
+        static readonly string activePath;
 		static ConfigValues values;
 
         // static ctor
         static Config()
 		{
-            string path = Path.Combine(AppContext.BaseDirectory, FILE_NAME);
-            Console.WriteLine("Attempting to read config from " + path);
+            activePath = Path.Combine(AppContext.BaseDirectory, FILE_NAME);
+            Console.WriteLine("Attempting to read config from " + activePath);
 
-            if (!File.Exists(path))
+            if (!File.Exists(activePath))
             {
-                TomlDocument doc = TomletMain.DocumentFrom(new ConfigValues());
-                File.WriteAllText(path, doc.SerializedValue);
+                WriteConfig(new ConfigValues()).Wait();
                 Console.WriteLine("Config file wasn't found! An empty one was created, fill it out.");
                 Console.ReadKey();
                 Environment.Exit(0);
             }
 
-			UpdateConfig();
+			LoadConfig();
 
+            WriteConfig(values).Wait();
 			// write new cfg to add new fields
-			string fileContents = TomletMain.DocumentFrom(values).SerializedValue;
-			File.WriteAllText(path, fileContents);
 			Logger.Put("Updated config.");
 			Logger.Put("(Updating config is harmless, just in case things changed between versions, this adds the new fields)", Logger.Reason.Trace);
 			Logger.Put("Starting config watcher.");
@@ -93,15 +96,20 @@ namespace Voidway_Bot {
         {
 			// wait 25ms to avoid race conditions about reading while another process has access
 			await Task.Delay(25);
-			UpdateConfig();
+            try
+            {
+			    LoadConfig();
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn("Exception while live-reloading config file.", ex);
+            }
         }
 
         [MemberNotNull(nameof(values))]
-		private static void UpdateConfig()
+		private static void LoadConfig()
 		{
-            string path = Path.Combine(AppContext.BaseDirectory, FILE_NAME);
-            string fileContents;
-            fileContents = File.ReadAllText(path);
+            string fileContents = File.ReadAllText(activePath);
             values = TomletMain.To<ConfigValues>(fileContents);
             Logger.Put("Retrieved config values.");
         }
@@ -232,6 +240,24 @@ namespace Voidway_Bot {
             }
 
             return false;
+        }
+
+        internal static bool IsUserOwner(ulong id) => values.owners.Contains(id);
+
+        internal static Task ModifyConfig(Action<ConfigValues> changeVia)
+        {
+            StackTrace trace = new(1);
+            MethodBase? mb = trace.GetFrame(0)?.GetMethod();
+            Logger.Put("Config being modified from: " + (mb?.DeclaringType?.FullName ?? "<Unknown type>") + (mb?.Name ?? "<Unknown method>"), Logger.Reason.Trace);
+            changeVia(values);
+            return WriteConfig(values);
+        }
+
+        internal static async Task WriteConfig(ConfigValues cfg)
+        {
+            string fileContents = TomletMain.DocumentFrom(cfg).SerializedValue;
+            await File.WriteAllTextAsync(activePath, fileContents);
+            Logger.Put("Wrote config to disk.");
         }
     }
 }

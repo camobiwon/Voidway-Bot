@@ -5,6 +5,12 @@ using DSharpPlus.Exceptions;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.SlashCommands.Attributes;
+using Emzi0767.Utilities;
+using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 
 namespace Voidway_Bot
 {
@@ -169,16 +175,18 @@ namespace Voidway_Bot
             return now.Add(span * count);
         }
 
+
+
         [SlashCommand("testmodannouncement", "Allows an admin to test mod uploads")]
         [SlashCommandPermissions(Permissions.Administrator)]
         public async Task TestModAnnouncement(
             InteractionContext ctx,
-            [Option("ModID", "Mod.io mod ID")]
+            [Option("modid", "Mod.io mod ID")]
             long modId,
-            [Option("UserID", "Mod.io user ID")]
+            [Option("userid", "Mod.io user ID")]
             long userId
             )
-        {   
+        {
             ModUploads.NotifyNewMod((uint)modId, (uint)userId);
 
             await ctx.CreateResponseAsync($"Tested mod uploads with mod ID {modId} and user ID {userId}", true);

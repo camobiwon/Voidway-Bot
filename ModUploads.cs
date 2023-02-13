@@ -108,7 +108,7 @@ namespace Voidway_Bot {
 
         private static async void UpdateAnnouncements(uint modId)
         {
-			bool hasMessages = announcementMessages.TryGetValue(modId, out List<DiscordMessage>? messages) && messages.Any();
+			bool hasMessages = announcementMessages.TryGetValue(modId, out List<DiscordMessage>? messages) && (messages?.Any() ?? false);
 			if (!hasMessages) return;
 			bool embedsHaveImage = string.IsNullOrEmpty(messages![0].Embeds[0].Image.Url.ToString());
 			if (embedsHaveImage) return;

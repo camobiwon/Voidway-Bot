@@ -3,18 +3,44 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32414.318
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voidway Bot", "Voidway Bot.csproj", "{FD62AC80-514A-445C-9A38-396831E99022}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Voidway Bot", "Voidway Bot.csproj", "{FD62AC80-514A-445C-9A38-396831E99022}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Voidway Bot Relauncher", "Relauncher\Voidway Bot Relauncher.csproj", "{F4C83978-31B7-4E77-A9FE-C1DADD1B91AE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|ARM64 = Debug|ARM64
+		DebugARM|Any CPU = DebugARM|Any CPU
+		DebugARM|ARM64 = DebugARM|ARM64
 		Release|Any CPU = Release|Any CPU
+		Release|ARM64 = Release|ARM64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{FD62AC80-514A-445C-9A38-396831E99022}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FD62AC80-514A-445C-9A38-396831E99022}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD62AC80-514A-445C-9A38-396831E99022}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{FD62AC80-514A-445C-9A38-396831E99022}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{FD62AC80-514A-445C-9A38-396831E99022}.DebugARM|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD62AC80-514A-445C-9A38-396831E99022}.DebugARM|Any CPU.Build.0 = Debug|Any CPU
+		{FD62AC80-514A-445C-9A38-396831E99022}.DebugARM|ARM64.ActiveCfg = Debug|Any CPU
+		{FD62AC80-514A-445C-9A38-396831E99022}.DebugARM|ARM64.Build.0 = Debug|Any CPU
 		{FD62AC80-514A-445C-9A38-396831E99022}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FD62AC80-514A-445C-9A38-396831E99022}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD62AC80-514A-445C-9A38-396831E99022}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{FD62AC80-514A-445C-9A38-396831E99022}.Release|ARM64.Build.0 = Release|Any CPU
+		{F4C83978-31B7-4E77-A9FE-C1DADD1B91AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4C83978-31B7-4E77-A9FE-C1DADD1B91AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4C83978-31B7-4E77-A9FE-C1DADD1B91AE}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{F4C83978-31B7-4E77-A9FE-C1DADD1B91AE}.Debug|ARM64.Build.0 = Debug|ARM64
+		{F4C83978-31B7-4E77-A9FE-C1DADD1B91AE}.DebugARM|Any CPU.ActiveCfg = DebugARM|Any CPU
+		{F4C83978-31B7-4E77-A9FE-C1DADD1B91AE}.DebugARM|Any CPU.Build.0 = DebugARM|Any CPU
+		{F4C83978-31B7-4E77-A9FE-C1DADD1B91AE}.DebugARM|ARM64.ActiveCfg = DebugARM|ARM64
+		{F4C83978-31B7-4E77-A9FE-C1DADD1B91AE}.DebugARM|ARM64.Build.0 = DebugARM|ARM64
+		{F4C83978-31B7-4E77-A9FE-C1DADD1B91AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4C83978-31B7-4E77-A9FE-C1DADD1B91AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4C83978-31B7-4E77-A9FE-C1DADD1B91AE}.Release|ARM64.ActiveCfg = Release|ARM64
+		{F4C83978-31B7-4E77-A9FE-C1DADD1B91AE}.Release|ARM64.Build.0 = Release|ARM64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

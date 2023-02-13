@@ -54,10 +54,10 @@ namespace Voidway_Bot
 
             public Reason() { }
         }
-
         const string PUT_DATE_FORMAT = "hh:mm:sstt"; // example: "12:33:05AM"
         const string FILE_DATE_FORMAT = "yyyy-MM-dd h_m_stt"; // example: "2022-10-23 12_01_47AM"
         readonly static int maxPutDateLength = PUT_DATE_FORMAT.Length;
+        static readonly Queue<string> logStatements = new();
         static readonly StreamWriter logFile;
 
         static Logger()
@@ -98,6 +98,7 @@ namespace Voidway_Bot
 
             string starter = $"[{GetPutTime()}] ";
             string reasonStr = reason.logCaller ? $"{reason.name} @ {GetCaller()}" : reason.name;
+            string fileString = $"{starter}{reasonStr} -> {str}";
 
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.Write(starter);
@@ -113,6 +114,8 @@ namespace Voidway_Bot
                 logFile.WriteLine($"{starter}{reasonStr} -> {str}");
                 logFile.Flush();
             }
+
+            logStatements.Enqueue(fileString);
         }
 
         public static string EnsureShorterThan(string str, int maxLen)
