@@ -89,14 +89,14 @@ namespace Voidway_Bot
                     }
 
                     if (aheadOfRemote)
-                        git.StartInfo.Arguments = $"rev-list {BRANCH_NAME} --not origin/{BRANCH_NAME}";
+                        git.StartInfo.Arguments = $"rev-list {BRANCH_NAME} --not origin/{BRANCH_NAME} --pretty=short";
                     else
-                        git.StartInfo.Arguments = $"rev-list origin/{BRANCH_NAME} --not {BRANCH_NAME}";
+                        git.StartInfo.Arguments = $"rev-list origin/{BRANCH_NAME} --not {BRANCH_NAME} --pretty=short";
                     Logger.Put($"Executing command: {git.StartInfo.FileName} {git.StartInfo.Arguments}", Logger.Reason.Debug);
                     git.Start();
                     git.WaitForExit();
                     commitNames = git.StandardOutput.ReadToEnd().TrimEnd();
-                    Logger.Put($"Output from {git.StartInfo.FileName} {git.StartInfo.Arguments}: {aheadCountOutput}", Logger.Reason.Debug);
+                    Logger.Put($"Output from {git.StartInfo.FileName} {git.StartInfo.Arguments}: {commitNames}", Logger.Reason.Debug);
                 }
                 catch (Exception ex)
                 {
@@ -113,28 +113,29 @@ namespace Voidway_Bot
                     outputMessage.Append(exception.ToString());
                 goto SENDMESSAGE;
             }
-            else outputMessage.AppendLine($"There have been {commitCount} commits since this repository's creation (and likely since last build). ");
+            else outputMessage.AppendLine($"There have been {commitCount} commits since this repository's creation.");
 
             if (string.IsNullOrEmpty(aheadCountOutput))
             {
-                outputMessage.AppendLine("Unable to get remote-to-local commit diff count. ");
+                outputMessage.AppendLine("Unable to get remote-to-local commit diff count.");
                 if (exception is not null)
                     outputMessage.Append(exception.ToString());
                 goto SENDMESSAGE;
             }
-            else outputMessage.AppendLine($"There have been {aheadCountOutput} commits between local and remote (and likely since last build). Local is {(aheadOfRemote ? "ahead of" : "behind")} remote. ");
+            else outputMessage.AppendLine($"There have been {aheadCountOutput} commits between local and remote (and likely since last build). Local is {(aheadOfRemote ? "ahead of" : "behind")} remote.");
 
             if (string.IsNullOrEmpty(commitNames))
             {
-                outputMessage.AppendLine("Unable to get remote-to-local commit diff names. ");
+                outputMessage.AppendLine("Unable to get remote-to-local commit diff names.");
                 if (exception is not null)
                     outputMessage.Append(exception.ToString());
                 goto SENDMESSAGE;
             }
             else
             {
-                var commits = commitNames.Split('\n', StringSplitOptions.TrimEntries).Select(cn => $"({cn[..7]}) - {cn}");
-                outputMessage.AppendLine($"Here's a list of the commits since between the two:\n\t{string.Join("\n\t", commits.ToArray())}");
+                //var commits = commitNames.Split('\n', StringSplitOptions.TrimEntries).Select(cn => $"({cn[..7]}) - {cn}");
+                //outputMessage.AppendLine($"Here's a list of the commits between the two:\n\t{string.Join("\n\t", commits.ToArray())}");
+                outputMessage.AppendLine($"Here's a list of the commits between the two:\n{commitNames}");
             }
 
         // bro this is such shit code never use labels EVER bruh
