@@ -132,7 +132,7 @@ namespace Voidway_Bot {
 
 			DiscordEmbedBuilder baseEmbed = CreateEmbed(mod);
 
-			foreach (DiscordMessage msg in messages)
+			foreach (DiscordMessage msg in messages!)
 			{
                 DiscordEmbedBuilder deb = new(baseEmbed);
 
