@@ -110,7 +110,7 @@ namespace Voidway_Bot {
         {
 			bool hasMessages = announcementMessages.TryGetValue(modId, out List<DiscordMessage>? messages) && (messages?.Any() ?? false);
 			if (!hasMessages) return;
-			bool embedsHaveImage = string.IsNullOrEmpty(messages![0].Embeds[0].Image.Url.ToString());
+			bool embedsHaveImage = !string.IsNullOrEmpty(messages![0].Embeds[0].Image?.Url?.ToString());
 			if (embedsHaveImage) return;
 
 			Mod mod;
