@@ -10,6 +10,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using DSharpPlus.Interactivity.Extensions;
 
 namespace Voidway_Bot
 {
@@ -333,6 +334,32 @@ namespace Voidway_Bot
             }
 
             Logger.Put("Finished relaunch callback.");
+        }
+
+        [SlashCommand("getlogs", "Retrieves the most logs that will fit into a 2000 char message.")]
+        [SlashRequireVoidwayOwner]
+        private static async Task GetLogs(
+            InteractionContext ctx, 
+            [Option("Reverse", "Shows the reverse (start?) of the logs instead of its default order")]
+            bool reverse)
+        {
+            StringBuilder sb = new(2000);
+            if (Logger.logStatements.IsEmpty)
+            {
+                await ctx.CreateResponseAsync("There have been no recent logs.", true);
+                return;
+            }
+
+            Logger.Put($"Dumping logs to {ctx.User.Username}#{ctx.User.Discriminator} (ID={ctx.User.Id}), Reversed?={reverse}");
+
+            var logs = reverse ? Logger.logStatements : Logger.logStatements.Reverse();
+            foreach (string log in logs)
+            {
+                if (log.Length + sb.Length >= 2000) break;
+                sb.AppendLine(log);
+            }
+
+            await ctx.CreateResponseAsync(sb.ToString(), true);
         }
     }
 }
