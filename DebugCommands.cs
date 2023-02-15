@@ -210,7 +210,7 @@ namespace Voidway_Bot
                     relauncherPath = dotnetBuildOutput.Replace("\r\n", "\n").Split('>')[1].Split("\n\n")[0].Trim().Replace("\n  ", "");
                     if (OperatingSystem.IsWindows()) relauncherPath = Path.ChangeExtension(relauncherPath, "exe");
                     else relauncherPath = Path.GetFileNameWithoutExtension(relauncherPath);
-                    
+
                     Logger.Put($"Found relauncher path to be {relauncherPath}", Logger.Reason.Debug);
                 }
                 catch (Exception ex)
@@ -339,7 +339,7 @@ namespace Voidway_Bot
         [SlashCommand("getlogs", "Retrieves the most logs that will fit into a 2000 char message.")]
         [SlashRequireVoidwayOwner]
         private static async Task GetLogs(
-            InteractionContext ctx, 
+            InteractionContext ctx,
             [Option("Reverse", "Shows the reverse (start?) of the logs instead of its default order")]
             bool reverse)
         {
@@ -360,6 +360,16 @@ namespace Voidway_Bot
             }
 
             await ctx.CreateResponseAsync(sb.ToString(), true);
+        }
+
+        [SlashCommand("uptime", "Retrieves the length of time this instance of Voidway Bot has been active for.")]
+        [SlashRequireUserPermissions(Permissions.ManageMessages)]
+        private static async Task GetUptime(InteractionContext ctx)
+        {
+            Process proc = Process.GetCurrentProcess();
+
+            TimeSpan uptime = DateTime.Now - proc.StartTime;
+            await ctx.CreateResponseAsync(uptime.ToString(), true);
         }
     }
 }

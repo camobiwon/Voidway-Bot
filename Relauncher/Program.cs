@@ -4,12 +4,14 @@ namespace Voidway_Bot
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static async void Main(string[] args)
         {
             if (args.Contains("DEBUGGING")) Debugger.Launch();
 
+            await Task.Delay(1000); // wait for main proc to finish closing to release locks
+
             // dont even bother try-catching. if this fails we're basically fucked (and shouldn'tve gotten this far in the first place)
-            string rootFolder = args[0];            
+            string rootFolder = args[0];
             string voidwayBotEntry = args[1];
             string dotnetBuildOutput;
 
