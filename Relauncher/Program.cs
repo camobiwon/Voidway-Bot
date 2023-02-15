@@ -31,12 +31,11 @@ namespace Voidway_Bot
             proc.WaitForExit();
             dotnetBuildOutput = proc.StandardOutput.ReadToEnd();
 
-            proc.StartInfo.FileName = voidwayBotEntry;
             proc.StartInfo.RedirectStandardOutput = false;
             proc.StartInfo.WorkingDirectory = Path.GetDirectoryName(voidwayBotEntry);
             proc.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
             proc.StartInfo.CreateNoWindow = false;
-            proc.StartInfo.Arguments = "";
+            proc.StartInfo.Arguments = "run " + voidwayBotEntry;
             proc.StartInfo.ArgumentList.Add("UPDATED");
             proc.StartInfo.ArgumentList.Add(dotnetBuildOutput);
             proc.StartInfo.ArgumentList.Add(args[2]);
