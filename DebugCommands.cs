@@ -199,7 +199,7 @@ namespace Voidway_Bot
                     dotnetRestoreOutput = proc.StandardOutput.ReadToEnd();
                     Logger.Put($"Output from {proc.StartInfo.FileName} {proc.StartInfo.Arguments}: {dotnetRestoreOutput}", Logger.Reason.Debug);
 
-                    proc.StartInfo.Arguments = "build --sc \"Relauncher/Voidway Bot Relauncher.csproj\"";
+                    proc.StartInfo.Arguments = "build \"Relauncher/Voidway Bot Relauncher.csproj\"";
                     Logger.Put($"Executing command: {proc.StartInfo.FileName} {proc.StartInfo.Arguments}", Logger.Reason.Debug);
                     proc.Start();
                     proc.WaitForExit();
