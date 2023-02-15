@@ -319,8 +319,8 @@ namespace Voidway_Bot
             {
                 string? uid = Bot.Args.FirstOrDefault(arg => ulong.TryParse(arg, out ulong _));
                 string? buildOutput = Bot.Args.FirstOrDefault(arg => arg.Contains("MSBuild version"));
-                if (uid is null || buildOutput is null) return;
-                Logger.Put($"Fetching user w/ ID={Bot.Args[2]} to DM post-restart");
+                if (uid is null) return;
+                Logger.Put($"Fetching user w/ ID={uid} to DM post-restart");
 
                 ulong userId = ulong.Parse(uid);
                 await Bot.CurrClient.GetUserAsync(userId);
@@ -329,7 +329,7 @@ namespace Voidway_Bot
                 DiscordMember member = (DiscordMember)ctor.Invoke(Array.Empty<object>());
                 typeof(DiscordMember).GetProperty("Discord", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(member, Bot.CurrClient);
                 typeof(DiscordMember).GetProperty("Id")!.SetValue(member, userId);
-                await member.SendMessageAsync("Voidway Bot restarted successfully.\n`dotnet build` output:\n" + buildOutput);
+                await member.SendMessageAsync("Voidway Bot restarted successfully.\n`dotnet build` output:\n" + (buildOutput ?? "<none (what?)>"));
             }
             catch (Exception ex)
             {
