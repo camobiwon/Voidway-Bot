@@ -12,7 +12,7 @@ namespace Voidway_Bot
             Thread.Sleep(1000); // ideally id await but apparently main cant be async.
 
             // dont even bother try-catching. if this fails we're basically fucked (and shouldn'tve gotten this far in the first place)
-            string rootFolder = args[0];
+            string rootFolder = args.First(arg => arg.StartsWith("RF=")).Substring("RF=".Length - 1);
             string voidwayBotEntry = args.First(arg => Path.GetFileNameWithoutExtension(arg).EndsWith("Voidway Bot"));
             string dotnetBuildOutput;
 

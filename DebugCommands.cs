@@ -290,7 +290,7 @@ namespace Voidway_Bot
 
             relauncher.StartInfo.ArgumentList.Add("run");
             relauncher.StartInfo.ArgumentList.Add(relauncherPath);
-            relauncher.StartInfo.ArgumentList.Add(rootFolder);
+            relauncher.StartInfo.ArgumentList.Add("RF=" + rootFolder);
             relauncher.StartInfo.ArgumentList.Add(voidwayBotPath);
             relauncher.StartInfo.ArgumentList.Add(ctx.User.Id.ToString());
             if (Debugger.IsAttached) relauncher.StartInfo.ArgumentList.Add("DEBUGGING");
