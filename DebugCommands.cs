@@ -318,8 +318,8 @@ namespace Voidway_Bot
             try
             {
                 string? uid = Bot.Args.FirstOrDefault(arg => ulong.TryParse(arg, out ulong _));
-                string? buildOutput = Bot.Args.FirstOrDefault(arg => arg.Contains("MSBuild version");
-                if (uid is null) return;
+                string? buildOutput = Bot.Args.FirstOrDefault(arg => arg.Contains("MSBuild version"));
+                if (uid is null || buildOutput is null) return;
                 Logger.Put($"Fetching user w/ ID={Bot.Args[2]} to DM post-restart");
 
                 ulong userId = ulong.Parse(uid);

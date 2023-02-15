@@ -38,7 +38,7 @@ namespace Voidway_Bot
             proc.StartInfo.Arguments = "run " + voidwayBotEntry;
             proc.StartInfo.ArgumentList.Add("UPDATED");
             proc.StartInfo.ArgumentList.Add(dotnetBuildOutput);
-            proc.StartInfo.ArgumentList.Add(args.First(arg => ulong.TryParse(arg, out _));
+            proc.StartInfo.ArgumentList.Add(args.First(arg => ulong.TryParse(arg, out _)));
             if (args.Contains("DEBUGGING")) proc.StartInfo.ArgumentList.Add("DEBUGGING");
             proc.Start();
             Environment.Exit(0);
