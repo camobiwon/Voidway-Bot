@@ -17,6 +17,7 @@ namespace Voidway_Bot {
         static void Main(string[] args)
         {
             Args = args;
+            Console.WriteLine($"Initial startup log: Args = [\"{string.Join("\", \"", args)}\"]");
             MainAsync().GetAwaiter().GetResult();
         }
 
