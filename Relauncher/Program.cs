@@ -4,11 +4,12 @@ namespace Voidway_Bot
 {
     internal class Program
     {
-        static async void Main(string[] args)
+        static void Main(string[] args)
         {
             if (args.Contains("DEBUGGING")) Debugger.Launch();
 
-            await Task.Delay(1000); // wait for main proc to finish closing to release locks
+            // wait for main proc to finish closing to release locks
+            Thread.Sleep(1000); // ideally id await but apparently main cant be async.
 
             // dont even bother try-catching. if this fails we're basically fucked (and shouldn'tve gotten this far in the first place)
             string rootFolder = args[0];

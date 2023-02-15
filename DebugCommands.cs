@@ -273,7 +273,7 @@ namespace Voidway_Bot
             };
             await ctx.EditResponseAsync(dwb);
 
-            if (exception is not null) return;
+            if (exception is not null || dotnetBuildOutput.Contains("Build FAILED.")) return;
 
             Process relauncher = new()
             {
