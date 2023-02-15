@@ -279,7 +279,7 @@ namespace Voidway_Bot
             {
                 StartInfo = new()
                 {
-                    FileName = "dotnet",
+                    FileName = relauncherPath,
                     CreateNoWindow = false
                 }
             };
@@ -288,9 +288,7 @@ namespace Voidway_Bot
             if (OperatingSystem.IsWindows()) voidwayBotPath = Path.ChangeExtension(voidwayBotPath, "exe");
             else voidwayBotPath = Path.GetFileNameWithoutExtension(voidwayBotPath);
 
-            relauncher.StartInfo.ArgumentList.Add("run");
-            relauncher.StartInfo.ArgumentList.Add(relauncherPath);
-            relauncher.StartInfo.ArgumentList.Add("RF=" + rootFolder);
+            relauncher.StartInfo.ArgumentList.Add("RF="rootFolder);
             relauncher.StartInfo.ArgumentList.Add(voidwayBotPath);
             relauncher.StartInfo.ArgumentList.Add(ctx.User.Id.ToString());
             if (Debugger.IsAttached) relauncher.StartInfo.ArgumentList.Add("DEBUGGING");
