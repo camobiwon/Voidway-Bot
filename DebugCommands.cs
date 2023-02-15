@@ -302,7 +302,7 @@ namespace Voidway_Bot
 
         public static void HandleRelaunch()
         {
-            if (Bot.Args.Length == 0 || Bot.Args[0] != "UPDATED") return;
+            if (Bot.Args.Length == 0 || !Bot.Args.Contains("UPDATED")) return;
 
             // do insane arg passing to pass debugger state between processes and restarts
             if (Bot.Args.Contains("DEBUGGING")) Debugger.Launch();
@@ -317,18 +317,19 @@ namespace Voidway_Bot
             // readback args passed from relauncher process
             try
             {
-                if (Bot.Args.Length < 3) throw new IndexOutOfRangeException("Bot was not started with enough arguments.");
-
+                string? uid = Bot.Args.FirstOrDefault(arg => ulong.TryParse(arg, out ulong _));
+                string? buildOutput = Bot.Args.FirstOrDefault(arg => arg.Contains("MSBuild version");
+                if (uid is null) return;
                 Logger.Put($"Fetching user w/ ID={Bot.Args[2]} to DM post-restart");
 
-                ulong userId = ulong.Parse(Bot.Args[2]);
+                ulong userId = ulong.Parse(uid);
                 await Bot.CurrClient.GetUserAsync(userId);
                 // have to do this bullshit to be able to DM the user
                 ConstructorInfo ctor = typeof(DiscordMember).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, Array.Empty<Type>())!;
                 DiscordMember member = (DiscordMember)ctor.Invoke(Array.Empty<object>());
                 typeof(DiscordMember).GetProperty("Discord", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(member, Bot.CurrClient);
                 typeof(DiscordMember).GetProperty("Id")!.SetValue(member, userId);
-                await member.SendMessageAsync("Voidway Bot restarted successfully.\n`dotnet build` output:\n" + Bot.Args[1]);
+                await member.SendMessageAsync("Voidway Bot restarted successfully.\n`dotnet build` output:\n" + buildOutput);
             }
             catch (Exception ex)
             {

@@ -13,7 +13,7 @@ namespace Voidway_Bot
 
             // dont even bother try-catching. if this fails we're basically fucked (and shouldn'tve gotten this far in the first place)
             string rootFolder = args[0];
-            string voidwayBotEntry = args[1];
+            string voidwayBotEntry = args.First(arg => Path.GetFileNameWithoutExtension(arg).EndsWith("Voidway Bot"));
             string dotnetBuildOutput;
 
             Process proc = new()
@@ -38,7 +38,7 @@ namespace Voidway_Bot
             proc.StartInfo.Arguments = "run " + voidwayBotEntry;
             proc.StartInfo.ArgumentList.Add("UPDATED");
             proc.StartInfo.ArgumentList.Add(dotnetBuildOutput);
-            proc.StartInfo.ArgumentList.Add(args[2]);
+            proc.StartInfo.ArgumentList.Add(args.First(arg => ulong.TryParse(arg, out _));
             if (args.Contains("DEBUGGING")) proc.StartInfo.ArgumentList.Add("DEBUGGING");
             proc.Start();
             Environment.Exit(0);
