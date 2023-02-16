@@ -38,8 +38,6 @@ namespace Voidway_Bot {
                     "10", new() { { nameof(ModUploads.UploadType.Avatar), 11 } } 
                 } 
             };
-            [TomlPrecedingComment("RoleID list")]
-			public ulong[] rolesExemptFromLogging = Array.Empty<ulong>(); // ExemptRoleLog isnt called anywhere... does this need to exist?
 			[TomlPrecedingComment("Will hide image & desc of mod announcements when posted in these servers AS LONG AS THEY MATCH THE SPECIFIED CRITERIA")]
 			public ulong[] censorModAnnouncementsIn = new ulong[] { 12 };
 			[TomlPrecedingComment("Determines if 'All' criteria, or just 'One' criterion must be met before a mod's announcement is censored. All criteria are in LOWERCASE, and can be set to '*' to match every mod (for censorCriteriaBehavior = All)")]
@@ -51,8 +49,17 @@ namespace Voidway_Bot {
             [TomlPrecedingComment("Renames users to 'hoist' if their nick/name starts with one of these characterss (and is in a specified server). Backslash escape char FYI.")]
             public string hoistCharacters = @"()-+=_][\|;',.<>/?!@#$%^&*"; // literal string literal ftw
             public ulong[] hoistServers = new ulong[] { 13 };
+            [TomlPrecedingComment("Deletes activity join invites in these servers.")]
+            public ulong[] msgFilterServers = new ulong[] { 14 };
+            [TomlPrecedingComment("Allows the invites in these channels, even if they're in a filtering server.")]
+            public ulong[] msgFilterExceptions = new ulong[] { 15 };
+            [TomlPrecedingComment("The invites to send when filtering someone's message.")]
+            public string[] sendWhenFilterMessage = new string[] { "discord.gg/real" };
+            [TomlPrecedingComment("The time between sending a message filter response to sending another message filter response, if someone else posts a new invite, and the time to leave the message up.")]
+            public int msgFilterMessageTimeout = 60;
+            public int msgFilterMessageStayTime = 10;
             [TomlPrecedingComment("Not necessarily able to bypass permissions (like Slash Commands) checks, just able to access debug commands/")]
-            public ulong[] owners = new ulong[] { 14 };
+            public ulong[] owners = new ulong[] { 16 };
             public string[] ignoreDSharpPlusLogsWith = new string[] { "Unknown event:" }; // "GUILD_JOIN_REQUEST_UPDATE" SHUT THE FUCK UP
         }
 
@@ -122,6 +129,9 @@ namespace Voidway_Bot {
         internal static string GetLogPath() => Path.GetFullPath(values.logPath);
 		internal static ModUploads.CensorCriteriaBehavior GetCriteriaBehavior() => values.censorCriteriaBehavior;
 		internal static bool GetIgnoreTagspam() => values.ignoreTagspamMods;
+        internal static int GetFilterResponseTimeout() => values.msgFilterMessageTimeout;
+        internal static string[] GetFilterInvites() => values.sendWhenFilterMessage;
+        internal static int GetFilterResponseStayTime() => values.msgFilterMessageStayTime;
         internal static string GetDiscordToken() => values.DiscordToken;
 		internal static (string, string) GetModioTokens() => (values.modioToken, values.modioOAuth);
 
@@ -141,10 +151,6 @@ namespace Voidway_Bot {
 				Logger.Warn("Config values don't have a messages channel for the given guild ID: " + guild);
                 return default;
             }
-        }
-
-        internal static bool ExemptRoleLog(ulong roleID) {
-            return values.rolesExemptFromLogging.Contains(roleID);
         }
 
 		internal static ulong FetchAllModsChannel(ulong guild) {
@@ -179,6 +185,16 @@ namespace Voidway_Bot {
         internal static bool IsHoistServer(ulong guild)
         {
             return values.hoistServers.Contains(guild);
+        }
+
+        internal static bool IsFilterMessageServer(ulong guild)
+        {
+            return values.msgFilterServers.Contains(guild);
+        }
+
+        internal static bool IsMessageAllowedChannel(ulong guild)
+        {
+            return values.msgFilterExceptions.Contains(guild);
         }
 
         internal static bool IsHoistMember(char firstChar)

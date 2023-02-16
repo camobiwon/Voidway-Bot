@@ -386,7 +386,7 @@ namespace Voidway_Bot
             Process proc = Process.GetCurrentProcess();
 
             TimeSpan uptime = DateTime.Now - proc.StartTime;
-            await ctx.CreateResponseAsync(uptime.ToString(), true);
+            await ctx.CreateResponseAsync($"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s", true);
         }
     }
 }

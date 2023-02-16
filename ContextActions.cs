@@ -5,6 +5,7 @@ using DSharpPlus.Exceptions;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.SlashCommands.Attributes;
+using System.Threading;
 
 namespace Voidway_Bot
 {
@@ -26,6 +27,7 @@ namespace Voidway_Bot
 
         [ContextMenu(ApplicationCommandType.MessageContextMenu, "Thread owner: Pin message", true)]
         [SlashRequireBotPermissions(Permissions.ManageMessages)]
+        [SlashRequireThreadOwner]
         public async Task PinThreadMessage(ContextMenuContext ctx)
         {
             if (!Config.GetThreadCreatorPinMessages())
@@ -34,37 +36,6 @@ namespace Voidway_Bot
                 {
                     IsEphemeral = true,
                     Content = "Thread creators aren't permitted to pin messages in their threads. Ask a moderator to pin that message.",
-                });
-                return;
-            }
-
-            if (ctx.Channel is not DiscordThreadChannel thread)
-            {
-                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
-                {
-                    IsEphemeral = true,
-                    Content = "This isn't a thread channel!",
-                });
-                return;
-            }
-            DiscordUser? user = thread.Users.FirstOrDefault(tm => tm.Id == ctx.User.Id);
-
-            if (user is null)
-            {
-                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
-                {
-                    IsEphemeral = true,
-                    Content = "You aren't in this thread.... What?",
-                });
-                return;
-            }
-
-            if (user.Id != thread.CreatorId)
-            {
-                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
-                {
-                    IsEphemeral = true,
-                    Content = "This isn't your thread!",
                 });
                 return;
             }
@@ -83,8 +54,50 @@ namespace Voidway_Bot
                 res = $"Unable to pin that message. Tell the developer: {ex.GetType().FullName}";
                 Logger.Error
                     (
-                        $"Unable to pin message '{Logger.EnsureShorterThan(ctx.TargetMessage.Content, 50)}' by {author.Username}#{author.Discriminator} in #{thread.Parent?.Name ?? "<NOPARENT>"}->'{thread.Name}'\n\t" +
-                        $"(AuthorId={author.Id}; MsgId={ctx.TargetMessage.Id}; ReqBy {ctx.User.Username}#{ctx.User.Discriminator} Id={ctx.User.Id}, ThreadId={thread.Id})",
+                        $"Unable to pin message '{Logger.EnsureShorterThan(ctx.TargetMessage.Content, 50)}' by {author.Username}#{author.Discriminator} in #{ctx.Channel.Parent?.Name ?? "<NOPARENT>"}->'{ctx.Channel.Name}'\n\t" +
+                        $"(AuthorId={author.Id}; MsgId={ctx.TargetMessage.Id}; ReqBy {ctx.User.Username}#{ctx.User.Discriminator} Id={ctx.User.Id}, ThreadId={ctx.Channel.Id})",
+                        ex
+                    );
+            }
+
+            await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+            {
+                IsEphemeral = true,
+                Content = res
+            });
+        }
+
+        [ContextMenu(ApplicationCommandType.MessageContextMenu, "Thread owner: Unpin message", true)]
+        [SlashRequireBotPermissions(Permissions.ManageMessages)]
+        [SlashRequireThreadOwner]
+        public async Task UnpinThreadMessage(ContextMenuContext ctx)
+        {
+            if (!Config.GetThreadCreatorPinMessages())
+            {
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+                {
+                    IsEphemeral = true,
+                    Content = "Thread creators aren't permitted to unpin messages in their threads. Ask a moderator to pin that message.",
+                });
+                return;
+            }
+
+            //DiscordThreadChannelMember threadCreator = thread.user.OrderBy(tm => tm.JoinedAt).First();
+
+            string res = "Pinned!";
+
+            try
+            {
+                await ctx.TargetMessage.PinAsync();
+            }
+            catch (DiscordException ex)
+            {
+                DiscordUser author = ctx.TargetMessage.Author;
+                res = $"Unable to unpin that message. Tell the developer: {ex.GetType().FullName}";
+                Logger.Error
+                (
+                $"Unable to unpin message '{Logger.EnsureShorterThan(ctx.TargetMessage.Content, 50)}' by {author.Username}#{author.Discriminator} in #{ctx.Channel.Parent?.Name ?? "<NOPARENT>"}->'{ctx.Channel.Name}'\n\t" +
+                $"(AuthorId={author.Id}; MsgId={ctx.TargetMessage.Id}; ReqBy {ctx.User.Username}#{ctx.User.Discriminator} Id={ctx.User.Id}, ThreadId={ctx.Channel.Id})",
                         ex
                     );
             }
@@ -98,45 +111,15 @@ namespace Voidway_Bot
 
         [ContextMenu(ApplicationCommandType.MessageContextMenu, "Thread owner: Delete message", true)]
         [SlashRequireBotPermissions(Permissions.ManageMessages)]
+        [SlashRequireThreadOwner]
         public async Task DeleteThreadMessage(ContextMenuContext ctx)
         {
-            if (!Config.GetThreadCreatorPinMessages())
+            if (!Config.GetThreadCreatorDeleteMessages())
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
                 {
                     IsEphemeral = true,
                     Content = "Thread creators aren't permitted to delete messages in their threads. Ask a moderator to pin that message.",
-                });
-                return;
-            }
-
-            if (ctx.Channel is not DiscordThreadChannel thread)
-            {
-                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
-                {
-                    IsEphemeral = true,
-                    Content = "This isn't a thread channel!",
-                });
-                return;
-            }
-            DiscordUser? user = thread.Users.FirstOrDefault(tm => tm.Id == ctx.User.Id);
-
-            if (user is null)
-            {
-                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
-                {
-                    IsEphemeral = true,
-                    Content = "You aren't in this thread.... What?",
-                });
-                return;
-            }
-
-            if (user.Id != thread.CreatorId)
-            {
-                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
-                {
-                    IsEphemeral = true,
-                    Content = "This isn't your thread!",
                 });
                 return;
             }
@@ -152,11 +135,11 @@ namespace Voidway_Bot
             catch (DiscordException ex)
             {
                 DiscordUser author = ctx.TargetMessage.Author;
-                res = $"Unable to pin that message. Tell the developer: {ex.GetType().FullName}";
+                res = $"Unable to delete that message. Tell the developer: {ex.GetType().FullName}";
                 Logger.Error
                     (
-                        $"Unable to delete message '{Logger.EnsureShorterThan(ctx.TargetMessage.Content, 50)}' by {author.Username}#{author.Discriminator} in #{thread.Parent?.Name ?? "<NOPARENT>"}->'{thread.Name}'\n\t" +
-                        $"(AuthorId={author.Id}; MsgId={ctx.TargetMessage.Id}; ReqBy {ctx.User.Username}#{ctx.User.Discriminator} Id={ctx.User.Id}, ThreadId={thread.Id})",
+                        $"Unable to delete message '{Logger.EnsureShorterThan(ctx.TargetMessage.Content, 50)}' by {author.Username}#{author.Discriminator} in #{ctx.Channel.Parent?.Name ?? "<NOPARENT>"}->'{ctx.Channel.Name}'\n\t" +
+                        $"(AuthorId={author.Id}; MsgId={ctx.TargetMessage.Id}; ReqBy {ctx.User.Username}#{ctx.User.Discriminator} Id={ctx.User.Id}, ThreadId={ctx.Channel.Id})",
                         ex
                     );
             }

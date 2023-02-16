@@ -48,6 +48,7 @@ namespace Voidway_Bot {
             slashExtension.RegisterCommands<SlashCommands>();
             slashExtension.RegisterCommands<DebugCommands>();
             slashExtension.RegisterCommands<ContextActions>();
+            slashExtension.RegisterCommands<ConfigCommands>();
             discord.UseInteractivity(new InteractivityConfiguration()
             {
                 Timeout = TimeSpan.FromSeconds(30)
@@ -56,6 +57,7 @@ namespace Voidway_Bot {
 
             Moderation.HandleModeration(discord);
             ModUploads.HandleModUploads(discord);
+            MessageBlocker.HandleMessages(discord);
 
             DebugCommands.HandleRelaunch();
 
