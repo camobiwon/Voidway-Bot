@@ -51,8 +51,9 @@ namespace Voidway_Bot
             [SlashRequireVoidwayOwner]
             public Task HoistServers(InteractionContext ctx,
                                     [Option("index", "List idx to replace, or nothing to read vals. Use a num >= list length to append value")] long? idx = default,
-                                    [Option("value", "value to set, or nothing to remove the value at the given index")] long value = 0)
+                                    [Option("value", "value to set, or nothing to remove the value at the given index")] string _value = "")
             {
+                bool parseSuccess = ulong.TryParse(_value, out ulong value);
                 if (!idx.HasValue)
                 {
                     ulong[] summaries = Array.Empty<ulong>();
@@ -63,7 +64,7 @@ namespace Voidway_Bot
 
                 Config.ModifyConfig(cv =>
                 {
-                    cv.hoistServers = ModifyOrExpand(cv.hoistServers, (int)idx.Value, (ulong)value, value != 0);
+                    cv.hoistServers = ModifyOrExpand(cv.hoistServers, (int)idx.Value, value, !parseSuccess);
                 });
 
                 return ctx.CreateResponseAsync("Done!", true);
@@ -160,8 +161,9 @@ namespace Voidway_Bot
             [SlashRequireVoidwayOwner]
             public Task FilterServers(InteractionContext ctx, 
                                           [Option("index", "List idx to replace, or nothing to read vals. Use a num >= list length to append value")] long? idx = default,
-                                          [Option("value", "value to set, or nothing to remove the value at the given index")] long value = 0)
+                                          [Option("value", "value to set, or nothing to remove the value at the given index")] string _value = "")
             {
+                bool parseSuccess = ulong.TryParse(_value, out ulong value);
                 if (!idx.HasValue)
                 {
                     ulong[] summaries = Array.Empty<ulong>();
@@ -172,7 +174,7 @@ namespace Voidway_Bot
 
                 Config.ModifyConfig(cv =>
                 {
-                    cv.msgFilterServers = ModifyOrExpand(cv.msgFilterServers, (int)idx.Value, (ulong)value, value != 0);
+                    cv.msgFilterServers = ModifyOrExpand(cv.msgFilterServers, (int)idx.Value, value, !parseSuccess);
                 });
 
                 return ctx.CreateResponseAsync("Done!", true);
@@ -182,8 +184,9 @@ namespace Voidway_Bot
             [SlashRequireVoidwayOwner]
             public Task FilterExceptions(InteractionContext ctx,
                                           [Option("index", "List idx to replace, or nothing to read vals. Use a num >= list length to append value")] long? idx = default,
-                                          [Option("value", "value to set, or nothing to remove the value at the given index")] long value = 0)
+                                          [Option("value", "value to set, or nothing to remove the value at the given index")] string _value = "")
             {
+                bool parseSuccess = ulong.TryParse(_value, out ulong value);
                 if (!idx.HasValue)
                 {
                     ulong[] summaries = Array.Empty<ulong>();
@@ -194,7 +197,7 @@ namespace Voidway_Bot
 
                 Config.ModifyConfig(cv =>
                 {
-                    cv.msgFilterExceptions = ModifyOrExpand(cv.msgFilterExceptions, (int)idx.Value, (ulong)value, value != 0);
+                    cv.msgFilterExceptions = ModifyOrExpand(cv.msgFilterExceptions, (int)idx.Value, value, !parseSuccess);
                 });
 
                 return ctx.CreateResponseAsync("Done!", true);
