@@ -1,4 +1,5 @@
-﻿using DSharpPlus.Entities;
+﻿using System.Linq.Expressions;
+using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus;
 using DSharpPlus.SlashCommands;
@@ -209,7 +210,7 @@ namespace Voidway_Bot
                     // and stop before line: "Build succeeded."
                     relauncherPath = dotnetBuildOutput.Replace("\r\n", "\n").Split('>')[1].Split("\n\n")[0].Trim().Replace("\n  ", "");
                     if (OperatingSystem.IsWindows()) relauncherPath = Path.ChangeExtension(relauncherPath, "exe");
-                    else relauncherPath = Path.GetFileNameWithoutExtension(relauncherPath);
+                    else relauncherPath = Path.ChangeExtension(relauncherPath, null).TrimEnd('.');
 
                     Logger.Put($"Found relauncher path to be {relauncherPath}", Logger.Reason.Debug);
                 }
@@ -286,14 +287,29 @@ namespace Voidway_Bot
 
             string voidwayBotPath = entryPoint.Location;
             if (OperatingSystem.IsWindows()) voidwayBotPath = Path.ChangeExtension(voidwayBotPath, "exe");
-            else voidwayBotPath = Path.GetFileNameWithoutExtension(voidwayBotPath);
+            else voidwayBotPath = Path.ChangeExtension(voidwayBotPath, null).TrimEnd('.');
 
-            relauncher.StartInfo.ArgumentList.Add("RF="rootFolder);
+            relauncher.StartInfo.ArgumentList.Add("RF=" + rootFolder);
             relauncher.StartInfo.ArgumentList.Add(voidwayBotPath);
             relauncher.StartInfo.ArgumentList.Add(ctx.User.Id.ToString());
             if (Debugger.IsAttached) relauncher.StartInfo.ArgumentList.Add("DEBUGGING");
             Logger.Put($"Created relauncher process, not yet started. The following command will be ran: {relauncher.StartInfo.FileName} \"{string.Join("\" ", relauncher.StartInfo.ArgumentList)}\"", Logger.Reason.Debug);
-            relauncher.Start();
+            try 
+            {
+                relauncher.Start();
+            }
+            catch(Exception ex)
+            {
+                Logger.Error("Exception thrown when attemping to start relauncher process, aborting!", ex);
+                DiscordFollowupMessageBuilder dfmb = new()
+                {
+                    Content = "Exception thrown when attempting to start relauncher process, aborting:\n\t" + ex.ToString(),
+                    IsEphemeral = true,
+                };
+                await ctx.FollowUpAsync(dfmb);
+                return;
+            }
+
             Logger.Put("Relauncher process started. The current bot process will now exit.");
             Environment.Exit(0);
         }
