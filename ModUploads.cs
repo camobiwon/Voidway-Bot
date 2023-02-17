@@ -164,7 +164,7 @@ namespace Voidway_Bot {
         internal static async void NotifyNewMod(uint modId, uint userId)
 		{
 			// give the uploader 60 extra seconds to upload a thumbnail/change metadata/add tags
-			await Task.Delay(15 * 1000);
+			await Task.Delay(60 * 1000);
 			if (uploadChannels is null || uploadChannels.Count is 0) FallbackGetChannels();
 
 			ModClient newMod = bonelabMods[modId];
@@ -206,8 +206,8 @@ namespace Voidway_Bot {
             }
 
 			await PostAnnouncements(modData, uploadType);
-			// force recheck after 1min, thanks modio api for working predictably :) (SARCASM)
-			await Task.Delay(60000);
+			// force recheck after 5min, thanks modio api for working predictably :) (SARCASM)
+			await Task.Delay(5 * 60 * 1000);
             UpdateAnnouncements(modId);
         }
 
