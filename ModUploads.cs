@@ -287,7 +287,7 @@ namespace Voidway_Bot {
 
         private static DiscordEmbedBuilder CreateEmbed(Mod mod)
         {
-            string? image = mod.Media.Images.FirstOrDefault()?.Original?.ToString();
+            string? image = mod.Logo?.Thumb640x360?.OriginalString ?? mod.Media.Images.FirstOrDefault()?.Original?.ToString();
             DiscordEmbedBuilder.EmbedAuthor? author = mod.SubmittedBy is not null
                 ? new DiscordEmbedBuilder.EmbedAuthor()
                 {
