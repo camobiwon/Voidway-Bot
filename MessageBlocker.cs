@@ -2,6 +2,7 @@
 using DSharpPlus.Entities;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Channels;
@@ -15,13 +16,12 @@ namespace Voidway_Bot
     {
         static Dictionary<ulong, DateTime> lastResponseTimes = new();
 
-
         internal static void HandleMessages(DiscordClient client)
         {
-            client.MessageCreated += FilterMessage;
+            client.MessageCreated += (_, e) => { FilterMessage(e); return Task.CompletedTask; };
         }
 
-        private static async Task FilterMessage(DiscordClient sender, DSharpPlus.EventArgs.MessageCreateEventArgs e)
+        private static async void FilterMessage(DSharpPlus.EventArgs.MessageCreateEventArgs e)
         {
             if (e.Message.Channel.GuildId is null || e.Guild is null) return;
             if (e.Guild.Permissions is null) return;
@@ -34,7 +34,10 @@ namespace Voidway_Bot
                 Logger.Put($"Deleting message '{Logger.EnsureShorterThan(e.Message.Content, 50)}' by {author} {application}", Logger.Reason.Debug);
 
                 await TryDelete(e.Message);
+                
+                bool messageSuccess = await TryMessage((DiscordMember)e.Message.Author, e.Guild);
 
+                if (messageSuccess) return;
                 await SendAndDeleteInvites(e.Channel);
             }
         }
@@ -53,6 +56,22 @@ namespace Voidway_Bot
             }
         }
 
+        static async Task<bool> TryMessage(DiscordMember author, DiscordGuild guild)
+        {
+                string authorStr = $"{author.Username}#{author.Discriminator} (ID={author.Id})";
+            try
+            {
+                await author.SendMessageAsync($"Hey, I saw you posted an invite to a multiplayer game (probably BLMP, BWMP, or Fusion) in {guild.Name}. I'm sorry, but that isn't allowed, however you can find people to play with in these servers instead:\n{string.Join("\n", Config.GetFilterInvites())}");
+                Logger.Put($"Sent message to {authorStr} in asking to not post invites in {guild.Name}.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Exception while trying to DM {authorStr} from guild {guild.Name}", ex);
+                return false;
+            }
+        }
+
         static async Task SendAndDeleteInvites(DiscordChannel channel)
         {
             if (lastResponseTimes.TryGetValue(channel.GuildId!.Value, out DateTime time))
@@ -61,17 +80,16 @@ namespace Voidway_Bot
                 if (time + TimeSpan.FromSeconds(Config.GetFilterResponseTimeout()) > DateTime.Now)
                     return;
             }
-            else
-            {
-                lastResponseTimes[channel.GuildId!.Value] = DateTime.Now;
-            }
+            
+            lastResponseTimes[channel.GuildId!.Value] = DateTime.Now;
 
-            string channelName = channel.Parent is DiscordThreadChannel thread ? $"{channel.Parent.Name}->{channel.Name}" : channel.Name;
+            string channelName = channel.Parent is DiscordThreadChannel ? $"{channel.Parent.Name}->{channel.Name}" : channel.Name;
             Logger.Put($"Sending and deleting invites (in {Config.GetFilterResponseTimeout()}s) in {channelName}", Logger.Reason.Debug);
 
             try
             {
                 DiscordMessage msg = await channel.SendMessageAsync($"Do not send invites in this server. You can find people to play with in these servers instead:\n{string.Join("\n", Config.GetFilterInvites())}");
+                Logger.Put($"Sent message to #{channel.Name} in {channel.Guild.Name} asking to not post invites.");
                 DeleteLater(msg);
             }
             catch(Exception ex)
