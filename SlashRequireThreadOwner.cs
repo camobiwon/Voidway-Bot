@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace Voidway_Bot
 {
-    internal class SlashRequireThreadOwner : SlashCheckBaseAttribute
+    internal class SlashRequireThreadOwner : ContextMenuCheckBaseAttribute
     {
-        public override Task<bool> ExecuteChecksAsync(InteractionContext ctx)
+        public override Task<bool> ExecuteChecksAsync(ContextMenuContext ctx)
         {
             if (ctx.Channel is not DiscordThreadChannel thread)
                 return Task.FromResult(false);
