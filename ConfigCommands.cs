@@ -253,6 +253,36 @@ namespace Voidway_Bot
             }
         }
 
+        [SlashCommandGroup("threadOwner", "Values related to actions thread owners can perform")]
+        private class ThreadOwner : ApplicationCommandModule
+        {
+            [SlashCommand(nameof(Config.ConfigValues.threadCreatorDeleteMessages), "Get / set a config value")]
+            [SlashRequireVoidwayOwner]
+            public Task ThreadCreatorDeleteMessages(InteractionContext ctx, [Option("Value", "The value to assign, or nothing to retrieve the value.")] bool? value = default)
+            {
+                if (value.HasValue)
+                {
+                    Config.ModifyConfig(cv => cv.threadCreatorDeleteMessages = value.Value);
+                    return ctx.CreateResponseAsync("Done!", true);
+                }
+
+                return ctx.CreateResponseAsync(Config.GetThreadCreatorDeleteMessages().ToString(), true);
+            }
+
+            [SlashCommand(nameof(Config.ConfigValues.threadCreatorPinMessages), "Get / set a config value")]
+            [SlashRequireVoidwayOwner]
+            public Task ThreadCreatorPinMessages(InteractionContext ctx, [Option("Value", "The value to assign, or nothing to retrieve the value.")] bool? value = default)
+            {
+                if (value.HasValue)
+                {
+                    Config.ModifyConfig(cv => cv.threadCreatorPinMessages = value.Value);
+                    return ctx.CreateResponseAsync("Done!", true);
+                }
+
+                return ctx.CreateResponseAsync(Config.GetThreadCreatorPinMessages().ToString(), true);
+            }
+        }
+
         private static T[] ModifyOrExpand<T>(T[] arr, int idx, T value, bool remove)
         {
             if (idx >= arr.Length)
