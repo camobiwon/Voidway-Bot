@@ -253,8 +253,8 @@ namespace Voidway_Bot
             }
         }
 
-        [SlashCommandGroup("threadOwner", "Values related to actions thread owners can perform")]
-        private class ThreadOwner : ApplicationCommandModule
+        [SlashCommandGroup("threadCreator", "Values related to actions thread owners can perform")]
+        private class ThreadCreator : ApplicationCommandModule
         {
             [SlashCommand(nameof(Config.ConfigValues.threadCreatorDeleteMessages), "Get / set a config value")]
             [SlashRequireVoidwayOwner]
