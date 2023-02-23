@@ -11,7 +11,7 @@ namespace Voidway_Bot
     [SlashCommandGroup("config", "Modify or retrieve configuration values")]
     internal class ConfigCommands : ApplicationCommandModule
     {
-        [SlashCommandGroup("misc", "Other unrelated values")]
+        [SlashCommandGroup("discordlog", "Values relating to D#+'s annoying ass log spamming")]
         private class Miscellaneous : ApplicationCommandModule
         {
             [SlashCommand(nameof(Config.ConfigValues.logDiscordDebug), "Get / set a config value")]
@@ -26,6 +26,28 @@ namespace Voidway_Bot
             
             return ctx.CreateResponseAsync(Config.GetLogDiscordDebug().ToString(), true);
         }
+
+            [SlashCommand(nameof(Config.ConfigValues.ignoreDSharpPlusLogsWith), "Get / set a config value")]
+            [SlashRequireVoidwayOwner]
+            public Task IgnoreDiscordLogs(InteractionContext ctx,
+                                          [Option("index", "List idx to replace, or nothing to read vals. Use a num >= list length to append value")] long? idx = default,
+                                          [Option("value", "value to set, or nothing to remove the value at the given index")] string value = "")
+            {
+                if (!idx.HasValue)
+                {
+                    string[] summaries = Array.Empty<string>();
+                    Config.ModifyConfig(cv => summaries = cv.ignoreDSharpPlusLogsWith);
+
+                    return ctx.CreateResponseAsync($"[\n\t{string.Join("\n\t", summaries)}\n]", true);
+                }
+
+                Config.ModifyConfig(cv =>
+                {
+                    cv.ignoreDSharpPlusLogsWith = ModifyOrExpand(cv.ignoreDSharpPlusLogsWith, (int)idx.Value, value, string.IsNullOrEmpty(value));
+                });
+
+                return ctx.CreateResponseAsync("Done!", true);
+            }
         }
 
 
