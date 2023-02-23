@@ -96,7 +96,7 @@ namespace Voidway_Bot {
 
         private static Task DirectMessageHandler(DiscordClient sender, MessageCreateEventArgs e)
         {
-            if (e.Channel.IsPrivate)
+            if (e.Channel.IsPrivate && e.Author.Id != sender.CurrentUser.Id) // ignore messages from self
             {
                 Logger.Put($"DM from {e.Author.Username}#{e.Author.Discriminator} ({e.Author.Id}): {e.Message.Content}");
                 if (e.Message.Attachments.Count != 0)
