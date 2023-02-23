@@ -23,8 +23,8 @@ namespace Voidway_Bot
 
         private static async void FilterMessage(DSharpPlus.EventArgs.MessageCreateEventArgs e)
         {
-            if (e.Message.Channel.GuildId is null || e.Guild is null) return;
-            if (e.Channel.PermissionsFor((DiscordMember)e.Author).HasPermission(Permissions.ManageMessages)) return;
+            if (e.Message.Channel.GuildId is null || e.Guild is null || e.Author is not DiscordMember member) return;
+            if (e.Channel.PermissionsFor(member).HasPermission(Permissions.ManageMessages)) return;
 
             if (IsFiltered(e.Message))
             {
@@ -34,7 +34,7 @@ namespace Voidway_Bot
 
                 await TryDelete(e.Message);
                 
-                bool messageSuccess = await TryMessage((DiscordMember)e.Message.Author, e.Guild);
+                bool messageSuccess = await TryMessage(member, e.Guild);
 
                 if (messageSuccess) return;
                 await SendAndDeleteInvites(e.Channel);
