@@ -153,15 +153,23 @@ namespace Voidway_Bot {
             //AuditLogActionType? alat = (AuditLogActionType?)auditLogType;
             //await Task.Delay(250);
 
-            for (int i = 1; i < Config.GetAuditLogRetryCount() + 1; i++)
+            int _iteration = 0;
+            try
             {
-
-                foreach (DiscordAuditLogEntry auditLogEntry in await guild.GetAuditLogsAsync(i/*, null, alat*/))
+                for (int i = 1; i < Config.GetAuditLogRetryCount() + 1; i++)
                 {
-                    if (predicate(auditLogEntry)) return auditLogEntry;
-                }
+                    _iteration++;
+                    foreach (DiscordAuditLogEntry auditLogEntry in await guild.GetAuditLogsAsync(i/*, null, alat*/))
+                    {
+                        if (predicate(auditLogEntry)) return auditLogEntry;
+                    }
 
-                await Task.Delay(1000 * i); // progressively increase delay to avoid setting off ratelimiting
+                    await Task.Delay(1000 * i); // progressively increase delay to avoid setting off ratelimiting
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"UNEXPLAINABLE EXCEPTION WHILE ATTEMPTING TO GET AUDIT LOG ENTRY ON ITERATION {_iteration}!!!", ex);
             }
 
             return null;
