@@ -24,8 +24,7 @@ namespace Voidway_Bot
         private static async void FilterMessage(DSharpPlus.EventArgs.MessageCreateEventArgs e)
         {
             if (e.Message.Channel.GuildId is null || e.Guild is null) return;
-            if (e.Guild.Permissions is null) return;
-            if (!e.Guild.Permissions.Value.HasPermission(Permissions.ManageMessages)) return;
+            if (e.Channel.PermissionsFor((DiscordMember)e.Author).HasPermission(Permissions.ManageMessages)) return;
 
             if (IsFiltered(e.Message))
             {
@@ -107,11 +106,11 @@ namespace Voidway_Bot
 
         static bool IsFiltered(DiscordMessage msg)
         {
-            if (!Config.IsFilterMessageServer(msg.Channel.GuildId!.Value) || msg.Application is null) return false;
+            if (!Config.IsFilterMessageServer(msg.Channel.GuildId!.Value) || msg.Activity is null) return false;
 
             bool filteredByActivity = msg.Activity?.Type == MessageActivityType.Join;
 
-            return filteredByActivity && !Config.IsMessageAllowedChannel(msg.ChannelId);
+            return filteredByActivity && !Config.IsJoinMessageAllowedIn(msg.ChannelId);
         }
     }
 }

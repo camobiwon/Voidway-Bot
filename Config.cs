@@ -192,7 +192,7 @@ namespace Voidway_Bot {
             return values.msgFilterServers.Contains(guild);
         }
 
-        internal static bool IsMessageAllowedChannel(ulong guild)
+        internal static bool IsJoinMessageAllowedIn(ulong guild)
         {
             return values.msgFilterExceptions.Contains(guild);
         }
