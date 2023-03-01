@@ -77,18 +77,18 @@ namespace Voidway_Bot
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
                 {
                     IsEphemeral = true,
-                    Content = "Thread creators aren't permitted to unpin messages in their threads. Ask a moderator to pin that message.",
+                    Content = "Thread creators aren't permitted to pin/unpin messages in their threads. Ask a moderator to pin that message.",
                 });
                 return;
             }
 
             //DiscordThreadChannelMember threadCreator = thread.user.OrderBy(tm => tm.JoinedAt).First();
 
-            string res = "Pinned!";
+            string res = "Unpinned!";
 
             try
             {
-                await ctx.TargetMessage.PinAsync();
+                await ctx.TargetMessage.UnpinAsync();
             }
             catch (DiscordException ex)
             {
