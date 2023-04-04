@@ -5,6 +5,9 @@ using Modio.Models;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
 using System.Threading.Channels;
+using ModFile = Modio.Models.File;
+using System.IO.Compression;
+using System.Net.Http.Json;
 
 namespace Voidway_Bot {
 	internal static class ModUploads {
@@ -25,15 +28,32 @@ namespace Voidway_Bot {
 			One
 		}
 
+		[Flags]
+        enum FileUploadHeuristic
+		{
+			UnrecognizedNoMod = 0,
+			MarrowMod = 1 << 0,
+			Txt = 1 << 1,
+			Img = 1 << 2,
+            Blend = 1 << 3,
+            Fbx = 1 << 4,
+			Misc3dFile = 1 << 5,
+			UnityPkg = 1 << 6,
+            UnityProj = 1 << 7, // i swear to god this has happened at least once. a full fucking unity project.
+			VirusFlagged = 1 << 10,
+        }
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		static Dictionary<UploadType, List<DiscordChannel>> uploadChannels = new();
 		static Dictionary<uint, List<DiscordMessage>> announcementMessages = new(); // modio mod id to message
+		static List<DiscordChannel> malformedFileChannels = new();
 		static List<string> uploadTypeNames = Enum.GetNames<UploadType>().ToList(); // List has IndexOf, Array does not
 		static UploadType[] uploadTypeValues = Enum.GetValues<UploadType>();
 		static UploadType[] uploadTypeValuesNoUnk = Enum.GetValues<UploadType>().Skip(1).ToArray(); // skip needs to be changed if Unknown is moved
 		static Client client;
 		static GameClient bonelab;
 		static ModsClient bonelabMods;
+		[ThreadStatic] static HttpClient downloadClient; // threadstatic to prevent multiple threads using the same httpclient at the same time
 		static uint lastModioEvent;
 		// static Dictionary<uint, bool> censorModCache = new(); is it worth extra alloc's and shit to cache the result of WillCensor? my guess is nope.
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -97,7 +117,7 @@ namespace Voidway_Bot {
 			ModEvent? firstEvent = await bonelab.Mods.GetEvents().First();
 			lastModioEvent = firstEvent!.Id; // im quite certain theres at least one event
 
-			discord.GuildDownloadCompleted += (client, e) => GetAnnouncementChannels(e.Guilds);
+			discord.GuildDownloadCompleted += (client, e) => GetChannelsFromGuilds(e.Guilds);
 
 			ModUploadWatcher();
 
@@ -168,9 +188,11 @@ namespace Voidway_Bot {
 			if (uploadChannels is null || uploadChannels.Count is 0) FallbackGetChannels();
 
 			ModClient newMod = bonelabMods[modId];
+			IReadOnlyList<Modio.Models.File> files;
 			Mod modData;
 			IReadOnlyList<Tag> tags;
 			UploadType uploadType = UploadType.Unknown;
+			NotifyIfNoBundle(newMod);
 			try
 			{
 				modData = await newMod.Get();
@@ -212,31 +234,42 @@ namespace Voidway_Bot {
         }
 
 
-        private static Task GetAnnouncementChannels(IEnumerable<KeyValuePair<ulong, DiscordGuild>> keyValues)
+        private static Task GetChannelsFromGuilds(IEnumerable<KeyValuePair<ulong, DiscordGuild>> keyValues)
 		{
 			// NESTED FOREACH SO GOOD
-			int counter = 0;
-			foreach (UploadType uType in uploadTypeValues)
-			{
-				uploadChannels[uType] = new();
+			int announcementChannelCounter = 0;
+			int malformedChannelCounter = 0;
 
-				foreach (var kvp in keyValues)
+
+			foreach (var kvp in keyValues)
+			{
+				ulong malChannelId = Config.FetchMalformedUploadChannel(kvp.Key);
+				DiscordChannel malChannel = kvp.Value.GetChannel(malChannelId);
+				if (malChannel is not null)
 				{
+                    malformedFileChannels.Add(malChannel);
+					malformedChannelCounter++;
+                }
+
+				foreach (UploadType uType in uploadTypeValues)
+				{
+					uploadChannels[uType] = new();
+
 					ulong channelId = Config.FetchUploadChannel(kvp.Key, uType);
 					if(channelId == 0)
 						channelId = Config.FetchAllModsChannel(kvp.Key);
-					if(channelId == 0) //Dumb but works
+					if(channelId == 0) // Dumb but works
 						continue;
 
 					DiscordChannel channel = kvp.Value.GetChannel(channelId);
 					if (channel is null) continue;
 
 					uploadChannels[uType].Add(channel);
-					counter++;
+					announcementChannelCounter++;
 				}
 			}
 
-			Logger.Put($"Fetched {counter} mod.io announcement channels");
+			Logger.Put($"Fetched {announcementChannelCounter} mod.io announcement channels, and {malformedChannelCounter} malformed announcement channels");
 			return Task.CompletedTask;
 		}
 
@@ -284,6 +317,112 @@ namespace Voidway_Bot {
             }
             Logger.Put($"Announced mod upload in {count} channel(s).");
         }
+
+		static async void NotifyIfNoBundle(ModClient modClient)
+		{
+			//await Task.Delay(60 * 1000);
+			// Wrap in try-catch because async void crashes program if excepted
+			try
+			{
+				Mod mod = await modClient.Get();
+				FileUploadHeuristic nonBundleType = await GetUploadFiletypes(modClient, mod);
+				if (nonBundleType != FileUploadHeuristic.MarrowMod) await SendMalformedUploadMsgs(mod, nonBundleType);
+			}
+			catch(Exception ex) 
+			{
+				Logger.Warn($"Failed to notify a (possibly) bundle-less mod! Details: {ex}");
+			}
+		}
+
+		static async Task<FileUploadHeuristic> GetUploadFiletypes(ModClient modClient, Mod mod)
+		{
+            /*
+				UnrecognizedNoMod = 0,
+				Txt = 1 << 0,
+				Img = 1 << 1,
+				Blend = 1 << 2,
+				Fbx = 1 << 3,
+				VirusFlagged = 1 << 4,
+				UnityPkg = 1 << 5,
+				UnityProj
+			*/
+            ModFile? file =  await modClient.Files.Search().First();
+			Download? download = file?.Download;
+			downloadClient ??= new();
+            FileUploadHeuristic ret = FileUploadHeuristic.UnrecognizedNoMod;
+			if (file is null)
+			{
+				Logger.Warn($"Modio API had another skill issue: the first file on {mod.NameId} was null");
+				return ret;
+			}
+			else if (download is null)
+			{
+                Logger.Warn($"Modio API had another skill issue: the download link for first file on {mod.NameId} was null");
+                return ret;
+            }
+
+			// do everything in memory to avoid writing to slow pi storage
+            using Stream stream = await downloadClient.GetStreamAsync(download.BinaryUrl);
+			using ZipArchive zip = new(stream);
+			string[] textExts = { ".txt", ".rtf", ".docx", };
+			string[] imageExts = { ".jpg", ".jpeg", ".png", ".webp", ".gif", ".tiff", ".bmp" };
+			string[] misc3dExts = { ".obj", ".stl" };
+			string[] filePaths = zip.Entries.Select(ze => ze.FullName.ToLower()).ToArray();
+            bool hasBundle = filePaths.Any(p => p.EndsWith(".bundle"));
+            bool hasJson = filePaths.Any(p => p.EndsWith(".json")); // someone let that guy from Heavy Rain know
+            bool hasHash = filePaths.Any(p => p.EndsWith(".hash")); // isCalifornian? (haha get it? weed joke)
+			bool isLikelyValidMod = hasBundle && hasJson && hasHash;
+            
+			bool hasTxt = filePaths.Any(p => textExts.Contains(Path.GetExtension(p)));
+			bool hasImg = filePaths.Any(p => imageExts.Contains(Path.GetExtension(p)));
+			bool hasBlend = filePaths.Any(p => p.EndsWith(".blend"));
+			bool hasFbx = filePaths.Any(p => p.EndsWith(".fbx"));
+			bool hasOther3d = filePaths.Any(p => misc3dExts.Contains(Path.GetExtension(p)));
+			bool virusFlagged = file.VirusStatus == 1;
+            bool hasUnityPkg = filePaths.Any(p => p.EndsWith(".unitypackage"));
+			bool hasUnityProj = filePaths.Any(p => p.EndsWith(".meta"));
+
+			if (isLikelyValidMod)
+				ret |= FileUploadHeuristic.MarrowMod;
+			if (hasTxt)
+				ret |= FileUploadHeuristic.Txt;
+			if (hasImg)
+				ret |= FileUploadHeuristic.Img;
+			if (hasBlend)
+				ret |= FileUploadHeuristic.Blend;
+			if (hasFbx)
+				ret |= FileUploadHeuristic.Fbx;
+			if (hasOther3d)
+				ret |= FileUploadHeuristic.Misc3dFile;
+			if (virusFlagged)
+				ret |= FileUploadHeuristic.VirusFlagged;
+			if (hasUnityPkg)
+				ret |= FileUploadHeuristic.UnityPkg;
+			if (hasUnityProj)
+				ret |= FileUploadHeuristic.UnityProj;
+
+			return ret;
+        }
+
+		static async Task SendMalformedUploadMsgs(Mod mod, FileUploadHeuristic fileType)
+		{
+			const string FALLBACK_URL = "https://cdn.shibe.online/shibes/f75268ccba1856ad9bab97b4dd332e3a5d1c4a9a.jpg";
+			DiscordEmbedBuilder deb = new()
+			{
+				Author = new()
+				{
+					Url = mod.SubmittedBy?.ProfileUrl?.ToString() ?? FALLBACK_URL,
+					Name = mod.SubmittedBy is not null ? $"{mod.SubmittedBy.Username} (ID: {mod.SubmittedBy.NameId})" : "??? (Mod.io API is fantastic and reliable)",
+				},
+				Description = "Mod files has/have: " + fileType.ToString(),
+				Title = $"{mod.Name} (ID: {mod.NameId})",
+				Url = mod.HomepageUrl?.ToString() ?? FALLBACK_URL
+			};
+			foreach (DiscordChannel channel in malformedFileChannels)
+			{
+				await channel.SendMessageAsync(deb.Build());
+			}
+		}
 
         private static DiscordEmbedBuilder CreateEmbed(Mod mod)
         {
@@ -352,12 +491,19 @@ namespace Voidway_Bot {
             };
         }
 
+		static void CreateDirectoryRecursive(string? directory)
+		{
+			if (Directory.Exists(directory))
+				return;
+			CreateDirectoryRecursive(Path.GetDirectoryName(directory));
+		}
+
 		static void FallbackGetChannels()
 		{
 			// have to do this because dsharpplus doesnt fire guilddownloadscompleted (or whatever the event is called) on .NET 7, for whatever reason
 			Logger.Put("The list of mod upload announcement channels is empty! Attempting to rectify this now.", Logger.Reason.Debug);
 
-			GetAnnouncementChannels(Bot.CurrClient.Guilds);
+			GetChannelsFromGuilds(Bot.CurrClient.Guilds);
 		}
 
     }
