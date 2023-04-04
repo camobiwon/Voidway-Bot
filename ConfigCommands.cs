@@ -94,7 +94,7 @@ namespace Voidway_Bot
         }
 
         [SlashCommandGroup("modio", "Values related to modio announcements")]
-        private class ModAnnoucements : ApplicationCommandModule
+        private class ModAnnouncements : ApplicationCommandModule
         {
             [SlashCommand("trimAnnouncementsWithSummaries", "Get / set a config value")]
             [SlashRequireVoidwayOwner]
