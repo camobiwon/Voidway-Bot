@@ -26,7 +26,7 @@ namespace Voidway_Bot {
             [TomlPrecedingComment("Key=ServerID -> Value=ChannelID; Will be used for logging actions taken by moderators.")]
             public Dictionary<string, ulong> moderationChannels = new() { { "0", 1 }, { "2", 3 } }; // init w/ default values so the user knows how its formatted
             [TomlPrecedingComment("Key=ServerID -> Value=ChannelID; Will be used for logging message actions by users.")]
-            public Dictionary<string, ulong> messsageChannels = new() { { "4", 5 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
+            public Dictionary<string, ulong> messageChannels = new() { { "4", 5 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
             [TomlPrecedingComment("Where the bot will log suspicious joins. (<1d old & acc creation time within 1h of join time)")]
             public Dictionary<string, ulong> newAccountChannels = new() { { "6", 7 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
             [TomlPrecedingComment("Key=ServerID -> Value=ChannelID; Where ALL mod uploads get posted to, useful for seeing an entire list for moderation")]
@@ -147,7 +147,7 @@ namespace Voidway_Bot {
         }
 		
 		internal static ulong FetchMessagesChannel(ulong guild) {
-			if (values.messsageChannels.TryGetValue(guild.ToString(), out ulong channel)) return channel;
+			if (values.messageChannels.TryGetValue(guild.ToString(), out ulong channel)) return channel;
 			else
 			{
 				Logger.Warn("Config values don't have a messages channel for the given guild ID: " + guild);
