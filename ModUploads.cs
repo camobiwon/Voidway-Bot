@@ -425,7 +425,7 @@ namespace Voidway_Bot {
 				},
 				Description = "Mod files has/have: " + fileType.ToString(),
 				Title = $"{mod.Name} (ID: {mod.NameId})",
-				Url = mod.HomepageUrl?.ToString() ?? FALLBACK_URL
+				Url = mod.ProfileUrl?.ToString() ?? FALLBACK_URL
 			};
 			foreach (DiscordChannel channel in malformedFileChannels)
 			{
