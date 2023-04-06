@@ -238,8 +238,8 @@ namespace Voidway_Bot {
 		{
 			// NESTED FOREACH SO GOOD
 			int announcementChannelCounter = 0;
+			int allAnnouncementChannelCounter = 0;
 			int malformedChannelCounter = 0;
-
 
 			foreach (var kvp in keyValues)
 			{
@@ -251,25 +251,34 @@ namespace Voidway_Bot {
 					malformedChannelCounter++;
                 }
 
+				ulong allChannelId = Config.FetchAllModsChannel(kvp.Key);
 				foreach (UploadType uType in uploadTypeValues)
 				{
 					uploadChannels[uType] = new();
 
-					ulong channelId = Config.FetchUploadChannel(kvp.Key, uType);
-					if(channelId == 0)
-						channelId = Config.FetchAllModsChannel(kvp.Key);
-					if(channelId == 0) // Dumb but works
-						continue;
+                    // getchannel does a tryget from a dict, returns null if not found. default will cause null to be ret'd
+                    ulong upChannelId = Config.FetchUploadChannel(kvp.Key, uType);
+					DiscordChannel? upChannel = kvp.Value.GetChannel(upChannelId); 
+					DiscordChannel? allChannel = kvp.Value.GetChannel(allChannelId);
 
-					DiscordChannel channel = kvp.Value.GetChannel(channelId);
-					if (channel is null) continue;
 
-					uploadChannels[uType].Add(channel);
-					announcementChannelCounter++;
-				}
+                    if (upChannel is not null)
+					{
+                        uploadChannels[uType].Add(upChannel);
+						announcementChannelCounter++;
+                    }
+
+					if (allChannel is not null)
+					{
+						uploadChannels[uType].Add(allChannel);
+                        allAnnouncementChannelCounter++;
+                    }
+                }
 			}
-
-			Logger.Put($"Fetched {announcementChannelCounter} mod.io announcement channels, and {malformedChannelCounter} malformed announcement channels");
+			Logger.Put($"Fetched {announcementChannelCounter + allAnnouncementChannelCounter + malformedChannelCounter} total mod.io upload announcement channels");
+			Logger.Put($" - {announcementChannelCounter} per-type mod.io announcement channels");
+			Logger.Put($" - {allAnnouncementChannelCounter} all-type mod.io announcement channels");
+			Logger.Put($" - {malformedChannelCounter} malformed (moderation) announcement channels");
 			return Task.CompletedTask;
 		}
 
