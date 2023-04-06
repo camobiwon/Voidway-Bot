@@ -378,7 +378,7 @@ namespace Voidway_Bot {
 			bool hasBlend = filePaths.Any(p => p.EndsWith(".blend"));
 			bool hasFbx = filePaths.Any(p => p.EndsWith(".fbx"));
 			bool hasOther3d = filePaths.Any(p => misc3dExts.Contains(Path.GetExtension(p)));
-			bool virusFlagged = file.VirusStatus == 1;
+			bool virusFlagged = file.VirusStatus == 1 && file.VirusPositive == 1;
             bool hasUnityPkg = filePaths.Any(p => p.EndsWith(".unitypackage"));
 			bool hasUnityProj = filePaths.Any(p => p.EndsWith(".meta"));
 
