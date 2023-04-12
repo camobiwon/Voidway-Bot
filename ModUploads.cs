@@ -375,7 +375,7 @@ namespace Voidway_Bot {
 			using ZipArchive zip = new(stream);
 			string[] textExts = { ".txt", ".rtf", ".docx", };
 			string[] imageExts = { ".jpg", ".jpeg", ".png", ".webp", ".gif", ".tiff", ".bmp" };
-			string[] misc3dExts = { ".obj", ".stl" };
+			string[] misc3dExts = { ".obj", ".stl", ".dae", ".glb" };
 			string[] filePaths = zip.Entries.Select(ze => ze.FullName.ToLower()).ToArray();
             bool hasBundle = filePaths.Any(p => p.EndsWith(".bundle"));
             bool hasJson = filePaths.Any(p => p.EndsWith(".json")); // someone let that guy from Heavy Rain know
