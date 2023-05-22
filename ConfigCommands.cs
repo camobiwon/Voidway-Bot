@@ -1,4 +1,5 @@
-﻿using DSharpPlus.SlashCommands;
+﻿using DSharpPlus.Entities;
+using DSharpPlus.SlashCommands;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -302,6 +303,42 @@ namespace Voidway_Bot
                 }
 
                 return ctx.CreateResponseAsync(Config.GetThreadCreatorPinMessages().ToString(), true);
+            }
+        }
+
+        [SlashCommandGroup("sanityCheck", "Double check runtime values")]
+        private class SanityCheck : ApplicationCommandModule
+        {
+            [SlashCommand(nameof(Config.ConfigValues.moderationChannels), "Get / set a config value")]
+            [SlashRequireVoidwayOwner]
+            public async Task ModerationChannel(InteractionContext ctx, [Option("Value", "Some switch or something. Check source.")] bool value = false)
+            {
+                ulong id = Config.FetchModerationChannel(ctx.Guild.Id);
+                string channelName = $"<none found, ID supposedly {id}>";
+                try
+                {
+                    DiscordChannel channel = ctx.Guild.Channels[id];
+                    channelName = channel.ToString();
+                }
+                catch { }
+
+                await ctx.CreateResponseAsync("The moderation channel for this server is: " + channelName, true);
+            }
+
+            [SlashCommand(nameof(Config.ConfigValues.messageChannels), "Get / set a config value")]
+            [SlashRequireVoidwayOwner]
+            public async Task MessageChannel(InteractionContext ctx, [Option("Value", "Some switch or something. Check source.")] bool value = false)
+            {
+                ulong id = Config.FetchMessagesChannel(ctx.Guild.Id);
+                string channelName = $"<none found, ID supposedly {id}>";
+                try
+                {
+                    DiscordChannel channel = ctx.Guild.Channels[id];
+                    channelName = channel.ToString();
+                }
+                catch { }
+
+                await ctx.CreateResponseAsync("The msg channel for this server is: " + channelName, true);
             }
         }
 
