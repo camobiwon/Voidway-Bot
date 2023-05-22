@@ -119,7 +119,6 @@ namespace Voidway_Bot {
         }
 
         private static Task MessageEmbed(DiscordGuild guild, DiscordMessage message, string actionType, DiscordMessage? pastMessage = null) {
-            Task.Delay(1000);
             if (message.Author is null)
                 return Task.CompletedTask;
 
@@ -139,11 +138,19 @@ namespace Voidway_Bot {
                 Description = $"{(!string.IsNullOrEmpty(message.Content) ? "**Message**\n" + message.Content : "")} {(pastMessage is not null ? "\n\n**Past Message**\n" + pastMessage.Content : (!string.IsNullOrEmpty(attachments) ? "\n\n**Attachments**" + attachments : ""))}",
                 Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"User ID: {message.Author.Id} | Message ID: {message.Id}" }
             };
-            embed.AddField("User", $"{message.Author.Username}", true);
-            embed.AddField("Channel", $"<#{message.Channel.Id}>", true);
-            embed.AddField("Original Time", $"<t:{message.Timestamp.ToUnixTimeSeconds()}:f>", true);
+            embed.AddField("User", $"{message.Author.Username}", true)
+                 .AddField("Channel", $"<#{message.Channel.Id}>", true)
+                 .AddField("Original Time", $"<t:{message.Timestamp.ToUnixTimeSeconds()}:f>", true);
 
-            guild.GetChannel(Config.FetchMessagesChannel(guild.Id))?.SendMessageAsync(embed);
+            ulong channelId = Config.FetchMessagesChannel(guild.Id);
+            DiscordChannel? channel = guild.GetChannel(channelId);
+            if (channel is null)
+            {
+                Logger.Warn($"Recieved msg delete event in {guild}, but there is no message channel set in settings/none was found! Cfg says ID = {channelId}.");
+                return Task.CompletedTask;
+            }
+            
+            channel.SendMessageAsync(embed);
             return Task.CompletedTask;
         }
 
