@@ -58,7 +58,7 @@ namespace Voidway_Bot
         const string PUT_DATE_FORMAT = "hh:mm:sstt"; // example: "12:33:05AM"
         const string FILE_DATE_FORMAT = "yyyy-MM-dd h_m_stt"; // example: "2022-10-23 12_01_47AM"
         readonly static int maxPutDateLength = PUT_DATE_FORMAT.Length;
-        internal static readonly CircularBuffer<string> logStatements = new(1024);
+        internal static readonly CircularBuffer<string> logStatements = new(64);
         static readonly StreamWriter logFile;
 
         static Logger()
