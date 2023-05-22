@@ -41,6 +41,8 @@ namespace Voidway_Bot {
             UnityPkg = 1 << 6,
             UnityProj = 1 << 7, // i swear to god this has happened at least once. a full fucking unity project.
             VirusFlagged = 1 << 10,
+            Dll = 1 << 11,
+            Zip = 1 << 12,
         }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -375,7 +377,7 @@ namespace Voidway_Bot {
             using ZipArchive zip = new(stream);
             string[] textExts = { ".txt", ".rtf", ".docx", };
             string[] imageExts = { ".jpg", ".jpeg", ".png", ".webp", ".gif", ".tiff", ".bmp" };
-            string[] misc3dExts = { ".obj", ".stl", ".dae", ".glb" };
+            string[] misc3dExts = { ".obj", ".stl", ".dae", ".glb", ".gltf" };
             string[] filePaths = zip.Entries.Select(ze => ze.FullName.ToLower()).ToArray();
             bool hasBundle = filePaths.Any(p => p.EndsWith(".bundle"));
             bool hasJson = filePaths.Any(p => p.EndsWith(".json")); // someone let that guy from Heavy Rain know
@@ -390,6 +392,8 @@ namespace Voidway_Bot {
             bool virusFlagged = file.VirusStatus == 1 && file.VirusPositive == 1;
             bool hasUnityPkg = filePaths.Any(p => p.EndsWith(".unitypackage"));
             bool hasUnityProj = filePaths.Any(p => p.EndsWith(".meta"));
+            bool hasDll = filePaths.Any(p => p.EndsWith(".dll"));
+            bool hasZip = filePaths.Any(p => p.EndsWith(".zip"));
 
             if (isLikelyValidMod)
                 ret |= FileUploadHeuristic.MarrowMod;
@@ -407,8 +411,10 @@ namespace Voidway_Bot {
                 ret |= FileUploadHeuristic.VirusFlagged;
             if (hasUnityPkg)
                 ret |= FileUploadHeuristic.UnityPkg;
-            if (hasUnityProj)
-                ret |= FileUploadHeuristic.UnityProj;
+            if (hasDll)
+                ret |= FileUploadHeuristic.Dll;
+            if (hasZip)
+                ret |= FileUploadHeuristic.Zip;
 
             return ret;
         }
