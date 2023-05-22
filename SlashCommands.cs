@@ -5,7 +5,6 @@ using DSharpPlus.Exceptions;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.SlashCommands.Attributes;
-using Emzi0767.Utilities;
 using System;
 using System.Diagnostics;
 using System.Linq;
