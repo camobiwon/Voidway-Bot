@@ -40,14 +40,14 @@ namespace Voidway_Bot {
                     "11", new() { { nameof(ModUploads.UploadType.Avatar), 12 } } 
                 } 
             };
-			[TomlPrecedingComment("Will hide image & desc of mod announcements when posted in these servers AS LONG AS THEY MATCH THE SPECIFIED CRITERIA")]
-			public ulong[] censorModAnnouncementsIn = new ulong[] { 13 };
-			[TomlPrecedingComment("Determines if 'All' criteria, or just 'One' criterion must be met before a mod's announcement is censored. All criteria are in LOWERCASE, and can be set to '*' to match every mod (for censorCriteriaBehavior = All)")]
-			public ModUploads.CensorCriteriaBehavior censorCriteriaBehavior = ModUploads.CensorCriteriaBehavior.One;
-			public string[] censorModsWithSummaryContaining = new string[] { "ten point five" };
-			public string[] censorModsWithTitlesContaining = new string[] { "eleven and no fraction", "This will never be hit because T is uppercase." };
-			public string[] censorModsWithTag = new string[] { "ELEVEN POINT FIVE THAT WONT BE HIT CUZ CAPS", "adult 18+", "other tag" };
-			public bool ignoreTagspamMods = true;
+            [TomlPrecedingComment("Will hide image & desc of mod announcements when posted in these servers AS LONG AS THEY MATCH THE SPECIFIED CRITERIA")]
+            public ulong[] censorModAnnouncementsIn = new ulong[] { 13 };
+            [TomlPrecedingComment("Determines if 'All' criteria, or just 'One' criterion must be met before a mod's announcement is censored. All criteria are in LOWERCASE, and can be set to '*' to match every mod (for censorCriteriaBehavior = All)")]
+            public ModUploads.CensorCriteriaBehavior censorCriteriaBehavior = ModUploads.CensorCriteriaBehavior.One;
+            public string[] censorModsWithSummaryContaining = new string[] { "ten point five" };
+            public string[] censorModsWithTitlesContaining = new string[] { "eleven and no fraction", "This will never be hit because T is uppercase." };
+            public string[] censorModsWithTag = new string[] { "ELEVEN POINT FIVE THAT WONT BE HIT CUZ CAPS", "adult 18+", "other tag" };
+            public bool ignoreTagspamMods = true;
             [TomlPrecedingComment("Renames users to 'hoist' if their nick/name starts with one of these characterss (and is in a specified server). Backslash escape char FYI.")]
             public string hoistCharacters = @"()-+=_][\|;',.<>/?!@#$%^&*"; // literal string literal ftw
             public ulong[] hoistServers = new ulong[] { 14 };
@@ -65,14 +65,14 @@ namespace Voidway_Bot {
             public string[] ignoreDSharpPlusLogsWith = new string[] { "Unknown event:" }; // "GUILD_JOIN_REQUEST_UPDATE" SHUT THE FUCK UP
         }
 
-		const string FILE_NAME = "config.toml";
-		static readonly FileSystemWatcher watcher;
+        const string FILE_NAME = "config.toml";
+        static readonly FileSystemWatcher watcher;
         static readonly string activePath;
-		static ConfigValues values;
+        static ConfigValues values;
 
         // static ctor
         static Config()
-		{
+        {
             activePath = Path.Combine(AppContext.BaseDirectory, FILE_NAME);
             Console.WriteLine("Attempting to read config from " + activePath);
 
@@ -84,30 +84,30 @@ namespace Voidway_Bot {
                 Environment.Exit(0);
             }
 
-			LoadConfig();
+            LoadConfig();
 
             WriteConfig(values).Wait();
-			// write new cfg to add new fields
-			Logger.Put("Updated config.");
-			Logger.Put("(Updating config is harmless, just in case things changed between versions, this adds the new fields)", Logger.Reason.Trace);
-			Logger.Put("Starting config watcher.");
-			watcher = new FileSystemWatcher(AppContext.BaseDirectory)
-			{
-				Filter = "*.toml",
-				IncludeSubdirectories = false,
-				EnableRaisingEvents = true,
-			};
+            // write new cfg to add new fields
+            Logger.Put("Updated config.");
+            Logger.Put("(Updating config is harmless, just in case things changed between versions, this adds the new fields)", Logger.Reason.Trace);
+            Logger.Put("Starting config watcher.");
+            watcher = new FileSystemWatcher(AppContext.BaseDirectory)
+            {
+                Filter = "*.toml",
+                IncludeSubdirectories = false,
+                EnableRaisingEvents = true,
+            };
             watcher.Changed += WatcherChanged;
-			Logger.Put("Watcher started successfully.");
+            Logger.Put("Watcher started successfully.");
         }
 
         private static async void WatcherChanged(object sender, FileSystemEventArgs e)
         {
-			// wait 25ms to avoid race conditions about reading while another process has access
-			await Task.Delay(25);
+            // wait 25ms to avoid race conditions about reading while another process has access
+            await Task.Delay(25);
             try
             {
-			    LoadConfig();
+                LoadConfig();
             }
             catch (Exception ex)
             {
@@ -116,26 +116,26 @@ namespace Voidway_Bot {
         }
 
         [MemberNotNull(nameof(values))]
-		private static void LoadConfig()
-		{
+        private static void LoadConfig()
+        {
             string fileContents = File.ReadAllText(activePath);
             values = TomletMain.To<ConfigValues>(fileContents);
             Logger.Put("Retrieved config values.");
         }
 
         internal static int GetAuditLogRetryCount() => values.auditLogRetryCount;
-		internal static int GetMaxLogFiles() => values.maxLogFiles;
-		internal static bool GetLogDiscordDebug() => values.logDiscordDebug;
-		internal static bool GetThreadCreatorPinMessages() => values.threadCreatorPinMessages;
-		internal static bool GetThreadCreatorDeleteMessages() => values.threadCreatorDeleteMessages;
+        internal static int GetMaxLogFiles() => values.maxLogFiles;
+        internal static bool GetLogDiscordDebug() => values.logDiscordDebug;
+        internal static bool GetThreadCreatorPinMessages() => values.threadCreatorPinMessages;
+        internal static bool GetThreadCreatorDeleteMessages() => values.threadCreatorDeleteMessages;
         internal static string GetLogPath() => Path.GetFullPath(values.logPath);
-		internal static ModUploads.CensorCriteriaBehavior GetCriteriaBehavior() => values.censorCriteriaBehavior;
-		internal static bool GetIgnoreTagspam() => values.ignoreTagspamMods;
+        internal static ModUploads.CensorCriteriaBehavior GetCriteriaBehavior() => values.censorCriteriaBehavior;
+        internal static bool GetIgnoreTagspam() => values.ignoreTagspamMods;
         internal static int GetFilterResponseTimeout() => values.msgFilterMessageTimeout;
         internal static string[] GetFilterInvites() => values.sendWhenFilterMessage;
         internal static int GetFilterResponseStayTime() => values.msgFilterMessageStayTime;
         internal static string GetDiscordToken() => values.DiscordToken;
-		internal static (string, string) GetModioTokens() => (values.modioToken, values.modioOAuth);
+        internal static (string, string) GetModioTokens() => (values.modioToken, values.modioOAuth);
 
         internal static ulong FetchModerationChannel(ulong guild) {
             if (values.moderationChannels.TryGetValue(guild.ToString(), out ulong channel)) return channel;
@@ -145,25 +145,25 @@ namespace Voidway_Bot {
                 return default;
             }
         }
-		
-		internal static ulong FetchMessagesChannel(ulong guild) {
-			if (values.messageChannels.TryGetValue(guild.ToString(), out ulong channel)) return channel;
-			else
-			{
-				Logger.Warn("Config values don't have a messages channel for the given guild ID: " + guild);
+        
+        internal static ulong FetchMessagesChannel(ulong guild) {
+            if (values.messageChannels.TryGetValue(guild.ToString(), out ulong channel)) return channel;
+            else
+            {
+                Logger.Warn("Config values don't have a messages channel for the given guild ID: " + guild);
                 return default;
             }
         }
 
-		internal static ulong FetchAllModsChannel(ulong guild) {
-			if(values.allModUploads.TryGetValue(guild.ToString(), out ulong channel)) return channel;
-			else {
-				Logger.Warn("Config values don't have an all mod uploads channel for the given guild ID: " + guild);
-				return default;
-			}
-		}
+        internal static ulong FetchAllModsChannel(ulong guild) {
+            if(values.allModUploads.TryGetValue(guild.ToString(), out ulong channel)) return channel;
+            else {
+                Logger.Warn("Config values don't have an all mod uploads channel for the given guild ID: " + guild);
+                return default;
+            }
+        }
 
-		internal static ulong FetchUploadChannel(ulong guild, ModUploads.UploadType uploadType) {
+        internal static ulong FetchUploadChannel(ulong guild, ModUploads.UploadType uploadType) {
             if (!values.modUploadChannels.TryGetValue(guild.ToString(), out var uploadTypeToChannel))
                 return default;
 
