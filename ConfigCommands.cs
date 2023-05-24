@@ -317,7 +317,7 @@ namespace Voidway_Bot
                 string channelName = $"<none found, ID supposedly {id}>";
                 try
                 {
-                    DiscordChannel channel = ctx.Guild.Channels[id];
+                    DiscordChannel channel = ctx.Guild.Channels[id] ?? throw new NullReferenceException();
                     channelName = channel.ToString();
                 }
                 catch { }
@@ -333,7 +333,7 @@ namespace Voidway_Bot
                 string channelName = $"<none found, ID supposedly {id}>";
                 try
                 {
-                    DiscordChannel channel = ctx.Guild.Channels[id];
+                    DiscordChannel channel = ctx.Guild.Channels[id] ?? throw new NullReferenceException();
                     channelName = channel.ToString();
                 }
                 catch { }
