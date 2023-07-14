@@ -313,7 +313,7 @@ namespace Voidway_Bot {
                     try
                     {
                         string author = mod.SubmittedBy is not null ? $" created by **{mod.SubmittedBy.Username?.ToString()!}**" : "";
-                        messages.Add(await channel.SendMessageAsync($"**{mod.Name}**{author}\n{modURL}"));
+                        messages.Add(await channel.SendMessageAsync($"**{mod.Name}**{author}\n\n{modURL}"));
                         DiscordMessage modMsg = messages[^1];
 						await modMsg.CreateReactionAsync(DiscordEmoji.FromUnicode("👍"));
                         await modMsg.CreateReactionAsync(DiscordEmoji.FromUnicode("👎"));
