@@ -85,7 +85,7 @@ namespace Voidway_Bot {
                             NotifyNewMod(modEvent.ModId, modEvent.UserId);
                             break;
                         case ModEventType.MOD_EDITED:
-                            UpdateAnnouncements(modEvent.ModId);
+                            //UpdateAnnouncements(modEvent.ModId);
                             break;
                         default:
                             break;
@@ -128,6 +128,7 @@ namespace Voidway_Bot {
             return;
         }
 
+        /*
         private static async void UpdateAnnouncements(uint modId)
         {
             bool hasMessages = announcementMessages.TryGetValue(modId, out List<DiscordMessage>? messages) && (messages?.Any() ?? false);
@@ -182,6 +183,7 @@ namespace Voidway_Bot {
             }
 
         }
+        */
 
         internal static async void NotifyNewMod(uint modId, uint userId)
         {
@@ -231,8 +233,8 @@ namespace Voidway_Bot {
 
             await PostAnnouncements(modData, uploadType);
             // force recheck after 5min, thanks modio api for working predictably :) (SARCASM)
-            await Task.Delay(5 * 60 * 1000);
-            UpdateAnnouncements(modId);
+            //await Task.Delay(5 * 60 * 1000);
+            //UpdateAnnouncements(modId);
         }
 
 
@@ -291,7 +293,6 @@ namespace Voidway_Bot {
                 messages = new();
                 announcementMessages[mod.Id] = messages;
             }
-            DiscordEmbedBuilder baseEmbed = CreateEmbed(mod);
 
             int count = 0;
             foreach (UploadType flag in uploadTypeValuesNoUnk)
@@ -301,23 +302,21 @@ namespace Voidway_Bot {
 
                 foreach (DiscordChannel channel in channels)
                 {
-                    DiscordEmbedBuilder deb = new(baseEmbed);
-                    if (ShouldHideDesc(mod, channel.GuildId ?? 1UL))
+                    string modURL = mod.ProfileUrl?.ToString()!;
+
+                    if (ShouldHideDesc(mod, channel.GuildId ?? 1UL) || ShouldHideImage(mod, channel.GuildId ?? 1UL))
                     {
-                        Logger.Put($"Hiding mod summary for {mod.NameId}");
-                        deb.Description = "";
-                    }
-                    //Hide mature images
-                    if (ShouldHideImage(mod, channel.GuildId ?? 1UL))
-                    {
-                        Logger.Put($"Hiding mod image for {mod.NameId}");
-                        deb.ImageUrl = "";
+                        Logger.Put($"Hiding mod embed for {mod.NameId}");
+                        modURL = $"<{modURL}>";
                     }
 
                     try
                     {
-                        messages.Add(await channel.SendMessageAsync(deb));
-                        count++;
+                        messages.Add(await channel.SendMessageAsync($"**{mod.Name}** created by **{mod.SubmittedBy!}**\n{modURL}"));
+                        DiscordMessage modMsg = messages[^1];
+						await modMsg.CreateReactionAsync(DiscordEmoji.FromUnicode("👍"));
+                        await modMsg.CreateReactionAsync(DiscordEmoji.FromUnicode("👎"));
+						count++;
                     }
                     catch (DiscordException ex)
                     {
@@ -439,6 +438,7 @@ namespace Voidway_Bot {
             }
         }
 
+        /*
         private static DiscordEmbedBuilder CreateEmbed(Mod mod)
         {
             string? image = mod.Logo?.Thumb640x360?.OriginalString ?? mod.Media.Images.FirstOrDefault()?.Original?.ToString();
@@ -465,6 +465,7 @@ namespace Voidway_Bot {
             };
             return baseEmbed;
         }
+        */
 
         private static bool ShouldHideImage(Mod mod, ulong server) 
             => mod.MaturityOption != MaturityOption.None 
