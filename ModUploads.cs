@@ -381,8 +381,7 @@ namespace Voidway_Bot {
         }
 
         private static bool ShouldHideImage(Mod mod, ulong server) 
-            => mod.MaturityOption != MaturityOption.None 
-            || WillCensor(mod, server);
+            => mod.MaturityOption != MaturityOption.None;
 
         private static bool ShouldHideDesc(Mod mod, ulong server)
             => mod.MaturityOption.HasFlag(MaturityOption.Explicit)
