@@ -244,12 +244,10 @@ namespace Voidway_Bot {
                 {
                     string modURL = mod.ProfileUrl?.ToString()!;
 
-                    if (ShouldHideDesc(mod, channel.GuildId ?? 1UL) || ShouldHideImage(mod, channel.GuildId ?? 1UL))
+                    if (ShouldHideImage(mod, channel.GuildId ?? 1UL))
                     {
                         Logger.Put($"Hiding mod embed for {mod.NameId}");
-                        modURL = $"<{modURL}>";
-                        if(ShouldHideImage(mod, channel.GuildId ?? 1UL))
-							modURL = $"*Embed removed as mod is marked with mature options*\n{modURL}";
+                        modURL = $"*Embed removed as mod is marked with mature options*\n<{modURL}>";
 					}
 
                     try
@@ -383,9 +381,11 @@ namespace Voidway_Bot {
         private static bool ShouldHideImage(Mod mod, ulong server) 
             => mod.MaturityOption != MaturityOption.None;
 
+        /*
         private static bool ShouldHideDesc(Mod mod, ulong server)
             => mod.MaturityOption.HasFlag(MaturityOption.Explicit)
             || WillCensor(mod, server);
+        */
 
         static UploadType IdentifyUpload(IEnumerable<Tag> tags)
         {
