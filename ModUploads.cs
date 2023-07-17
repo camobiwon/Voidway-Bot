@@ -248,7 +248,9 @@ namespace Voidway_Bot {
                     {
                         Logger.Put($"Hiding mod embed for {mod.NameId}");
                         modURL = $"<{modURL}>";
-                    }
+                        if(ShouldHideImage(mod, channel.GuildId ?? 1UL))
+							modURL = $"*Embed removed as mod is marked with mature options*\n{modURL}";
+					}
 
                     try
                     {
