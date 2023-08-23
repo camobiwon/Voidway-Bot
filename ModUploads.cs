@@ -43,6 +43,8 @@ namespace Voidway_Bot {
             VirusFlagged = 1 << 10,
             Dll = 1 << 11,
             Zip = 1 << 12,
+            FileTooLarge = 1 << 13,
+            MarrowReplacer = 1 << 14,
         }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -135,7 +137,6 @@ namespace Voidway_Bot {
             if (uploadChannels is null || uploadChannels.Count is 0) FallbackGetChannels();
 
             ModClient newMod = bonelabMods[modId];
-            IReadOnlyList<Modio.Models.File> files;
             Mod modData;
             IReadOnlyList<Tag> tags;
             UploadType uploadType = UploadType.Unknown;
@@ -288,6 +289,8 @@ namespace Voidway_Bot {
 
         static async Task<FileUploadHeuristic> GetUploadFiletypes(ModClient modClient, Mod mod)
         {
+            const long MB_BYTES = 1024 * 1024;
+            const long MAX_FILE_SIZE = MB_BYTES * 384;
             /*
                 UnrecognizedNoMod = 0,
                 Txt = 1 << 0,
@@ -298,6 +301,7 @@ namespace Voidway_Bot {
                 UnityPkg = 1 << 5,
                 UnityProj
             */
+            GC.GetGCMemoryInfo();
             ModFile? file =  await modClient.Files.Search().First();
             Download? download = file?.Download;
             downloadClient ??= new();
@@ -312,6 +316,11 @@ namespace Voidway_Bot {
                 Logger.Warn($"Modio API had another skill issue: the download link for first file on {mod.NameId} was null");
                 return ret;
             }
+            else if (file.FileSize > MAX_FILE_SIZE)
+            {
+                Logger.Warn($"Mod is {Math.Round(file.FileSize / (double)MB_BYTES, 2)}MB. Unable to scan.");
+                return FileUploadHeuristic.FileTooLarge;
+            }
 
             // do everything in memory to avoid writing to slow pi storage
             using Stream stream = await downloadClient.GetStreamAsync(download.BinaryUrl);
@@ -324,7 +333,8 @@ namespace Voidway_Bot {
             bool hasJson = filePaths.Any(p => p.EndsWith(".json")); // someone let that guy from Heavy Rain know
             bool hasHash = filePaths.Any(p => p.EndsWith(".hash")); // isCalifornian? (haha get it? weed joke)
             bool isLikelyValidMod = hasBundle && hasJson && hasHash;
-            
+            bool isLikelyReplacerMod = !hasBundle && hasJson && hasHash;
+
             bool hasTxt = filePaths.Any(p => textExts.Contains(Path.GetExtension(p)));
             bool hasImg = filePaths.Any(p => imageExts.Contains(Path.GetExtension(p)));
             bool hasBlend = filePaths.Any(p => p.EndsWith(".blend"));
@@ -356,6 +366,8 @@ namespace Voidway_Bot {
                 ret |= FileUploadHeuristic.Dll;
             if (hasZip)
                 ret |= FileUploadHeuristic.Zip;
+            if (isLikelyReplacerMod)
+                ret |= FileUploadHeuristic.MarrowReplacer;
 
             return ret;
         }
