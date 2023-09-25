@@ -2905,9 +2905,39 @@
             Enable guides.
             </summary>
         </member>
-        <member name="F:Modio.Models.CommunityOptions.DISABLE_SUBSCRIBE">
+        <member name="F:Modio.Models.CommunityOptions.PIN_HOMEPAGE">
             <summary>
-            Disable website "subscribe to install" text.
+            Pin on homepage (?).
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CommunityOptions.SHOW_HOMEPAGE">
+            <summary>
+            Show on homepage (???)
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CommunityOptions.SHOW_MORE_HOMEPAGE">
+            <summary>
+            Show more on homepage (?????)
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CommunityOptions.CHANGE_STATUS">
+            <summary>
+            Allow change status (???????)
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CommunityOptions.ENABLE_PREVIEWS">
+            <summary>
+            Enable Previews (Game must be hidden)
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CommunityOptions.ALLOW_PREVIEW_SHARE">
+            <summary>
+            Allow Preview Share-URL (Previews must be enabled)
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CommunityOptions.NEGATIVE_RATINGS">
+            <summary>
+            Allow negative ratings
             </summary>
         </member>
         <member name="T:Modio.Models.RevenueOptions">

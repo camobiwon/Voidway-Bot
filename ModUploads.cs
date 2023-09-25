@@ -59,6 +59,7 @@ namespace Voidway_Bot {
         static ModsClient bonelabMods;
         [ThreadStatic] static HttpClient downloadClient; // threadstatic to prevent multiple threads using the same httpclient at the same time
         static uint lastModioEvent;
+        static List<uint> announcedMods = new();
         // static Dictionary<uint, bool> censorModCache = new(); is it worth extra alloc's and shit to cache the result of WillCensor? my guess is nope.
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
@@ -135,6 +136,8 @@ namespace Voidway_Bot {
             // give the uploader 60 extra seconds to upload a thumbnail/change metadata/add tags
             await Task.Delay(60 * 1000);
             if (uploadChannels is null || uploadChannels.Count is 0) FallbackGetChannels();
+
+            if (announcedMods.Contains(modId)) return;
 
             ModClient newMod = bonelabMods[modId];
             Mod modData;
@@ -261,6 +264,7 @@ namespace Voidway_Bot {
 						await modMsg.CreateReactionAsync(DiscordEmoji.FromUnicode("👍"));
                         await modMsg.CreateReactionAsync(DiscordEmoji.FromUnicode("👎"));
 						count++;
+                        announcedMods.Add(mod.Id);
                     }
                     catch (DiscordException ex)
                     {
