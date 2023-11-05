@@ -5,6 +5,7 @@ using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Logging;
+using OpenAI_API;
 
 namespace Voidway_Bot {
     class Bot {
@@ -12,6 +13,7 @@ namespace Voidway_Bot {
         internal static DiscordUser CurrUser { get; private set; }
         internal static DiscordClient CurrClient { get; private set; }
         internal static string[] Args { get; private set; }
+        internal static OpenAIAPI? OpenAiClient { get; private set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         static void Main(string[] args)
@@ -41,7 +43,7 @@ namespace Voidway_Bot {
             });
             CurrClient = discord;
 
-            discord.Ready += Discord_Ready;
+            discord.SessionCreated += Ready;
             discord.MessageCreated += DirectMessageHandler;
 
             var slashExtension = discord.UseSlashCommands();
@@ -60,6 +62,9 @@ namespace Voidway_Bot {
             MessageBlocker.HandleMessages(discord);
 
             DebugCommands.HandleRelaunch();
+
+            if (!string.IsNullOrEmpty(Config.GetOpenAiToken()))
+                OpenAiClient = new(new(Config.GetOpenAiToken()));
 
             await discord.ConnectAsync();
             await Task.Delay(-1);
@@ -87,7 +92,7 @@ namespace Voidway_Bot {
         }
 
 
-        private static Task Discord_Ready(DiscordClient sender, ReadyEventArgs e)
+        private static Task Ready(DiscordClient sender, SessionReadyEventArgs e)
         {
             CurrUser = sender.CurrentUser;
             Logger.Put($"Discord client ready on user {sender.CurrentUser.Username}#{sender.CurrentUser.Discriminator} ({sender.CurrentUser.Id})");

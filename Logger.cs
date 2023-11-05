@@ -136,7 +136,11 @@ namespace Voidway_Bot
                 Type? decType = method?.DeclaringType;
                 if (method is null || decType is null) continue;
 
-                if (decType != typeof(Logger) && decType != typeof(DiscordLogger) && IsTypeLoggable(decType))
+                if (IsVoidwayMoveNext(decType))
+                {
+                    return decType.DeclaringType!.Name + '.' + decType.Name.Split('>').First().Substring(1);
+                }
+                else if (decType != typeof(Logger) && decType != typeof(DiscordLogger) && IsTypeLoggable(decType))
                 {
                     return decType.Name + '.' + method.Name;
                 }
@@ -148,6 +152,11 @@ namespace Voidway_Bot
         {
             // all this to avoid seeing "<MainAsync>d__1.MoveNext"
             return t.GetCustomAttribute(typeof(CompilerGeneratedAttribute)) is null && t.Assembly == typeof(Logger).Assembly;
+        }
+
+        static bool IsVoidwayMoveNext(Type t)
+        {
+            return t.GetCustomAttribute(typeof(CompilerGeneratedAttribute)) is not null && t.GetInterfaces().Any(i => i == typeof(IAsyncStateMachine));
         }
     }
 }

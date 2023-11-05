@@ -323,10 +323,10 @@ namespace Voidway_Bot
 
             Logger.Put("Voidway Bot restarted after updated from owner command!");
 
-            Bot.CurrClient.Ready += RelaunchThunk;
+            Bot.CurrClient.SessionCreated += RelaunchThunk;
         }
 
-        private static async Task RelaunchThunk(DiscordClient sender, ReadyEventArgs e)
+        private static async Task RelaunchThunk(DiscordClient sender, SessionReadyEventArgs e)
         {
             // readback args passed from relauncher process
             try

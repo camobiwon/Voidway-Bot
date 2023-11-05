@@ -29,19 +29,21 @@ namespace Voidway_Bot {
             public Dictionary<string, ulong> messageChannels = new() { { "4", 5 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
             [TomlPrecedingComment("Where the bot will log suspicious joins. (<1d old & acc creation time within 1h of join time)")]
             public Dictionary<string, ulong> newAccountChannels = new() { { "6", 7 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
+            [TomlPrecedingComment("Where the bot will log flagged message from OpenAI.")]
+            public Dictionary<string, ulong> openAiDiscordMonitorLogChannels = new() { { "8", 9 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
             [TomlPrecedingComment("Key=ServerID -> Value=ChannelID; Where ALL mod uploads get posted to, useful for seeing an entire list for moderation")]
-            public Dictionary<string, ulong> allModUploads = new() { { "8", 9 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
+            public Dictionary<string, ulong> allModUploads = new() { { "10", 11 } }; // <string,ulong> because otherwise tomlet shits itself and refuses to deserialize
             [TomlPrecedingComment("Key=ServerID -> Value=ChannelID; Where announcements of malformed uploads are sent (A staff-only channel)")]
-            public Dictionary<string, ulong> malformedUploadChannels = new() { { "9", 10 } };
+            public Dictionary<string, ulong> malformedUploadChannels = new() { { "12", 13 } };
             [TomlPrecedingComment("ServerID -> Upload Type -> ChannelID; Will be used for announcing recent mod.io uploads (Upload types: 'Avatar', 'Level', 'Spawnable', 'Utility').")]
             public Dictionary<string, Dictionary<string, ulong>> modUploadChannels = new() 
             { 
                 { 
-                    "11", new() { { nameof(ModUploads.UploadType.Avatar), 12 } } 
+                    "14", new() { { nameof(ModUploads.UploadType.Avatar), 15 } } 
                 } 
             };
             [TomlPrecedingComment("Will hide image & desc of mod announcements when posted in these servers AS LONG AS THEY MATCH THE SPECIFIED CRITERIA")]
-            public ulong[] censorModAnnouncementsIn = new ulong[] { 13 };
+            public ulong[] censorModAnnouncementsIn = new ulong[] { 16 };
             [TomlPrecedingComment("Determines if 'All' criteria, or just 'One' criterion must be met before a mod's announcement is censored. All criteria are in LOWERCASE, and can be set to '*' to match every mod (for censorCriteriaBehavior = All)")]
             public ModUploads.CensorCriteriaBehavior censorCriteriaBehavior = ModUploads.CensorCriteriaBehavior.One;
             public string[] censorModsWithSummaryContaining = new string[] { "ten point five" };
@@ -53,7 +55,7 @@ namespace Voidway_Bot {
             public ulong[] hoistServers = new ulong[] { 14 };
             [TomlPrecedingComment("Deletes activity join invites in these servers.")]
             public ulong[] msgFilterServers = new ulong[] { 15 };
-            [TomlPrecedingComment("Allows the invites in these channels, even if they're in a filtering server.")]
+            [TomlPrecedingComment("Allows invites in these channels, even if they're in a filtering server.")]
             public ulong[] msgFilterExceptions = new ulong[] { 16 };
             [TomlPrecedingComment("The invites to send when filtering someone's message.")]
             public string[] sendWhenFilterMessage = new string[] { "discord.gg/real" };
@@ -63,6 +65,13 @@ namespace Voidway_Bot {
             [TomlPrecedingComment("Not necessarily able to bypass permissions (like Slash Commands) checks, just able to access debug commands/")]
             public ulong[] owners = new ulong[] { 17 };
             public string[] ignoreDSharpPlusLogsWith = new string[] { "Unknown event:" }; // "GUILD_JOIN_REQUEST_UPDATE" SHUT THE FUCK UP
+            public Dictionary<string, ulong> modioCommentModerationNotifChannels = new() { { "18", 19 } };
+            [TomlPrecedingComment("Doesn't run these channels' messages through OpenAI's Moderation endpoint.")]
+            public ulong[] openAiModerationExceptions = new ulong[] { 16 };
+            [TomlPrecedingComment("If populated, will use the *free* OpenAI Moderation endpoint to flag discord messages and/or mod.io comments given their content.")]
+            public string openAiApiKey = "";
+            public bool openAiModerateDiscord = false;
+            public bool openAiModerateModio = true;
         }
 
         const string FILE_NAME = "config.toml";
@@ -86,7 +95,7 @@ namespace Voidway_Bot {
 
             LoadConfig();
 
-            WriteConfig(values).Wait();
+            WriteConfig(values).GetAwaiter().GetResult();
             // write new cfg to add new fields
             Logger.Put("Updated config.");
             Logger.Put("(Updating config is harmless, just in case things changed between versions, this adds the new fields)", Logger.Reason.Trace);
@@ -136,6 +145,7 @@ namespace Voidway_Bot {
         internal static int GetFilterResponseStayTime() => values.msgFilterMessageStayTime;
         internal static string GetDiscordToken() => values.DiscordToken;
         internal static (string, string) GetModioTokens() => (values.modioToken, values.modioOAuth);
+        internal static string GetOpenAiToken() => values.openAiApiKey;
 
         internal static ulong FetchModerationChannel(ulong guild) {
             if (values.moderationChannels.TryGetValue(guild.ToString(), out ulong channel)) return channel;
@@ -181,6 +191,14 @@ namespace Voidway_Bot {
             return default;
         }
 
+        internal static ulong FetchCommentModerationChannel(ulong guild)
+        {
+            if (values.modioCommentModerationNotifChannels.TryGetValue((guild.ToString()), out var channel))
+                return channel;
+
+            return default;
+        }
+
         internal static ulong FetchNewAccountLogChannel(ulong guild)
         {
             if (values.newAccountChannels.TryGetValue(guild.ToString(), out ulong channel)) return channel;
@@ -188,6 +206,15 @@ namespace Voidway_Bot {
             {
                 // don't log, because some servers wont want to log new users (like the SLZ server)
                 // Logger.Warn("Config values don't have a messages channel for the given guild ID: " + guild);
+                return default;
+            }
+        }
+
+        internal static ulong FetchOpenAiModerationChannel(ulong guild)
+        {
+            if (values.openAiDiscordMonitorLogChannels.TryGetValue(guild.ToString(), out ulong channel)) return channel;
+            else
+            {
                 return default;
             }
         }
@@ -202,9 +229,9 @@ namespace Voidway_Bot {
             return values.msgFilterServers.Contains(guild);
         }
 
-        internal static bool IsJoinMessageAllowedIn(ulong guild)
+        internal static bool IsJoinMessageAllowedIn(ulong channel)
         {
-            return values.msgFilterExceptions.Contains(guild);
+            return values.msgFilterExceptions.Contains(channel);
         }
 
         internal static bool IsHoistMember(char firstChar)
@@ -267,6 +294,15 @@ namespace Voidway_Bot {
 
             return false;
         }
+
+        internal static bool IsExemptFromOpenAiScanning(ulong discordChannel)
+        {
+            return values.openAiModerationExceptions.Contains(discordChannel);
+        }
+
+        internal static bool IsModeratingModioComments() => values.openAiModerateModio;
+
+        internal static bool IsModeratingDiscordMessages() => values.openAiModerateDiscord;
 
         internal static bool IsUserOwner(ulong id) => values.owners.Contains(id);
 

@@ -8,6 +8,8 @@ using System.Threading.Channels;
 using ModFile = Modio.Models.File;
 using System.IO.Compression;
 using System.Net.Http.Json;
+using System.Text;
+using Modio.Filters;
 
 namespace Voidway_Bot {
     internal static class ModUploads {
@@ -50,7 +52,8 @@ namespace Voidway_Bot {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         static Dictionary<UploadType, List<DiscordChannel>> uploadChannels = new();
         static Dictionary<uint, List<DiscordMessage>> announcementMessages = new(); // modio mod id to message
-        static List<DiscordChannel> malformedFileChannels = new();
+        static List<DiscordChannel> modioMalformedUploadChannels = new();
+        static List<DiscordChannel> modioCommentModerationNotifChannels = new();
         static List<string> uploadTypeNames = Enum.GetNames<UploadType>().ToList(); // List has IndexOf, Array does not
         static UploadType[] uploadTypeValues = Enum.GetValues<UploadType>();
         static UploadType[] uploadTypeValuesNoUnk = Enum.GetValues<UploadType>().Skip(1).ToArray(); // skip needs to be changed if Unknown is moved
@@ -63,7 +66,7 @@ namespace Voidway_Bot {
         // static Dictionary<uint, bool> censorModCache = new(); is it worth extra alloc's and shit to cache the result of WillCensor? my guess is nope.
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-        private static async void ModUploadWatcher()
+        private static async void ModEventWatcher()
         {
             while (true)
             {
@@ -89,6 +92,10 @@ namespace Voidway_Bot {
                             break;
                         case ModEventType.MOD_EDITED:
                             //UpdateAnnouncements(modEvent.ModId);
+                            break;
+                        case ModEventType.MOD_COMMENT_ADDED:
+                            if (Bot.OpenAiClient is not null && Config.IsModeratingModioComments())
+                                FlagModioCommentIfNecessary(modEvent.ModId, modEvent.UserId, modEvent.DateAdded);
                             break;
                         default:
                             break;
@@ -124,11 +131,85 @@ namespace Voidway_Bot {
 
             discord.GuildDownloadCompleted += (client, e) => GetChannelsFromGuilds(e.Guilds);
 
-            ModUploadWatcher();
+            ModEventWatcher();
 
             Logger.Put($"Started watching for mod.io uploads in {bonelabGame.Name} (ID:{bonelabGame.Id},NameID:{bonelabGame.NameId}) on user {currUser.Username} (ID:{currUser.Id},NameID:{currUser.NameId})");
 
             return;
+        }
+
+        internal static async void FlagModioCommentIfNecessary(uint modId, uint submitterId, long dateAdded)
+        {
+            try
+            {
+                ModClient parentModClient = bonelabMods[modId];
+                CommentsClient commentClient = bonelabMods[modId].Comments;
+                Mod parentMod = await parentModClient.Get();
+                //commentClient.Search()
+                var comments = await commentClient.Search().ToList();
+                Comment? comment = await commentClient.Search(ModEventFilter.DateAdded.Eq(dateAdded)).First();
+                                  //?? throw new NullReferenceException("Modio API says there's a comment made at " + dateAdded + " but then says there isn't. Thanks obama.");
+                //Comment comment = allModCommentsBySubmitter.OrderBy(c => c.DateAdded);
+
+                if (comment is null || Bot.OpenAiClient is null || string.IsNullOrEmpty(comment.Content)) return;
+
+                string? commenterUsername = comment.SubmittedBy?.Username;
+                string? commenterProfile = comment.SubmittedBy?.ProfileUrl?.ToString();
+
+                string commentStr = string.IsNullOrEmpty(commenterUsername) ? comment.Content : $"{commenterUsername}: {comment.Content}";
+                var moderationRes = await Bot.OpenAiClient.Moderation.CallModerationAsync(commentStr);
+
+                string messageTooLongStr = "... (truncated by bot)";
+
+                var res = moderationRes.Results.FirstOrDefault();
+                if (res is null) return;
+
+#if DEBUG
+                Logger.Put($"Comment from {commenterUsername} on {parentMod.NameId} was {(res.Flagged ? "flagged" : "not flagged")}. Highest score was {Math.Round(res.HighestFlagScore * 100, 2)}% for {res.CategoryScores.Max(kvp => kvp.Key)}", Logger.Reason.Debug);
+#endif
+                
+                if (!res.Flagged) return;
+
+                StringBuilder sb = new("A comment");
+                if (commenterUsername is not null && commenterProfile is not null)
+                    sb.Append($" from [{commenterUsername}](<{commenterProfile}>)");
+
+                sb.AppendLine($" on the mod [{parentMod.Name}](<{parentMod.ProfileUrl}>) has been flagged by OpenAI in the following categories:");
+
+                foreach (var flagged in res.FlaggedCategories)
+                {
+                    sb.Append(flagged);
+                    sb.Append(", ");
+                }
+
+                sb.Remove(sb.Length - 2, 2);
+
+                sb.AppendLine();
+                sb.Append("For the following content: **");
+                if (comment.Content.Length < 100)
+                {
+                    sb.Append(comment.Content.Replace("*", "\\*"));
+                    sb.Append("**");
+                }
+                else
+                {
+                    sb.Append(comment.Content[..100].Replace("*", "\\*"));
+                    sb.Append("**");
+                    sb.Append(messageTooLongStr);
+                }
+
+                var dmb = new DiscordMessageBuilder()
+                    .WithContent(sb.ToString());
+                foreach (DiscordChannel channel in modioCommentModerationNotifChannels)
+                {
+                    DiscordMessage msg = await channel.SendMessageAsync(dmb);
+                    await msg.ModifyEmbedSuppressionAsync(true);
+                }
+            }
+            catch(Exception ex)
+            {
+                Logger.Put($"Unable to check comment by a user with id {submitterId} on mod (ID {modId}) for moderation. Exception: {ex}", Logger.Reason.Debug, false);
+            }
         }
 
         internal static async void NotifyNewMod(uint modId, uint userId)
@@ -154,6 +235,10 @@ namespace Voidway_Bot {
                 Logger.Warn($"Failed to fetch data about mod ID:{modId}, Details: {ex}");
                 return;
             }
+            // because modio apparently loves doing dumb shit like: giving the same mod multiple ids. thanks modio!
+            if (announcedMods.Contains((uint)modData.NameId!.GetHashCode()))
+                return;
+            announcedMods.Add((uint)modData.NameId!.GetHashCode());
             Logger.Put($"New mod available: ID= {modId}; NameID= {modData.NameId}; tags= {string.Join(',', tags.Select(t => t.Name))}");
 
 
@@ -188,6 +273,7 @@ namespace Voidway_Bot {
             int announcementChannelCounter = 0;
             int allAnnouncementChannelCounter = 0;
             int malformedChannelCounter = 0;
+            int commentChannelCounter = 0;
 
             foreach (var kvp in keyValues)
             {
@@ -195,8 +281,16 @@ namespace Voidway_Bot {
                 DiscordChannel malChannel = kvp.Value.GetChannel(malChannelId);
                 if (malChannel is not null)
                 {
-                    malformedFileChannels.Add(malChannel);
+                    modioMalformedUploadChannels.Add(malChannel);
                     malformedChannelCounter++;
+                }
+
+                ulong commentChannelId = Config.FetchCommentModerationChannel(kvp.Key);
+                DiscordChannel comChannel = kvp.Value.GetChannel(commentChannelId);
+                if (comChannel is not null)
+                {
+                    modioCommentModerationNotifChannels.Add(comChannel);
+                    commentChannelCounter++;
                 }
 
                 ulong allChannelId = Config.FetchAllModsChannel(kvp.Key);
@@ -227,6 +321,7 @@ namespace Voidway_Bot {
             Logger.Put($" - {announcementChannelCounter} per-type mod.io announcement channels");
             Logger.Put($" - {allAnnouncementChannelCounter} all-type mod.io announcement channels");
             Logger.Put($" - {malformedChannelCounter} malformed (moderation) announcement channels");
+            Logger.Put($" - {commentChannelCounter} comment scan (moderation) notification channels");
             return Task.CompletedTask;
         }
 
@@ -305,7 +400,6 @@ namespace Voidway_Bot {
                 UnityPkg = 1 << 5,
                 UnityProj
             */
-            GC.GetGCMemoryInfo();
             ModFile? file =  await modClient.Files.Search().First();
             Download? download = file?.Download;
             downloadClient ??= new();
@@ -390,7 +484,7 @@ namespace Voidway_Bot {
                 Title = $"{mod.Name} (ID: {mod.NameId})",
                 Url = mod.ProfileUrl?.ToString() ?? FALLBACK_URL
             };
-            foreach (DiscordChannel channel in malformedFileChannels)
+            foreach (DiscordChannel channel in modioMalformedUploadChannels)
             {
                 await channel.SendMessageAsync(deb.Build());
             }

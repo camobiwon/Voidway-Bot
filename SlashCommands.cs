@@ -32,12 +32,12 @@ namespace Voidway_Bot
             //MONTHS discord silently fails to apply a monthlong timeout
         }
 
-        static Dictionary<string, string> reasonsByBot = new();
-        public static bool WasByBotCommand(string reason, out string user)
+        static Dictionary<string, VoidwayTimeoutData> timeoutsPerformedByCommand = new();
+        public static bool WasByBotCommand(string reason, out VoidwayTimeoutData user)
         {
-            if (reasonsByBot.TryGetValue(reason, out user!))
+            if (timeoutsPerformedByCommand.TryGetValue(reason, out user!))
             {
-                reasonsByBot.Remove(reason);
+                timeoutsPerformedByCommand.Remove(reason);
                 return true;
             }
             else return false;
@@ -74,8 +74,10 @@ namespace Voidway_Bot
 
             try
             {
+
+
                 reason = $"By {ctx.User.Username}: " + reason;
-                reasonsByBot[reason] = ctx.User.Username;
+                timeoutsPerformedByCommand[reason] = new(reason, ctx.User.Username, VoidwayTimeoutData.TargetNotificationStatus.NOT_APPLICABLE);
                 await victim.TimeoutAsync(until, reason);
 
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
@@ -118,7 +120,9 @@ namespace Voidway_Bot
             [Option("timeUnit", "The unit of time to apply the timeout in")]
             TimeType unit,
             [Option("reason", "Why this user is being timed out")]
-            string reason
+            string reason,
+            [Option("notifyWithReason", "DMs the user telling them the exact reason why they were muted.")]
+            bool notifyWithReasonImmediately = false
             )
         {
             DiscordMember victim = (DiscordMember)_victim;
@@ -136,8 +140,19 @@ namespace Voidway_Bot
 
             try
             {
+                string ogReason = reason;
                 reason = $"By {ctx.User.Username}: " + reason;
-                reasonsByBot[reason] = ctx.User.Username;
+                // this is so fugly LMFAO
+                VoidwayTimeoutData.TargetNotificationStatus notifStatus = notifyWithReasonImmediately
+                                                                        ?
+                                                                        (
+                                                                            await Moderation.SendWarningMessage(victim, ogReason, ctx.Guild.Name)
+                                                                            ? VoidwayTimeoutData.TargetNotificationStatus.SUCCESS 
+                                                                            : VoidwayTimeoutData.TargetNotificationStatus.FAILURE
+                                                                        )
+                                                                        : VoidwayTimeoutData.TargetNotificationStatus.NOT_ATTEMPTED;
+
+                timeoutsPerformedByCommand[reason] = new(ogReason, ctx.User.Username, notifStatus);
                 await victim.TimeoutAsync(until, reason);
 
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
@@ -145,6 +160,7 @@ namespace Voidway_Bot
                     IsEphemeral = true,
                     Content = $"Timed out {victim.Username}#{victim.Discriminator} until <t:{until.ToUnixTimeSeconds()}:f>"
                 });
+
             }
             catch (DiscordException ex)
             {
@@ -189,6 +205,33 @@ namespace Voidway_Bot
             ModUploads.NotifyNewMod((uint)modId, (uint)userId);
 
             await ctx.CreateResponseAsync($"Tested mod uploads with mod ID {modId} and user ID {userId}", true);
+        }
+
+        [SlashCommand("dumpModerationHistory", "Dumps all moderation history a given user has within the past month.")]
+        [SlashRequirePermissions(Permissions.ViewAuditLog, false)]
+        public async Task DumpModerationInfoFor(
+            InteractionContext ctx,
+            [Option("userId", "The ID to search records for")]
+            string userId = "",
+            [Option("user", "The user whose ID to check records for")]
+            DiscordUser? user = null,
+            [Option("showResultsEphemeral", "Whether to send the results secretly (true) or send as a normal message (false)")]
+            bool ephemeral = true
+            )
+        {
+            ulong id;
+            if (user is not null)
+                id = user.Id;
+            else if (ulong.TryParse(userId, out ulong parsedId))
+                id = parsedId;
+            else
+            {
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new() { Content = "You either need to provide a user's ID number or a user!", IsEphemeral = true });
+                return;
+            }
+
+            string str = PersistentData.GetModerationInfoFor(ctx.Guild.Id, id);
+            await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new() { Content = str, IsEphemeral = ephemeral });
         }
     }
 }

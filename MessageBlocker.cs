@@ -23,7 +23,7 @@ namespace Voidway_Bot
 
         private static async void FilterMessage(DSharpPlus.EventArgs.MessageCreateEventArgs e)
         {
-            if (e.Message.Channel.GuildId is null || e.Guild is null || e.Author is not DiscordMember member) return;
+            if (e.Guild is null || e.Author is not DiscordMember member) return;
             if (e.Channel.PermissionsFor(member).HasPermission(Permissions.ManageMessages)) return;
 
             if (IsFiltered(e.Message))
@@ -57,7 +57,7 @@ namespace Voidway_Bot
 
         static async Task<bool> TryMessage(DiscordMember author, DiscordGuild guild)
         {
-                string authorStr = $"{author.Username}#{author.Discriminator} (ID={author.Id})";
+            string authorStr = $"{author.Username}#{author.Discriminator} (ID={author.Id})";
             try
             {
                 await author.SendMessageAsync($"Hey, I saw you posted an invite to a multiplayer game (probably BLMP, BWMP, or Fusion) in {guild.Name}. I'm sorry, but that isn't allowed, however you can find people to play with in these servers instead:\n{string.Join("\n", Config.GetFilterInvites())}");
