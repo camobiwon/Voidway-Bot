@@ -58,6 +58,7 @@ namespace Voidway_Bot {
         static UploadType[] uploadTypeValues = Enum.GetValues<UploadType>();
         static UploadType[] uploadTypeValuesNoUnk = Enum.GetValues<UploadType>().Skip(1).ToArray(); // skip needs to be changed if Unknown is moved
         static Client client;
+        static Game bonelabGame;
         static GameClient bonelab;
         static ModsClient bonelabMods;
         [ThreadStatic] static HttpClient downloadClient; // threadstatic to prevent multiple threads using the same httpclient at the same time
@@ -123,7 +124,7 @@ namespace Voidway_Bot {
             client = new(cred);
             User currUser = await client.User.GetCurrentUser();
             var games = await client.Games.Search().ToList();
-            Game bonelabGame = games.First(g => g.NameId == "bonelab");
+            bonelabGame = games.First(g => g.NameId == "bonelab");
             bonelab = client.Games[bonelabGame.Id];
             bonelabMods = bonelab.Mods;
             ModEvent? firstEvent = await bonelab.Mods.GetEvents().First();
@@ -154,7 +155,7 @@ namespace Voidway_Bot {
                 if (comment is null || Bot.OpenAiClient is null || string.IsNullOrEmpty(comment.Content)) return;
 
                 string? commenterUsername = comment.SubmittedBy?.Username;
-                string? commenterProfile = comment.SubmittedBy?.ProfileUrl?.ToString();
+                string? commenterNameId = comment.SubmittedBy?.NameId?.ToString();
 
                 string commentStr = string.IsNullOrEmpty(commenterUsername) ? comment.Content : $"{commenterUsername}: {comment.Content}";
                 var moderationRes = await Bot.OpenAiClient.Moderation.CallModerationAsync(commentStr);
@@ -171,8 +172,8 @@ namespace Voidway_Bot {
                 if (!res.Flagged) return;
 
                 StringBuilder sb = new("A comment");
-                if (commenterUsername is not null && commenterProfile is not null)
-                    sb.Append($" from [{commenterUsername}](<{commenterProfile}>)");
+                if (commenterUsername is not null && commenterNameId is not null)
+                    sb.Append($" from [{commenterUsername}](<https://mod.io/g/{bonelabGame.NameId}/u/{commenterNameId}/info#comments>)");
 
                 sb.AppendLine($" on the mod [{parentMod.Name}](<{parentMod.ProfileUrl}>) has been flagged by OpenAI in the following categories:");
 
