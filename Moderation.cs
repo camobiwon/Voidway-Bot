@@ -183,11 +183,12 @@ namespace Voidway_Bot {
             DiscordMessageBuilder dmb = new();
 
             embed.AddField("User", $"{victim.Username}", true);
-            embed.AddField("Moderator", $"{timeoutData.ModeratorName}", true);
-            if (!string.IsNullOrEmpty(timeoutData.OriginalReason))
+            if (!string.IsNullOrWhiteSpace(timeoutData.ModeratorName))
+                embed.AddField("Moderator", timeoutData.ModeratorName, true);
+            if (!string.IsNullOrWhiteSpace(timeoutData.OriginalReason))
                 embed.AddField("Reason", timeoutData.OriginalReason, true);
-            else if (!string.IsNullOrEmpty(customFieldTitle))
-                embed.AddField(customFieldTitle, customField, true);
+            if (!string.IsNullOrWhiteSpace(customFieldTitle))
+                embed.AddField(customFieldTitle, customField, false);
 
             if (actionTriggersWarn)
             {
@@ -239,7 +240,7 @@ namespace Voidway_Bot {
                 if (attachment.FileSize < 8 * 1024 * 1024) // 8mb limit
                 {
                     attachmentsToGet.Add(attachment.ProxyUrl);
-                    attachments += $"\n(Attached below) {attachment.Url}";
+                    attachments += $"\n(Attached) {attachment.Url}";
                 }
                 else
                 {
