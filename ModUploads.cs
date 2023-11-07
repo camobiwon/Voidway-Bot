@@ -349,7 +349,7 @@ namespace Voidway_Bot {
                     {
                         Logger.Put($"Hiding mod embed for {mod.NameId}");
                         modURL = $"*Embed removed as mod is marked with mature options*\n<{modURL}>";
-					}
+                    }
                     */
 
                     try
@@ -357,9 +357,9 @@ namespace Voidway_Bot {
                         string author = mod.SubmittedBy is not null ? $" created by **{mod.SubmittedBy.Username?.ToString().Replace("&amp;", "&")!}**" : "";
                         messages.Add(await channel.SendMessageAsync($"**{mod.Name?.ToString().Replace("&amp;", "&")!}**{author}\n\n{modURL}"));
                         DiscordMessage modMsg = messages[^1];
-						await modMsg.CreateReactionAsync(DiscordEmoji.FromUnicode("👍"));
+                        await modMsg.CreateReactionAsync(DiscordEmoji.FromUnicode("👍"));
                         await modMsg.CreateReactionAsync(DiscordEmoji.FromUnicode("👎"));
-						count++;
+                        count++;
                         announcedMods.Add(mod.Id);
                     }
                     catch (DiscordException ex)
@@ -491,7 +491,7 @@ namespace Voidway_Bot {
             }
         }
 
-		/*
+        /*
         private static bool ShouldHideImage(Mod mod, ulong server) 
             => mod.MaturityOption != MaturityOption.None;
 
@@ -500,7 +500,7 @@ namespace Voidway_Bot {
             || WillCensor(mod, server);
         */
 
-		static UploadType IdentifyUpload(IEnumerable<Tag> tags)
+        static UploadType IdentifyUpload(IEnumerable<Tag> tags)
         {
             UploadType ret = UploadType.Unknown;
             foreach (Tag tag in tags)
