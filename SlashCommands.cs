@@ -75,9 +75,9 @@ namespace Voidway_Bot
             try
             {
 
-
+                string ogReason = reason;
                 reason = $"By {ctx.User.Username}: " + reason;
-                timeoutsPerformedByCommand[reason] = new(reason, ctx.User.Username, VoidwayTimeoutData.TargetNotificationStatus.NOT_APPLICABLE);
+                timeoutsPerformedByCommand[reason] = new(ogReason, ctx.User.Username, VoidwayTimeoutData.TargetNotificationStatus.NOT_APPLICABLE);
                 await victim.TimeoutAsync(until, reason);
 
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
