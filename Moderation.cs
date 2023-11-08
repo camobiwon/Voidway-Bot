@@ -343,7 +343,7 @@ namespace Voidway_Bot {
             if (SlashCommands.WasByBotCommand(logEntry.Reason, out var timeoutData)) {
                 return timeoutData;
             }
-            else return new VoidwayTimeoutData(userResponsible.Username, logEntry.Reason, TargetNotificationStatus.NOT_ATTEMPTED);
+            else return new VoidwayTimeoutData(logEntry.Reason, userResponsible.Username, TargetNotificationStatus.NOT_ATTEMPTED);
         }
 
         private static async void HandleWarnButtons(VoidwayTimeoutData timeoutData, DiscordMember timedOutUser, DiscordMessage waitOnMsg)
