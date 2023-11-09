@@ -336,7 +336,7 @@ namespace Voidway_Bot {
         {
             DiscordUser? userResponsible = logEntry?.UserResponsible;
             if (logEntry is null || userResponsible is null) return new("*Unknown*", logEntry?.Reason ?? "", TargetNotificationStatus.UNKNOWN);
-            else if (userResponsible != Bot.CurrUser) return new(userResponsible.Username, logEntry.Reason, TargetNotificationStatus.NOT_ATTEMPTED);
+            else if (userResponsible != Bot.CurrUser) return new(logEntry.Reason, userResponsible.Username, TargetNotificationStatus.NOT_ATTEMPTED);
 
             // now handle the case that the bot took action
 
