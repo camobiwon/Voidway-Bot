@@ -10,7 +10,7 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Text;
 using System.Threading.Channels;
-using static Voidway_Bot.VoidwayTimeoutData;
+using static Voidway_Bot.VoidwayModerationData;
 
 namespace Voidway_Bot {
     internal static class Moderation {
@@ -70,7 +70,7 @@ namespace Voidway_Bot {
                 return;
 
             DateTime now = DateTime.UtcNow; // discord audit logs use UTC time
-            DiscordAuditLogEntry? logEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.MemberUpdate && FuzzyFilterByTime(dale, now));
+            DiscordAuditLogEntry? logEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == DiscordAuditLogActionType.MemberUpdate && FuzzyFilterByTime(dale, now));
 
             DateTimeOffset? timeOutBefore = e.CommunicationDisabledUntilBefore.HasValue && e.CommunicationDisabledUntilBefore > DateTime.Now
                                           ? e.CommunicationDisabledUntilBefore.Value
@@ -94,7 +94,7 @@ namespace Voidway_Bot {
             else if (timeOutAfter.HasValue && timeOutAfter > DateTime.Now)
             {
                 // just gonna use 'AutoModerationUserCommunicationDisabled' to denote that the user was timed out regardless lol
-                await UserWasModerated(e.Member, AuditLogActionType.AutoModerationUserCommunicationDisabled);
+                await UserWasModerated(e.Member, DiscordAuditLogActionType.AutoModerationUserCommunicationDisabled);
                 await ModerationEmbed(e.Guild, e.Member, $"Timed Out. Ends <t:{timeOutAfter.Value.ToUnixTimeSeconds()}:R>", logEntry, DiscordColor.Yellow, actionTriggersWarn: true);
             }
             else if (timeOutBefore.HasValue && !timeOutAfter.HasValue)
@@ -103,7 +103,7 @@ namespace Voidway_Bot {
 
         private static async void KickHandler(GuildMemberRemoveEventArgs e) {
             DateTime now = DateTime.UtcNow;
-            DiscordAuditLogEntry? kickEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.Kick);
+            DiscordAuditLogEntry? kickEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == DiscordAuditLogActionType.Kick);
             Logger.Put($"{e.Guild.Name}, {e.Member.Username}, ke==null:{kickEntry is null}", Logger.Reason.Trace);
             if (kickEntry is null) return;
             if (!FuzzyFilterByTime(kickEntry, now, 10 * 1000))
@@ -112,8 +112,8 @@ namespace Voidway_Bot {
                 return;
             }
 
-            await UserWasModerated(e.Member, AuditLogActionType.Kick);
-            await ModerationEmbed(e.Guild, e.Member, "Kicked", kickEntry, DiscordColor.Orange);
+            await UserWasModerated(e.Member, DiscordAuditLogActionType.Kick);
+            await ModerationEmbed(e.Guild, e.Member, "Kicked", kickEntry, DiscordColor.Orange, actionTriggersWarn: true);
         }
 
         private static async Task NewAccountHandler(GuildMemberAddEventArgs e)
@@ -129,17 +129,29 @@ namespace Voidway_Bot {
 
         private static async Task BanAddHandler(GuildBanAddEventArgs e)
         {
-            DiscordAuditLogEntry? banEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.Ban);
-            await ModerationEmbed(e.Guild, e.Member, "Banned", banEntry, DiscordColor.Red, "Info pre-ban", PersistentData.GetModerationInfoFor(e.Guild.Id, e.Member.Id));
+            DiscordAuditLogEntry? banEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == DiscordAuditLogActionType.Ban);
+            await ModerationEmbed(e.Guild, e.Member, "Banned", banEntry, DiscordColor.Red, "Info pre-ban", PersistentData.GetModerationInfoFor(e.Guild.Id, e.Member.Id), true);
             if (PersistentData.GapDays.Count < 15)
             {
+                if (!PersistentData.values.observedMessages.TryGetValue(e.Guild.Id, out var userDict) || !userDict.TryGetValue(e.Member.Id, out var messagesDict))
+                {
+                    // if there were no messages from that user - assumed to be banned for scamming/TOS age or something
+                    return;
+                }
+
+                if (messagesDict.Values.Sum(ush => ush) < 100)
+                {
+                    // less than 100 messages - assumed to be banned for scamming/TOS age or other blatant shit
+                    return;
+                }
+
                 if (!PersistentData.values.moderationActions.TryGetValue(e.Guild.Id, out var usersDict) || !PersistentData.values.moderationActions.TryGetValue(e.Member.Id, out var actionsDict))
                 {
                     await ModerationEmbed(e.Guild, e.Member, "Possibly Banned In Error", null, DiscordColor.Orange, "Reconsider Action Taken", $"It seems this user hasn't been moderated in the past month. Are you sure you wanted to ban this user instead of just muting them? Full user info below.\n{PersistentData.GetModerationInfoFor(e.Guild.Id, e.Member.Id)}", false);
                     return;
                 }
 
-                int nonMsgDelActions = actionsDict.Values.SelectMany(v => v.Values).Count(alr => alr != AuditLogActionType.MessageDelete);
+                int nonMsgDelActions = actionsDict.Values.SelectMany(v => v.Values).Count(alr => alr != DiscordAuditLogActionType.MessageDelete);
                 if (nonMsgDelActions > 2 && PersistentData.TrackedDays.Count() > PersistentData.TRACK_PAST_DAYS / 2)
                     await ModerationEmbed(e.Guild, e.Member, "Possibly Banned In Error", null, DiscordColor.Orange, "Reconsider Action Taken", $"It seems this user was moderated only {nonMsgDelActions} time(s) (w/o msg deletions) in the past month. Full user info below.\n{PersistentData.GetModerationInfoFor(e.Guild.Id, e.Member.Id)}", false);
             }
@@ -148,7 +160,7 @@ namespace Voidway_Bot {
 
         private static async Task BanRemoveHandler(GuildBanRemoveEventArgs e)
         {
-            DiscordAuditLogEntry? unbanEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == AuditLogActionType.Unban);
+            DiscordAuditLogEntry? unbanEntry = await TryGetAuditLogEntry(e.Guild, dale => dale.ActionType == DiscordAuditLogActionType.Unban);
             await ModerationEmbed(e.Guild, e.Member, "Ban Removed", unbanEntry, DiscordColor.Green);
         }
 
@@ -173,7 +185,7 @@ namespace Voidway_Bot {
         }
 
         private static async Task ModerationEmbed(DiscordGuild guild, DiscordMember victim, string actionType, DiscordAuditLogEntry? logEntry, DiscordColor color, string customFieldTitle = "", string customField = "", bool actionTriggersWarn = false) {
-            VoidwayTimeoutData timeoutData = GetDataFromReason(logEntry);
+            VoidwayModerationData timeoutData = GetDataFromReason(logEntry);
             //(string loggedMod, string reason, bool targetNotified) = GetDataFromReason(logEntry);
             DiscordEmbedBuilder embed = new() {
                 Title = $"User {actionType}",
@@ -190,6 +202,14 @@ namespace Voidway_Bot {
             if (!string.IsNullOrWhiteSpace(customFieldTitle))
                 embed.AddField(customFieldTitle, customField, false);
 
+            bool stillInServer = false;
+            try
+            {
+                await guild.GetMemberAsync(victim.Id, true);
+                stillInServer = true;
+            }
+            catch { }
+
             if (actionTriggersWarn)
             {
                 string footerAddendum = timeoutData.TargetWarnStatus switch
@@ -203,7 +223,7 @@ namespace Voidway_Bot {
 
                 embed.Footer.Text = embed.Footer.Text + footerAddendum;
 
-                if (timeoutData.TargetWarnStatus == TargetNotificationStatus.NOT_ATTEMPTED)
+                if (stillInServer && timeoutData.TargetWarnStatus == TargetNotificationStatus.NOT_ATTEMPTED)
                 {
                     DiscordButtonComponent buttonSendLogReason = new(ButtonStyle.Primary, BUTTON_WARN_AUDITLOG_REASON, "Send warning (w/ audit log reason)");
                     DiscordButtonComponent buttonSendCraftedReason = new(ButtonStyle.Secondary, BUTTON_WARN_PROVIDE_REASON, "Send warning (specify reason)");
@@ -332,21 +352,21 @@ namespace Voidway_Bot {
             return ret;
         }
 
-        private static VoidwayTimeoutData GetDataFromReason(DiscordAuditLogEntry? logEntry)
+        private static VoidwayModerationData GetDataFromReason(DiscordAuditLogEntry? logEntry)
         {
             DiscordUser? userResponsible = logEntry?.UserResponsible;
-            if (logEntry is null || userResponsible is null) return new("*Unknown*", logEntry?.Reason ?? "", TargetNotificationStatus.UNKNOWN);
-            else if (userResponsible != Bot.CurrUser) return new(logEntry.Reason, userResponsible.Username, TargetNotificationStatus.NOT_ATTEMPTED);
+            if (logEntry is null || userResponsible is null) return new("*Unknown*", logEntry?.Reason ?? "*Unknown*", TargetNotificationStatus.UNKNOWN);
+            else if (userResponsible != Bot.CurrUser) return new(logEntry.Reason ?? "*Unknown*", userResponsible.Username, TargetNotificationStatus.NOT_ATTEMPTED);
 
             // now handle the case that the bot took action
 
             if (SlashCommands.WasByBotCommand(logEntry.Reason, out var timeoutData)) {
                 return timeoutData;
             }
-            else return new VoidwayTimeoutData(logEntry.Reason, userResponsible.Username, TargetNotificationStatus.NOT_ATTEMPTED);
+            else return new VoidwayModerationData(logEntry.Reason ?? "*Unknown*", userResponsible.Username, TargetNotificationStatus.NOT_ATTEMPTED);
         }
 
-        private static async void HandleWarnButtons(VoidwayTimeoutData timeoutData, DiscordMember timedOutUser, DiscordMessage waitOnMsg)
+        private static async void HandleWarnButtons(VoidwayModerationData timeoutData, DiscordMember timedOutUser, DiscordMessage waitOnMsg)
         {
             try
             {
@@ -359,18 +379,21 @@ namespace Voidway_Bot {
                 }
 
 
+                string footer = waitOnMsg.Embeds[0].Footer.Text;
+
                 switch (res.Result.Id)
                 {
                     case BUTTON_WARN_AUDITLOG_REASON:
                         await res.Result.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new() { Content = "Starting interaction!", IsEphemeral = true });
                         DiscordMessage alFollowup = await res.Result.Channel.SendMessageAsync($"Sending warning message to {timedOutUser.Username}...");
-                        bool alWarnSuccess = await SendWarningMessage(timedOutUser, timeoutData.OriginalReason, waitOnMsg.Channel.Guild.Name);
+                        bool alWarnSuccess = await SendWarningMessage(timedOutUser, "muted", timeoutData.OriginalReason, waitOnMsg.Channel.Guild.Name);
                         if (alWarnSuccess)
                             await alFollowup.ModifyAsync(alFollowup.Content + " Success!");
                         else
                             await alFollowup.ModifyAsync(alFollowup.Content + " Failed! Could be due to them leaving or their privacy settings!");
 
-                        await RemoveInteractionComponents(waitOnMsg);
+                        footer = footer.Split(',')[0] + ", warned.";
+                        await RemoveInteractionComponents(waitOnMsg, footer);
                         break;
                     case BUTTON_WARN_PROVIDE_REASON:
                         await res.Result.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new() { Content = "Starting interaction!", IsEphemeral = true });
@@ -398,13 +421,16 @@ namespace Voidway_Bot {
 
                         DiscordMessage warnMsg = nextMsgRes.Result;
 
-                        bool warnCustomTxtRes = await SendWarningMessage(timedOutUser, warnMsg.Content, waitOnMsg.Channel.Guild.Name);
+                        bool warnCustomTxtRes = await SendWarningMessage(timedOutUser, "muted", warnMsg.Content, waitOnMsg.Channel.Guild.Name);
 
                         await askWarnTxtMsg.ModifyAsync(warnCustomTxtRes ? $"Successfully warned {timedOutUser.Username} with that reason!" : $"Failed to warn {timedOutUser.Username} - their privacy settings may be too strict or they may have left.");
 
+                        footer = footer.Split(',')[0] + ", warned.";
                         await RemoveInteractionComponents(waitOnMsg);
                         break;
                     case BUTTON_WARN_IGNORE:
+
+                        footer = footer.Split(',')[0] + ", not warned (dismissed).";
                         await RemoveInteractionComponents(waitOnMsg);
                         await res.Result.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new() { Content = "Dismissed!", IsEphemeral = true });
                         break;
@@ -416,20 +442,27 @@ namespace Voidway_Bot {
             }
         }
 
-        private static async Task RemoveInteractionComponents(DiscordMessage removeComponents)
+        private static async Task RemoveInteractionComponents(DiscordMessage removeComponents, string? changeFooterTo = null)
         {
             DiscordMessageBuilder dmb = new(removeComponents);
 
             dmb.ClearComponents();
 
+            if (!string.IsNullOrEmpty(changeFooterTo))
+            {
+                DiscordEmbedBuilder deb = new(dmb.Embed);
+                deb.WithFooter(changeFooterTo);
+                dmb.Embed = deb;
+            }
+
             await removeComponents.ModifyAsync(dmb);
         }
 
-        internal static async Task<bool> SendWarningMessage(DiscordMember member, string reason, string serverName)
+        internal static async Task<bool> SendWarningMessage(DiscordMember member, string action, string reason, string serverName)
         {
             try
             {
-                await member.SendMessageAsync($"You were muted in **{serverName}** for the following reason:\n\"{reason}\"\n\n*This bot does not relay messages to the staff of that server. If you want clarification, DM a moderator/admin in that server.*");
+                await member.SendMessageAsync($"The moderators in **{serverName}** have {action} you for the following reason:\n\"{reason}\"\n\n*This bot does not relay messages to the staff of that server. If you want clarification, DM a moderator/admin in that server.*");
 
                 return true;
             }
@@ -446,13 +479,13 @@ namespace Voidway_Bot {
                 return;
 
             // if theres no audit log entry then the user deleted the message on their own
-            if (await TryGetAuditLogEntry(guild, ale => ale.ActionType == AuditLogActionType.MessageDelete) is null)
+            if (await TryGetAuditLogEntry(guild, ale => ale.ActionType == DiscordAuditLogActionType.MessageDelete) is null)
                 return;
 
             if (msg.Author is not DiscordMember member)
                 member = await guild.GetMemberAsync(msg.Author.Id);
 
-            await UserWasModerated(member, AuditLogActionType.MessageDelete);
+            await UserWasModerated(member, DiscordAuditLogActionType.MessageDelete);
         }
 
         private static Task HandleUserMessage(DiscordUser author, DiscordMessage message)
@@ -481,7 +514,7 @@ namespace Voidway_Bot {
             return Task.Run(() => { PersistentData.TrimOldMessages(); PersistentData.WritePersistentData(); });
         }
 
-        private static Task UserWasModerated(DiscordMember member, AuditLogActionType actionType)
+        private static Task UserWasModerated(DiscordMember member, DiscordAuditLogActionType actionType)
         {
             if (!PersistentData.values.moderationActions.TryGetValue(member.Guild.Id, out var userDict))
             {

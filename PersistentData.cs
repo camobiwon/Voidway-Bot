@@ -27,7 +27,7 @@ namespace Voidway_Bot
         // server -> user -> day -> msgCount
         public Dictionary<ulong, Dictionary<ulong, Dictionary<DateOnly, ushort>>> observedMessages = new();
         // server -> user -> day of actions
-        public Dictionary<ulong, Dictionary<ulong, Dictionary<DateTime, AuditLogActionType>>> moderationActions = new();
+        public Dictionary<ulong, Dictionary<ulong, Dictionary<DateTime, DiscordAuditLogActionType>>> moderationActions = new();
 
         static PersistentData()
         {
@@ -109,7 +109,7 @@ namespace Voidway_Bot
         {
             DateTime oneMonthAgo = DateTime.Now - TimeSpan.FromDays(TRACK_PAST_DAYS);
             int count = 0;
-            foreach (Dictionary<DateTime, AuditLogActionType> daysWhereUserWasModerated in values.moderationActions.Values.SelectMany(d => d.Values))
+            foreach (Dictionary<DateTime, DiscordAuditLogActionType> daysWhereUserWasModerated in values.moderationActions.Values.SelectMany(d => d.Values))
             {
                 var oldActionTimes = daysWhereUserWasModerated.Keys.Where(date => oneMonthAgo > date);
 
@@ -137,28 +137,28 @@ namespace Voidway_Bot
         static string GetModerationInfoStr(ulong guild, ulong user)
         {
             if (!values.moderationActions.TryGetValue(guild, out var userDict))
-                return "No moderation history";
+                return "**No** moderation history";
             if (!userDict.TryGetValue(user, out var actionsDict) || actionsDict.Count == 0)
-                return "No moderation history";
+                return "**No** moderation history";
 
 
             var actionsGrouped = actionsDict.Values.Distinct().Select(actionType => GetActionStringFromDict(actionType, actionsDict));
             return string.Join('\n', actionsGrouped);
 
-            static string GetActionStringFromDict(AuditLogActionType action, Dictionary<DateTime, AuditLogActionType> actionsDict)
+            static string GetActionStringFromDict(DiscordAuditLogActionType action, Dictionary<DateTime, DiscordAuditLogActionType> actionsDict)
             {
                 string actionName = action switch
                 {
-                    AuditLogActionType.AutoModerationUserCommunicationDisabled => "Timed out",
-                    AuditLogActionType.Kick => "Kicked",
-                    AuditLogActionType.Ban => "Banned",
-                    AuditLogActionType.MessageDelete => "Msg deleted",
+                    DiscordAuditLogActionType.AutoModerationUserCommunicationDisabled => "Timed out",
+                    DiscordAuditLogActionType.Kick => "Kicked",
+                    DiscordAuditLogActionType.Ban => "Banned",
+                    DiscordAuditLogActionType.MessageDelete => "Msg deleted",
                     _ => action.ToString()
                 };
 
                 int count = actionsDict.Values.Count(k => k == action);
 
-                return $"{actionName} {count} time{(count == 1 ? "" : "s")}";
+                return $"{actionName} **{count}** time{(count == 1 ? "" : "s")}";
             }
         }
 
@@ -169,7 +169,7 @@ namespace Voidway_Bot
             if (!userMsgDict.TryGetValue(user, out var msgCountDict) || msgCountDict.Count == 0)
                 return"**No observed messages in past month**";
             
-            return$"{msgCountDict.Values.Sum(u => u)} observed messages in past month";
+            return$"**{msgCountDict.Values.Sum(u => u)}** observed messages in past month";
         }
 
         static void RemoveOldGaps()

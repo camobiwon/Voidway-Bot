@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Voidway_Bot;
 
-internal record VoidwayTimeoutData(string OriginalReason, string ModeratorName, VoidwayTimeoutData.TargetNotificationStatus TargetWarnStatus)
+internal record VoidwayModerationData(string OriginalReason, string ModeratorName, VoidwayModerationData.TargetNotificationStatus TargetWarnStatus)
 {
     public enum TargetNotificationStatus
     {
