@@ -297,7 +297,8 @@ namespace Voidway_Bot {
                 ulong allChannelId = Config.FetchAllModsChannel(kvp.Key);
                 foreach (UploadType uType in uploadTypeValues)
                 {
-                    uploadChannels[uType] = new();
+                    if (!uploadChannels.ContainsKey(uType))
+                        uploadChannels[uType] = new();
 
                     // getchannel does a tryget from a dict, returns null if not found. default will cause null to be ret'd
                     ulong upChannelId = Config.FetchUploadChannel(kvp.Key, uType);
@@ -308,7 +309,7 @@ namespace Voidway_Bot {
                     if (upChannel is not null)
                     {
                         uploadChannels[uType].Add(upChannel);
-                        Logger.Put($"Channel #{upChannel} (in {upChannel.Guild.Name}) will be used for {uType} mods");
+                        Logger.Put($"Channel #{upChannel} (in {upChannel.Guild.Name}) will be used for {uType} mods, making a new ");
                         announcementChannelCounter++;
                     }
 
