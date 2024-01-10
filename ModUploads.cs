@@ -308,12 +308,14 @@ namespace Voidway_Bot {
                     if (upChannel is not null)
                     {
                         uploadChannels[uType].Add(upChannel);
+                        Logger.Put($"Channel #{upChannel} (in {upChannel.Guild.Name}) will be used for {uType}");
                         announcementChannelCounter++;
                     }
 
                     if (allChannel is not null)
                     {
                         uploadChannels[uType].Add(allChannel);
+                        Logger.Put($"Channel #{allChannel} (in {allChannel.Guild.Name}) will be used as an all-channel");
                         allAnnouncementChannelCounter++;
                     }
                 }
@@ -339,6 +341,8 @@ namespace Voidway_Bot {
             {
                 if (!uploadType.HasFlag(flag)) continue;
                 if (!uploadChannels.TryGetValue(flag, out List<DiscordChannel>? channels)) continue;
+
+                Logger.Put($"The log type {flag} gets announced in {channels.Count} channel(s)");
 
                 foreach (DiscordChannel channel in channels)
                 {
