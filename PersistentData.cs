@@ -46,6 +46,7 @@ namespace Voidway_Bot
             TrimOldMessages();
             TrimOldModerations();
             WritePersistentData();
+            Logger.Put("Finished persistent data init");
         }
 
         public static void OutputRawJSON()

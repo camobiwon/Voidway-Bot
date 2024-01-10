@@ -308,23 +308,27 @@ namespace Voidway_Bot {
                     if (upChannel is not null)
                     {
                         uploadChannels[uType].Add(upChannel);
-                        Logger.Put($"Channel #{upChannel} (in {upChannel.Guild.Name}) will be used for {uType}");
+                        Logger.Put($"Channel #{upChannel} (in {upChannel.Guild.Name}) will be used for {uType} mods");
                         announcementChannelCounter++;
                     }
 
                     if (allChannel is not null)
                     {
                         uploadChannels[uType].Add(allChannel);
-                        Logger.Put($"Channel #{allChannel} (in {allChannel.Guild.Name}) will be used as an all-channel");
+                        Logger.Put($"Channel #{allChannel} (in {allChannel.Guild.Name}) will be used as an all-mod announcement channel");
                         allAnnouncementChannelCounter++;
                     }
                 }
             }
             Logger.Put($"Fetched {announcementChannelCounter + allAnnouncementChannelCounter + malformedChannelCounter} total mod.io upload announcement channels");
             Logger.Put($" - {announcementChannelCounter} per-type mod.io announcement channels");
+            foreach (var kvp in uploadChannels)
+            {
+                Logger.Put($"    - {kvp.Key} has {kvp.Value.Count} channel(s)");
+            }
             Logger.Put($" - {allAnnouncementChannelCounter} all-type mod.io announcement channels");
             Logger.Put($" - {malformedChannelCounter} malformed (moderation) announcement channels");
-            Logger.Put($" - {commentChannelCounter} comment scan (moderation) notification channels");
+            Logger.Put($"And {commentChannelCounter} comment scan (moderation) notification channels!");
             return Task.CompletedTask;
         }
 
