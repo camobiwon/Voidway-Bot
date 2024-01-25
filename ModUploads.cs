@@ -319,6 +319,9 @@ namespace Voidway_Bot {
                         Logger.Put($"Channel #{allChannel} (in {allChannel.Guild.Name}) will be used as an all-mod announcement channel");
                         allAnnouncementChannelCounter++;
                     }
+
+                    if (uploadChannels.TryGetValue(uType, out List<DiscordChannel>? possiblyDuplicateChannels))
+                        uploadChannels[uType] = possiblyDuplicateChannels.Distinct().ToList();
                 }
             }
             Logger.Put($"Fetched {announcementChannelCounter + allAnnouncementChannelCounter + malformedChannelCounter} total mod.io upload announcement channels");
