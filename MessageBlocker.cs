@@ -29,8 +29,8 @@ namespace Voidway_Bot
             if (IsFiltered(e.Message))
             {
                 string application = e.Message.Application is not null ? $"w/ application {e.Message.Application.Name} (ID={e.Message.Application.Id})" : "";
-                string author = $"{e.Message.Author.Username}#{e.Message.Author.Discriminator}";
-                Logger.Put($"Deleting message '{Logger.EnsureShorterThan(e.Message.Content, 50)}' by {author} {application}", Logger.Reason.Debug);
+                string author = $"{e.Message.Author!.Username}#{e.Message.Author.Discriminator}";
+                Logger.Put($"Deleting message '{Logger.EnsureShorterThan(e.Message.Content ?? "<No Content>", 50)}' by {author} {application}", Logger.Reason.Debug);
 
                 await TryDelete(e.Message);
                 
@@ -50,8 +50,8 @@ namespace Voidway_Bot
             catch (Exception ex)
             {
                 string application = msg.Application is not null ? $"w/ application {msg.Application.Name} (ID={msg.Application.Id})" : "";
-                string author = $"{msg.Author.Username}#{msg.Author.Discriminator}";
-                Logger.Error($"Exception while deleting message '{Logger.EnsureShorterThan(msg.Content, 50)}' by {author} {application}", ex);
+                string author = $"{msg.Author!.Username}#{msg.Author.Discriminator}";
+                Logger.Error($"Exception while deleting message '{Logger.EnsureShorterThan(msg.Content ?? "<No Content>", 50)}' by {author} {application}", ex);
             }
         }
 
@@ -106,7 +106,7 @@ namespace Voidway_Bot
 
         static bool IsFiltered(DiscordMessage msg)
         {
-            if (!Config.IsFilterMessageServer(msg.Channel.GuildId!.Value) || msg.Activity is null) return false;
+            if (!Config.IsFilterMessageServer(msg.Channel!.GuildId!.Value) || msg.Activity is null) return false;
 
             bool filteredByActivity = msg.Activity?.Type == MessageActivityType.Join;
 

@@ -234,7 +234,7 @@ namespace Voidway_Bot {
             }
 
             if (logEntry is null) Logger.Put("Moderation embed created with nonexistent log entry! See below.", Logger.Reason.Warn);
-            Logger.Put($"{actionType} {victim.Username}#{victim.Discriminator} ({victim.Id}) in '{guild.Name}' by {timeoutData.ModeratorName} (Audit log says: {logEntry?.UserResponsible.Username ?? "Unknown"})");
+            Logger.Put($"{actionType} {victim.Username}#{victim.Discriminator} ({victim.Id}) in '{guild.Name}' by {timeoutData.ModeratorName} (Audit log says: {logEntry?.UserResponsible?.Username ?? "Unknown"})");
 
             dmb.AddEmbed(embed);
             var msg = await guild.GetChannel(Config.FetchModerationChannel(guild.Id)).SendMessageAsync(dmb);
@@ -259,7 +259,7 @@ namespace Voidway_Bot {
             {
                 if (attachment.FileSize < 8 * 1024 * 1024) // 8mb limit
                 {
-                    attachmentsToGet.Add(attachment.ProxyUrl);
+                    attachmentsToGet.Add(attachment.ProxyUrl ?? attachment.Url!);
                     attachments += $"\n(Attached) {attachment.Url}";
                 }
                 else
@@ -282,7 +282,7 @@ namespace Voidway_Bot {
                 Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"User ID: {message.Author.Id} | Message ID: {message.Id}" }
             };
             embed.AddField("User", $"{message.Author.Username}", true)
-                 .AddField("Channel", $"<#{message.Channel.Id}>", true)
+                 .AddField("Channel", $"<#{message.Channel!.Id}>", true)
                  .AddField("Original Time", $"<t:{message.Timestamp.ToUnixTimeSeconds()}:f>", true);
 
             ulong channelId = Config.FetchMessagesChannel(guild.Id);
@@ -294,7 +294,7 @@ namespace Voidway_Bot {
             }
 
             var dmb = new DiscordMessageBuilder()
-                .WithEmbed(embed);
+                .AddEmbed(embed);
 
             try
             {
@@ -379,14 +379,14 @@ namespace Voidway_Bot {
                 }
 
 
-                string footer = waitOnMsg.Embeds[0].Footer.Text;
+                string footer = waitOnMsg.Embeds[0].Footer!.Text!;
 
                 switch (res.Result.Id)
                 {
                     case BUTTON_WARN_AUDITLOG_REASON:
                         await res.Result.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new() { Content = "Starting interaction!", IsEphemeral = true });
                         DiscordMessage alFollowup = await res.Result.Channel.SendMessageAsync($"Sending warning message to {timedOutUser.Username}...");
-                        bool alWarnSuccess = await SendWarningMessage(timedOutUser, "muted", timeoutData.OriginalReason, waitOnMsg.Channel.Guild.Name);
+                        bool alWarnSuccess = await SendWarningMessage(timedOutUser, "muted", timeoutData.OriginalReason, waitOnMsg.Channel!.Guild.Name);
                         if (alWarnSuccess)
                             await alFollowup.ModifyAsync(alFollowup.Content + " Success!");
                         else
@@ -399,7 +399,7 @@ namespace Voidway_Bot {
                         await res.Result.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new() { Content = "Starting interaction!", IsEphemeral = true });
                         DiscordMessage askWarnTxtMsg = await res.Result.Channel.SendMessageAsync($"{res.Result.User.Username}, send a message of what you want the reason to be in the warn message, instead of '{timeoutData.OriginalReason}'");
                         TimeSpan timeoutSpan = TimeSpan.FromMinutes(1);
-                        var nextMsgTask = waitOnMsg.Channel.GetNextMessageAsync(m => m.Author == res.Result.User);
+                        var nextMsgTask = waitOnMsg.Channel!.GetNextMessageAsync(m => m.Author! == res.Result.User);
                         await Task.WhenAny(Task.Delay(timeoutSpan - TimeSpan.FromSeconds(10)), nextMsgTask);
 
                         if (!nextMsgTask.IsCompleted)
@@ -421,7 +421,7 @@ namespace Voidway_Bot {
 
                         DiscordMessage warnMsg = nextMsgRes.Result;
 
-                        bool warnCustomTxtRes = await SendWarningMessage(timedOutUser, "muted", warnMsg.Content, waitOnMsg.Channel.Guild.Name);
+                        bool warnCustomTxtRes = await SendWarningMessage(timedOutUser, "muted", warnMsg.Content ?? "<No Content>", waitOnMsg.Channel!.Guild.Name);
 
                         await askWarnTxtMsg.ModifyAsync(warnCustomTxtRes ? $"Successfully warned {timedOutUser.Username} with that reason!" : $"Failed to warn {timedOutUser.Username} - their privacy settings may be too strict or they may have left.");
 
@@ -450,9 +450,11 @@ namespace Voidway_Bot {
 
             if (!string.IsNullOrEmpty(changeFooterTo))
             {
-                DiscordEmbedBuilder deb = new(dmb.Embed);
+                DiscordEmbedBuilder deb = new(dmb.Embeds[0]);
                 deb.WithFooter(changeFooterTo);
-                dmb.Embed = deb;
+                //todo: use a .ClearEmbeds method if that ever becomes a thing. thanks D#+ for not making a method of replacing the embed!
+                ((List<DiscordEmbed>)dmb.Embeds).Clear();
+                dmb.AddEmbed(deb);
             }
 
             await removeComponents.ModifyAsync(dmb);
@@ -475,7 +477,7 @@ namespace Voidway_Bot {
 
         private static async Task HandleUserMessageDeleted(DiscordGuild guild, DiscordMessage msg)
         {
-            if (guild is null || msg.Channel.IsPrivate)
+            if (guild is null || msg.Channel!.IsPrivate)
                 return;
 
             // if theres no audit log entry then the user deleted the message on their own
@@ -483,14 +485,14 @@ namespace Voidway_Bot {
                 return;
 
             if (msg.Author is not DiscordMember member)
-                member = await guild.GetMemberAsync(msg.Author.Id);
+                member = await guild.GetMemberAsync(msg.Author!.Id);
 
             await UserWasModerated(member, DiscordAuditLogActionType.MessageDelete);
         }
 
         private static Task HandleUserMessage(DiscordUser author, DiscordMessage message)
         {
-            if (message.Channel.IsPrivate)
+            if (message.Channel!.IsPrivate)
                 return Task.CompletedTask;
 
             if (!PersistentData.values.observedMessages.TryGetValue(message.Channel.Guild.Id, out var userDict))
@@ -499,7 +501,7 @@ namespace Voidway_Bot {
                 PersistentData.values.observedMessages[message.Channel.Guild.Id] = userDict;
             }
 
-            if (!userDict.TryGetValue(message.Author.Id, out var calendarDict))
+            if (!userDict.TryGetValue(message.Author!.Id, out var calendarDict))
             {
                 calendarDict = new();
                 userDict[message.Author.Id] = calendarDict;
@@ -530,14 +532,14 @@ namespace Voidway_Bot {
 
             moderationDict[DateTime.Now] = actionType;
 
-            return Task.Run(() => { PersistentData.TrimOldMessages(); PersistentData.WritePersistentData(); });
+            return Task.Run(() => { PersistentData.TrimOldModerations(); PersistentData.WritePersistentData(); });
         }
 
 
 
         private static async Task HandleOpenAiModeration(DiscordGuild guild, DiscordMessage message)
         {
-            if (message.Author.IsBot || message.Channel.IsPrivate) return;
+            if (message.Author!.IsBot || message.Channel!.IsPrivate) return;
             DiscordMember? memb = message.Author as DiscordMember;
             try
             {
@@ -585,7 +587,7 @@ namespace Voidway_Bot {
 
             sb.AppendLine();
             sb.Append("For the following content: **");
-            if (message.Content.Length < 100)
+            if (message.Content!.Length < 100)
             {
                 sb.Append(message.Content.Replace("*", "\\*"));
                 sb.Append("**");
@@ -661,12 +663,12 @@ namespace Voidway_Bot {
                         break;
                     case OpenAiModerationAction.DISMISS_IGNORE_CHANNEL_1H:
                         await res.Result.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new() { Content = "Dismissing warning, editing message!", IsEphemeral = true });
-                        await waitOnMsg.ModifyAsync($"This warning was a false positive. Ignoring warnings from <#{flaggedMsg.Channel.Id}> for an hour.");
+                        await waitOnMsg.ModifyAsync($"This warning was a false positive. Ignoring warnings from <#{flaggedMsg.Channel!.Id}> for an hour.");
                         ignoreOaiInChannelsUntilAfter[flaggedMsg.Channel] = DateTime.Now.AddHours(1);
                         break;
                     case OpenAiModerationAction.DISMISS_IGNORE_USER_1H:
                         await res.Result.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new() { Content = "Dismissing warning, editing message!", IsEphemeral = true });
-                        await waitOnMsg.ModifyAsync($"This warning was a false positive. Ignoring warnings from <@{flaggedMsg.Author.Id}> for an hour.");
+                        await waitOnMsg.ModifyAsync($"This warning was a false positive. Ignoring warnings from <@{flaggedMsg.Author!.Id}> for an hour.");
                         ignoreOaiFromUsersUntilAfter[flaggedMsg.Author] = DateTime.Now.AddHours(1);
                         break;
                 }

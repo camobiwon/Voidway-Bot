@@ -342,6 +342,28 @@ namespace Voidway_Bot
             }
         }
 
+        [SlashCommandGroup("moderation", "Double check runtime values")]
+        private class Moderation : ApplicationCommandModule
+        {
+            [SlashCommand(nameof(Config.ConfigValues.serverModNotesChannels), "Get / set a config value")]
+            [SlashRequireVoidwayOwner]
+            public async Task ModNotesChannel(InteractionContext ctx, [Option("Value", "The value to assign, or nothing to retrieve the value.")] long value = 0)
+            {
+                if (value != 0)
+                {
+                    await Config.ModifyConfig(cv => cv.serverModNotesChannels[ctx.Guild.Id.ToString()] = (ulong)value);
+                    await ctx.CreateResponseAsync("Done!", true);
+                    return;
+                }
+
+                string noChannelStr = $"<none found>";
+                DiscordChannel? channel = await Config.GetModNotesChannel(ctx.Client, ctx.Guild.Id);
+                
+
+                await ctx.CreateResponseAsync("The mod notes channel for this server is: " + (channel?.Name ?? noChannelStr), true);
+            }
+        }
+
         private static T[] ModifyOrExpand<T>(T[] arr, int idx, T value, bool remove)
         {
             if (idx >= arr.Length)

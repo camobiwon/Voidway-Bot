@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using DSharpPlus;
+using DSharpPlus.Entities;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
@@ -43,35 +45,36 @@ namespace Voidway_Bot {
                 } 
             };
             [TomlPrecedingComment("Will hide image & desc of mod announcements when posted in these servers AS LONG AS THEY MATCH THE SPECIFIED CRITERIA")]
-            public ulong[] censorModAnnouncementsIn = new ulong[] { 16 };
+            public ulong[] censorModAnnouncementsIn = [16];
             [TomlPrecedingComment("Determines if 'All' criteria, or just 'One' criterion must be met before a mod's announcement is censored. All criteria are in LOWERCASE, and can be set to '*' to match every mod (for censorCriteriaBehavior = All)")]
             public ModUploads.CensorCriteriaBehavior censorCriteriaBehavior = ModUploads.CensorCriteriaBehavior.One;
-            public string[] censorModsWithSummaryContaining = new string[] { "ten point five" };
-            public string[] censorModsWithTitlesContaining = new string[] { "eleven and no fraction", "This will never be hit because T is uppercase." };
-            public string[] censorModsWithTag = new string[] { "ELEVEN POINT FIVE THAT WONT BE HIT CUZ CAPS", "adult 18+", "other tag" };
+            public string[] censorModsWithSummaryContaining = ["ten point five"];
+            public string[] censorModsWithTitlesContaining = ["eleven and no fraction", "This will never be hit because T is uppercase."];
+            public string[] censorModsWithTag = ["ELEVEN POINT FIVE THAT WONT BE HIT CUZ CAPS", "adult 18+", "other tag"];
             public bool ignoreTagspamMods = true;
             [TomlPrecedingComment("Renames users to 'hoist' if their nick/name starts with one of these characterss (and is in a specified server). Backslash escape char FYI.")]
             public string hoistCharacters = @"()-+=_][\|;',.<>/?!@#$%^&*"; // literal string literal ftw
-            public ulong[] hoistServers = new ulong[] { 14 };
+            public ulong[] hoistServers = [14];
             [TomlPrecedingComment("Deletes activity join invites in these servers.")]
-            public ulong[] msgFilterServers = new ulong[] { 15 };
+            public ulong[] msgFilterServers = [15];
             [TomlPrecedingComment("Allows invites in these channels, even if they're in a filtering server.")]
-            public ulong[] msgFilterExceptions = new ulong[] { 16 };
+            public ulong[] msgFilterExceptions = [16];
             [TomlPrecedingComment("The invites to send when filtering someone's message.")]
-            public string[] sendWhenFilterMessage = new string[] { "discord.gg/real" };
+            public string[] sendWhenFilterMessage = ["discord.gg/real"];
             [TomlPrecedingComment("The time between sending a message filter response to sending another message filter response, if someone else posts a new invite, and the time to leave the message up.")]
             public int msgFilterMessageTimeout = 60;
             public int msgFilterMessageStayTime = 10;
             [TomlPrecedingComment("Not necessarily able to bypass permissions (like Slash Commands) checks, just able to access debug commands/")]
-            public ulong[] owners = new ulong[] { 17 };
-            public string[] ignoreDSharpPlusLogsWith = new string[] { "Unknown event:" }; // "GUILD_JOIN_REQUEST_UPDATE" SHUT THE FUCK UP
+            public ulong[] owners = [17];
+            public string[] ignoreDSharpPlusLogsWith = ["Unknown event:"]; // "GUILD_JOIN_REQUEST_UPDATE" SHUT THE FUCK UP
             public Dictionary<string, ulong> modioCommentModerationNotifChannels = new() { { "18", 19 } };
             [TomlPrecedingComment("Doesn't run these channels' messages through OpenAI's Moderation endpoint.")]
-            public ulong[] openAiModerationExceptions = new ulong[] { 16 };
+            public ulong[] openAiModerationExceptions = [16];
             [TomlPrecedingComment("If populated, will use the *free* OpenAI Moderation endpoint to flag discord messages and/or mod.io comments given their content.")]
             public string openAiApiKey = "";
             public bool openAiModerateDiscord = false;
             public bool openAiModerateModio = true;
+            public Dictionary<string, ulong> serverModNotesChannels = new() { { "20", 21 } };
         }
 
         const string FILE_NAME = "config.toml";
@@ -306,6 +309,27 @@ namespace Voidway_Bot {
 
         internal static bool IsUserOwner(ulong id) => values.owners.Contains(id);
 
+        internal static ulong GetModNotesChannel(ulong guildId)
+        {
+            if (values.serverModNotesChannels.TryGetValue(guildId.ToString(), out ulong channelId))
+            {
+                return channelId;
+            }
+
+            return 0;
+        }
+
+        internal static async Task<DiscordChannel?> GetModNotesChannel(DiscordClient client, ulong guildId)
+        {
+            if (values.serverModNotesChannels.TryGetValue(guildId.ToString(), out ulong channelId))
+            {
+                DiscordChannel? channel = await FetchChannelFromJumpLink(client, $"https://discord.com/channels/{guildId}/{channelId}");
+                return channel;
+            }
+
+            return null;
+        }
+
         internal static Task ModifyConfig(Action<ConfigValues> changeVia)
         {
             StackTrace trace = new(1);
@@ -320,6 +344,56 @@ namespace Voidway_Bot {
             string fileContents = TomletMain.DocumentFrom(cfg).SerializedValue;
             await File.WriteAllTextAsync(activePath, fileContents);
             Logger.Put("Wrote config to disk.");
+        }
+
+        private static async Task<DiscordMessage?> FetchMessageFromJumpLink(DiscordClient client, string jumpLink)
+        {
+            string[] split = jumpLink.Split('/');
+            if (split.Length < 3) return null;
+
+            ulong guildId = ulong.Parse(split[4]);
+            ulong channelId = ulong.Parse(split[5]);
+            ulong messageId = ulong.Parse(split[6]);
+
+            // wrap in try-catch because dsharpplus will throw if the guild or channel is not found (EPICK WIN!!!)
+            try
+            {
+                DiscordGuild guild = await client.GetGuildAsync(guildId);
+                if (guild is null) return null;
+
+                DiscordChannel channel = guild.GetChannel(channelId);
+                if (channel is null) return null;
+
+                return await channel.GetMessageAsync(messageId);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn("Exception while fetching message from jump link.", ex);
+                return null;
+            }
+        }
+
+        private static async Task<DiscordChannel?> FetchChannelFromJumpLink(DiscordClient client, string jumpLink)
+        {
+            string[] split = jumpLink.Split('/');
+            if (split.Length < 3) return null;
+
+            ulong guildId = ulong.Parse(split[4]);
+            ulong channelId = ulong.Parse(split[5]);
+
+            // wrap in try-catch because dsharpplus will throw if the guild or channel is not found (EPICK WIN!!!)
+            try
+            {
+                DiscordGuild guild = await client.GetGuildAsync(guildId);
+                if (guild is null) return null;
+
+                return guild.GetChannel(channelId);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn("Exception while fetching channel from jump link.", ex);
+                return null;
+            }
         }
     }
 }

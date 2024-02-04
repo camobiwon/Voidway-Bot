@@ -1,5 +1,6 @@
 ﻿using DSharpPlus.Entities;
 using DSharpPlus.Entities.AuditLogs;
+using DSharpPlus.Exceptions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,8 @@ namespace Voidway_Bot
         private const string PD_PATH = "./persistentData.json";
         private static readonly Timer writerTimer;
         public const int TRACK_PAST_DAYS = 30;
+        public const string MOD_NOTE_START = "Moderation notes for {0}:\n";
+        public const string MOD_NOTE_SPLIT_ON = ":\n";
 
         public static IReadOnlyList<DateOnly> GapDays => values.gapDays;
         public static IEnumerable<DateOnly> TrackedDays => Enumerable.Range(0, TRACK_PAST_DAYS).Select(num => Today.AddDays(-num)).Where(d => !GapDays.Contains(d));
@@ -28,6 +31,8 @@ namespace Voidway_Bot
         public Dictionary<ulong, Dictionary<ulong, Dictionary<DateOnly, ushort>>> observedMessages = new();
         // server -> user -> day of actions
         public Dictionary<ulong, Dictionary<ulong, Dictionary<DateTime, DiscordAuditLogActionType>>> moderationActions = new();
+        // server -> user -> msgId
+        public Dictionary<ulong, Dictionary<ulong, ulong>> modNotes = new();
 
         static PersistentData()
         {
@@ -56,6 +61,7 @@ namespace Voidway_Bot
 
         [MemberNotNull(nameof(values), nameof(GapDays))]
         public static void ReadPersistentData()
+#pragma warning disable CS8774 // Member must have a non-null value when exiting.
         {
             string configText = File.ReadAllText(PD_PATH);
             values = JsonConvert.DeserializeObject<PersistentData>(configText) ?? new PersistentData();
@@ -73,6 +79,7 @@ namespace Voidway_Bot
                 currDay = currDay.AddDays(1);
             }
         }
+#pragma warning restore CS8774 // Member must have a non-null value when exiting.
 
         public static void WritePersistentData()
         { 
@@ -130,9 +137,37 @@ namespace Voidway_Bot
             RemoveOldGaps();
             TrimOldModerations();
 
-            string msgStr = GetMessageInfoStr(guild, user);
-            string modStr = GetModerationInfoStr(guild, user);
-            return msgStr + "\n" + modStr + "\n" + $"*{GapDays.Count} gap/untracked day(s)*";
+            string msgStr = GetMessageInfoStr(guild, user) + "\n";
+            string modStr = GetModerationInfoStr(guild, user) + "\n";
+            string modNoteStr = GetModNotesStr(guild, user) + "\n";
+            return $"{msgStr}{modStr}{modNoteStr}*{GapDays.Count} gap/untracked day(s)*";
+        }
+
+        public static async Task<DiscordMessage> GetOrCreateModNotesMessage(DiscordChannel notesChannel, DiscordUser user)
+        {
+            DiscordMessage? userMessage = null;
+            try
+            {
+                ulong msgId = values.modNotes[notesChannel.Guild.Id][user.Id];
+
+                userMessage = await notesChannel.GetMessageAsync(msgId, true); // update cache because modifyasync doesnt seem to always?
+            }
+            catch (Exception ex)
+            {
+
+                if (ex is not KeyNotFoundException && ex is not NotFoundException)
+                {
+                    Logger.Warn("Unexpected exception while getting mod notes message!", ex);
+                }
+                string msgStart = string.Format(MOD_NOTE_START, $"<@{user.Id}> ({(user as DiscordMember)?.DisplayName ?? user.GlobalName})");
+                userMessage = await notesChannel.SendMessageAsync(msgStart);
+
+                if (!values.modNotes.ContainsKey(notesChannel.Guild.Id))
+                    values.modNotes[notesChannel.Guild.Id] = new();
+                values.modNotes[notesChannel.Guild.Id][user.Id] = userMessage.Id;
+            }
+
+            return userMessage;
         }
 
         static string GetModerationInfoStr(ulong guild, ulong user)
@@ -171,6 +206,22 @@ namespace Voidway_Bot
                 return"**No observed messages in past month**";
             
             return$"**{msgCountDict.Values.Sum(u => u)}** observed messages in past month";
+        }
+
+
+        static string GetModNotesStr(ulong guild, ulong user)
+        {
+            ulong channel = Config.GetModNotesChannel(guild);
+
+            if (channel == 0)
+                return "**No** mod notes channel set up";
+
+            if (!values.modNotes.TryGetValue(guild, out var userDict))
+                return "**No** moderation notes";
+            if (!userDict.TryGetValue(user, out var msgId))
+                return "**No** moderation notes";
+
+            return $"Has [mod notes](https://discord.com/channels/{guild}/{channel}/{msgId})";
         }
 
         static void RemoveOldGaps()

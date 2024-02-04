@@ -45,6 +45,7 @@ namespace Voidway_Bot {
 
             discord.SessionCreated += Ready;
             discord.MessageCreated += DirectMessageHandler;
+            discord.ModalSubmitted += ContextModalHandler;
 
             var slashExtension = discord.UseSlashCommands();
             slashExtension.RegisterCommands<SlashCommands>();
@@ -69,6 +70,7 @@ namespace Voidway_Bot {
             await discord.ConnectAsync();
             await Task.Delay(-1);
         }
+
 
         static void SetupProcessLogs()
         {
@@ -110,6 +112,19 @@ namespace Voidway_Bot {
                 // if (e.Message.Embeds.Count != 0) 
                 //     Logger.Put($"DM from {e.Author.Username} has embeds: {string.Join("\n\t", e.Message.Embeds.Select(e => e.Url))}", Logger.Reason.Normal, false);
             }
+
+            return Task.CompletedTask;
+        }
+
+        private static Task ContextModalHandler(DiscordClient sender, ModalSubmitEventArgs args)
+        {
+            Logger.Put("Modal submitted w/ ID " + args.Interaction.Data.CustomId);
+
+            string[] idParts = args.Interaction.Data.CustomId.Split('.');
+            if (!ulong.TryParse(idParts.Last(), out ulong id))
+                return Task.CompletedTask;
+            if (ContextActions.modalsWaitingForCompletion.TryGetValue(id, out var taskCompletion))
+                taskCompletion.TrySetResult(args);
 
             return Task.CompletedTask;
         }
