@@ -156,7 +156,7 @@ namespace Voidway_Bot
         }
 
         [ContextMenu(ApplicationCommandType.UserContextMenu, "Moderation: Check mod notes", true)]
-        [SlashRequirePermissions(Permissions.ManageMessages)]
+        [SlashRequireUserPermissions(Permissions.ManageMessages)]
         public async Task CheckModNotes(ContextMenuContext ctx)
         {
             DiscordChannel? noteChannel = await Config.GetModNotesChannel(ctx.Client, ctx.Guild.Id);
