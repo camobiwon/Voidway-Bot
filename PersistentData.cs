@@ -155,17 +155,21 @@ namespace Voidway_Bot
             catch (Exception ex)
             {
 
-                if (ex is not KeyNotFoundException && ex is not NotFoundException)
-                {
+                if (ex is KeyNotFoundException || ex is NotFoundException)
+                    Logger.Put("Caught expected exception. Ignore DSharpPlus RestError.");
+                else
                     Logger.Warn("Unexpected exception while getting mod notes message!", ex);
-                }
+
                 string msgStart = string.Format(MOD_NOTE_START, $"<@{user.Id}> ({(user as DiscordMember)?.DisplayName ?? user.GlobalName})");
                 userMessage = await notesChannel.SendMessageAsync(msgStart);
 
                 if (!values.modNotes.ContainsKey(notesChannel.Guild.Id))
                     values.modNotes[notesChannel.Guild.Id] = new();
                 values.modNotes[notesChannel.Guild.Id][user.Id] = userMessage.Id;
+
+                WritePersistentData();
             }
+
 
             return userMessage;
         }

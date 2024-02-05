@@ -209,8 +209,6 @@ namespace Voidway_Bot
             await modalArgs.Interaction.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource, modalResponseBuilder);
             await notesMessage.ModifyAsync(string.Format(PersistentData.MOD_NOTE_START, $"<@{ctx.TargetUser!.Id}> ({ctx.TargetMember!.DisplayName})") + recievedText);
 
-            PersistentData.WritePersistentData();
-
             var webhookBuilder = new DiscordWebhookBuilder()
                 .WithContent("Updated mod notes!");
             await modalArgs.Interaction.EditOriginalResponseAsync(webhookBuilder);

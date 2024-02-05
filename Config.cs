@@ -387,7 +387,19 @@ namespace Voidway_Bot {
                 DiscordGuild guild = await client.GetGuildAsync(guildId);
                 if (guild is null) return null;
 
-                return guild.GetChannel(channelId);
+                if (guild.Channels.TryGetValue(channelId, out DiscordChannel? channel))
+                {
+                    return channel;
+                }
+
+                static IEnumerable<DiscordChannel> GetThreads(DiscordChannel ch)
+                {
+                    return ch.Type == ChannelType.Text || ch.Type == ChannelType.News || ch.Type == ChannelType.GuildForum
+                        ? ch.Threads // avoids an exception
+                        : Enumerable.Empty<DiscordChannel>();
+                }
+                IEnumerable<DiscordChannel> channelsAndThreads = guild.Channels.Values.Concat(guild.Channels.Values.SelectMany(GetThreads));
+                return channelsAndThreads.FirstOrDefault(c => c.Id == channelId);
             }
             catch (Exception ex)
             {
