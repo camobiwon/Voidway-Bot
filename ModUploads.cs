@@ -280,7 +280,7 @@ namespace Voidway_Bot {
             {
                 ulong malChannelId = Config.FetchMalformedUploadChannel(kvp.Key);
                 DiscordChannel malChannel = kvp.Value.GetChannel(malChannelId);
-                if (malChannel is not null)
+                if (malChannel is not null && !modioMalformedUploadChannels.Contains(malChannel))
                 {
                     modioMalformedUploadChannels.Add(malChannel);
                     malformedChannelCounter++;
@@ -288,7 +288,7 @@ namespace Voidway_Bot {
 
                 ulong commentChannelId = Config.FetchCommentModerationChannel(kvp.Key);
                 DiscordChannel comChannel = kvp.Value.GetChannel(commentChannelId);
-                if (comChannel is not null)
+                if (comChannel is not null && !modioCommentModerationNotifChannels.Contains(comChannel))
                 {
                     modioCommentModerationNotifChannels.Add(comChannel);
                     commentChannelCounter++;
@@ -391,7 +391,21 @@ namespace Voidway_Bot {
             {
                 Mod mod = await modClient.Get();
                 FileUploadHeuristic nonBundleType = await GetUploadFiletypes(modClient, mod);
-                if (nonBundleType != FileUploadHeuristic.MarrowMod) await SendMalformedUploadMsgs(mod, nonBundleType);
+
+                switch (nonBundleType)
+                {
+                    case FileUploadHeuristic.MarrowMod:
+                        // it is a valid mod, so dont send a message
+                        break;
+                    
+                    case FileUploadHeuristic.FileTooLarge:
+                        // its too large to scan, so it *could* be a valid mod, and it *could* also not be, but in any case, cam says its not useful to get a message for this
+                        break;
+                    
+                    default:
+                        await SendMalformedUploadMsgs(mod, nonBundleType);
+                        break;
+                }
             }
             catch(Exception ex) 
             {
@@ -497,7 +511,7 @@ namespace Voidway_Bot {
                 Title = $"{mod.Name} (ID: {mod.NameId})",
                 Url = mod.ProfileUrl?.ToString() ?? FALLBACK_URL
             };
-            foreach (DiscordChannel channel in modioMalformedUploadChannels)
+            foreach (DiscordChannel channel in modioMalformedUploadChannels.Distinct())
             {
                 await channel.SendMessageAsync(deb.Build());
             }
