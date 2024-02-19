@@ -328,6 +328,12 @@ namespace Voidway_Bot
 
         private static async Task RelaunchThunk(DiscordClient sender, SessionReadyEventArgs e)
         {
+            try
+            {
+                Bot.CurrClient.SessionCreated -= RelaunchThunk;
+            }
+            catch { }
+
             // readback args passed from relauncher process
             try
             {
