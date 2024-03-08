@@ -33,6 +33,10 @@ namespace Voidway_Bot
         }
 
         static Dictionary<string, VoidwayModerationData> moderationsPerformedByCommand = new();
+        public static void AddModerationPerformedByCommand(string mangledReason, VoidwayModerationData moderationData)
+        {
+            moderationsPerformedByCommand[mangledReason] = moderationData;
+        }
         public static bool WasByBotCommand(string? reason, out VoidwayModerationData moderationData)
         {
             if (string.IsNullOrEmpty(reason))
@@ -260,7 +264,7 @@ namespace Voidway_Bot
             InteractionContext ctx,
             [Option("user", "The user to ban")]
             DiscordUser _victim,
-            [Option("deletemsgdays", "How many days back to purge their messages")]
+            [Option("deletemsgdays", "How many days back to purge their messages (0-7)")]
             long delDays,
             [Option("reason", "Why this user is being banned")]
             string reason,

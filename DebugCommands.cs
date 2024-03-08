@@ -387,12 +387,26 @@ namespace Voidway_Bot
 
         [SlashCommand("uptime", "Retrieves the length of time this instance of Voidway Bot has been active for.")]
         [SlashRequireUserPermissions(Permissions.ManageMessages)]
-        private static async Task GetUptime(InteractionContext ctx)
+        private async Task GetUptime(InteractionContext ctx)
         {
             Process proc = Process.GetCurrentProcess();
 
             TimeSpan uptime = DateTime.Now - proc.StartTime;
             await ctx.CreateResponseAsync($"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s", true);
+        }
+
+        [SlashCommand("pid", "Sends bot PID in chat. Will send messages, so don't use in normal chats.")]
+        [SlashRequireUserPermissions(Permissions.ManageMessages)]
+        private async Task SendPid(InteractionContext ctx)
+        {
+            Process proc = Process.GetCurrentProcess();
+            try
+            {
+                await ctx.Channel.SendMessageAsync($"PID: {proc.Id}");
+
+                await ctx.CreateResponseAsync($"hi Bro.", true);
+            }
+            catch { }
         }
     }
 }

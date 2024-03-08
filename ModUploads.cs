@@ -64,6 +64,7 @@ namespace Voidway_Bot {
         [ThreadStatic] static HttpClient downloadClient; // threadstatic to prevent multiple threads using the same httpclient at the same time
         static uint lastModioEvent;
         static List<uint> announcedMods = new();
+        static DateTime lastOpenAiError = DateTime.Now;
         // static Dictionary<uint, bool> censorModCache = new(); is it worth extra alloc's and shit to cache the result of WillCensor? my guess is nope.
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
@@ -141,6 +142,9 @@ namespace Voidway_Bot {
 
         internal static async void FlagModioCommentIfNecessary(uint modId, uint submitterId, long dateAdded)
         {
+            if (lastOpenAiError.AddMinutes(15) > DateTime.Now)
+                return;
+
             try
             {
                 ModClient parentModClient = bonelabMods[modId];
@@ -209,6 +213,11 @@ namespace Voidway_Bot {
             }
             catch(Exception ex)
             {
+                if (ex is HttpRequestException hre && hre.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                {
+                    Logger.Put("VVV Exception was for too many requests. Ignoring comments for the next 15 minutes. See info below for more details.", Logger.Reason.Debug);
+                    lastOpenAiError = DateTime.Now;
+                }
                 Logger.Put($"Unable to check comment by a user with id {submitterId} on mod (ID {modId}) for moderation. Exception: {ex}", Logger.Reason.Debug, false);
             }
         }

@@ -14,7 +14,8 @@ namespace Voidway_Bot
     internal class ContextActions : ApplicationCommandModule
     {
         internal static Dictionary<ulong, TaskCompletionSource<ModalSubmitEventArgs>> modalsWaitingForCompletion = new();
-        internal const string MODNOTES_MODAL_ID_FORMAT = "voidwaybot.modnotes.{0}";
+        internal const string MODNOTES_MODAL_ID_FORMAT = "voidwaybot.modnotes.{0}"; // original interaction id
+        internal const string KICK_MODAL_ID_FORMAT = "voidwaybot.kickmodal.{0}"; // original interaction id
 
         [ContextMenu(ApplicationCommandType.UserContextMenu, "Hoist", true)]
         [SlashRequirePermissions(Permissions.ManageNicknames, false)]
@@ -214,6 +215,121 @@ namespace Voidway_Bot
             await modalArgs.Interaction.EditOriginalResponseAsync(webhookBuilder);
 
             Logger.Put($"Updated mod notes for {ctx.TargetUser} in {ctx.Guild}, see below.\n\t{recievedText}");
+        }
+
+
+        [ContextMenu(ApplicationCommandType.UserContextMenu, "Moderation: Kick", true)]
+        [SlashRequireUserPermissions(Permissions.ManageMessages)]
+        public async Task ModalKick(ContextMenuContext ctx)
+        {
+            if (ctx.TargetMember is null)
+            {
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+                {
+                    IsEphemeral = true,
+                    Content = "I can't find that user in the server. They might have left."
+                });
+                return;
+            }
+
+            if (ctx.TargetMember.Permissions.HasPermission(Permissions.Administrator))
+            {
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+                {
+                    IsEphemeral = true,
+                    Content = "You can't kick an admin!"
+                });
+                return;
+            }
+
+            TaskCompletionSource<ModalSubmitEventArgs> tcs = new();
+            modalsWaitingForCompletion.Add(ctx.InteractionId, tcs);
+
+            string[] funnyThings =
+            [
+               "they killed my grandma",
+               "my dog sniffed them and furrowed his brow",
+               "they said my goat was washed",
+               //"i asked them where the bathroom was and they couldnt hear what i was saying so eventually after saying what 20 times they just said haha yeah",
+               //"they asked if i wanted a ride on their \"magic carpet\" and im not racist but if its anything like the one from aladdin... tbh i dont want sand on my clothes",
+               "they gave me a bottle of soju but forbade me from saying the line",
+            ];
+
+            string modalId = string.Format(KICK_MODAL_ID_FORMAT, ctx.InteractionId);
+            
+            const string MODAL_REASON_KEY = "reason";
+            const string MODAL_SEND_KEY = "sendTo";
+            //const string MODAL_SENDMSG_KEY = "sendMsg";
+            //const string MODAL_SENDMSG_YES = "yes";
+            //const string MODAL_SENDMSG_NO = "no";
+            //DiscordSelectComponentOption[] options =
+            //[
+            //    new DiscordSelectComponentOption("Send message with reason", MODAL_SENDMSG_YES),
+            //    new DiscordSelectComponentOption("Don't send message", MODAL_SENDMSG_NO)
+            //];
+            var modalBuilder = new DiscordInteractionResponseBuilder()
+                .AsEphemeral(true)
+                .WithTitle("Kick " + ctx.TargetUser.Username + "?")
+                .WithCustomId(modalId)
+                // this shit doesnt fucking work unless i give it only a single one, and im this close to losing my shit over it
+                .AddComponents(new TextInputComponent("Reason, will be sent to user", MODAL_REASON_KEY, "Leave blank to not send", "", false, TextInputStyle.Paragraph, 0, 1984));
+                // fine fuck it .AddComponents(new TextInputComponent("Reason", MODAL_REASON_KEY, "'" + funnyThings[Random.Shared.Next(funnyThings.Length)] + "'", "", true, TextInputStyle.Paragraph, 0, 1984));
+
+            await ctx.CreateResponseAsync(InteractionResponseType.Modal, modalBuilder);
+
+            await Task.WhenAny(tcs.Task, Task.Delay(Config.GetFilterResponseTimeout() * 1000));
+
+            modalsWaitingForCompletion.Remove(ctx.InteractionId);
+            if (!tcs.Task.IsCompleted)
+                return;
+
+            ModalSubmitEventArgs modalArgs = tcs.Task.Result;
+            string kickReason = modalArgs.Values[MODAL_REASON_KEY];
+            //bool needsWarn = modalArgs.Values.TryGetValue(MODAL_SEND_KEY, out string? sendToUser);
+            bool needsWarn = true; // declare as true in case i ever want to add toggling functionality. thanks discord!
+
+            VoidwayModerationData.TargetNotificationStatus notifStatus = needsWarn 
+                ? VoidwayModerationData.TargetNotificationStatus.FAILURE
+                : VoidwayModerationData.TargetNotificationStatus.NOT_ATTEMPTED;
+
+            var modalResponseBuilder = new DiscordInteractionResponseBuilder()
+                .AsEphemeral(true)
+                .WithContent(needsWarn ? "Warning..." : "Kicking...");
+
+            await modalArgs.Interaction.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource, modalResponseBuilder);
+
+            bool warnSuccess = false;
+            if (needsWarn)
+            {
+                warnSuccess = await Moderation.SendWarningMessage(ctx.TargetMember, "kicked", kickReason, ctx.Guild.Name);
+
+                notifStatus = warnSuccess
+                    ? VoidwayModerationData.TargetNotificationStatus.SUCCESS
+                    : VoidwayModerationData.TargetNotificationStatus.FAILURE;
+                var kickWebhookBuilder = new DiscordWebhookBuilder()
+                    .WithContent($"{(warnSuccess ? "Successfully warned!" : "Failed to warn, probably left or has DMs off.")} Now kicking...");
+
+                await modalArgs.Interaction.EditOriginalResponseAsync(kickWebhookBuilder);
+            }
+
+            string mangledReason = $"By {ctx.User.Username}: " + kickReason;
+            SlashCommands.AddModerationPerformedByCommand(mangledReason, new(kickReason, ctx.User.Username, notifStatus));
+
+            bool kickSuccess = false;
+
+            try
+            {
+                await ctx.TargetMember.RemoveAsync(mangledReason);
+                kickSuccess = true;
+            }
+            catch(Exception ex)
+            {
+                Logger.Warn($"Failed to kick user {ctx.TargetMember.Username} in {ctx.Guild.Name}", ex);
+            }
+
+            var webhookBuilder = new DiscordWebhookBuilder()
+                .WithContent(kickSuccess ? "Kicked!" : $"Failed to kick! {(warnSuccess ? "They still got the warning message, so... Try again via the built-in Discord menu?" : "They didn't get warned, so that's the upshot.")}");
+            await modalArgs.Interaction.EditOriginalResponseAsync(webhookBuilder);
         }
     }
 }
