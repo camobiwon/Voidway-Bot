@@ -452,8 +452,7 @@ namespace Voidway_Bot {
             {
                 DiscordEmbedBuilder deb = new(dmb.Embeds[0]);
                 deb.WithFooter(changeFooterTo);
-                //todo: use a .ClearEmbeds method if that ever becomes a thing. thanks D#+ for not making a method of replacing the embed!
-                ((List<DiscordEmbed>)dmb.Embeds).Clear();
+                dmb.ClearEmbeds();
                 dmb.AddEmbed(deb);
             }
 
