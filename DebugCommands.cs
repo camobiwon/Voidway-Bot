@@ -395,7 +395,7 @@ namespace Voidway_Bot
             await ctx.CreateResponseAsync($"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s", true);
         }
 
-        [SlashCommand("pid", "Sends bot PID in chat. Will send messages, so don't use in normal chats.")]
+        [SlashCommand("pid", "Sends PID in msg(s), so don't use in normal chats.")]
         [SlashRequireUserPermissions(Permissions.ManageMessages)]
         private async Task SendPid(InteractionContext ctx)
         {
