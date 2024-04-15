@@ -190,7 +190,7 @@ namespace Voidway_Bot {
             DiscordEmbedBuilder embed = new() {
                 Title = $"User {actionType}",
                 Color = color,
-                Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"Username: {victim.Username}\nUser ID: {victim.Id}" }
+                Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"User: {victim.Username} ({victim.Id})" }
             };
             DiscordMessageBuilder dmb = new();
 
@@ -214,11 +214,11 @@ namespace Voidway_Bot {
             {
                 string footerAddendum = timeoutData.TargetWarnStatus switch
                 {
-                    TargetNotificationStatus.NOT_ATTEMPTED => " | Not yet warned.",
-                    TargetNotificationStatus.SUCCESS => " | Already warned.",
-                    TargetNotificationStatus.FAILURE => " | Warn failed, likely strict privacy settings or left server.",
-                    TargetNotificationStatus.NOT_APPLICABLE => " | Warning not applicable.",
-                    _ => ", unknown if warned or not.",
+                    TargetNotificationStatus.NOT_ATTEMPTED => "\nNot yet warned.",
+                    TargetNotificationStatus.SUCCESS => "\nAlready warned.",
+                    TargetNotificationStatus.FAILURE => "\nWarn Failed. Likely strict privacy settings or left server.",
+                    TargetNotificationStatus.NOT_APPLICABLE => "\nWarning not applicable.",
+                    _ => "\nUnknown if warned or not.",
                 };
 
                 embed.Footer.Text = embed.Footer.Text + footerAddendum;
@@ -279,7 +279,7 @@ namespace Voidway_Bot {
                 Title = $"Message {actionType}",
                 Color = DiscordColor.Gray,
                 Description = desc.Trim(),
-                Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"Username: {message.Author.Username}\nUser ID: {message.Author.Id}\nMessage ID: {message.Id}" }
+                Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"User: {message.Author.Username} ({message.Author.Id})\nMessage ID: {message.Id}" }
             };
             embed.AddField("User", $"<@{message.Author.Id}>", true)
                  .AddField("Channel", $"<#{message.Channel!.Id}>", true)
