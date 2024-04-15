@@ -190,13 +190,13 @@ namespace Voidway_Bot {
             DiscordEmbedBuilder embed = new() {
                 Title = $"User {actionType}",
                 Color = color,
-                Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"User ID: {victim.Id}" }
+                Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"Username: {victim.Username}\nUser ID: {victim.Id}" }
             };
             DiscordMessageBuilder dmb = new();
 
-            embed.AddField("User", $"{victim.Username}", true);
+            embed.AddField("User", $"<@{victim.Id}>", true);
             if (!string.IsNullOrWhiteSpace(timeoutData.ModeratorName))
-                embed.AddField("Moderator", timeoutData.ModeratorName, true);
+                embed.AddField("Moderator", $"<@{timeoutData.ModeratorName}>", true);
             if (!string.IsNullOrWhiteSpace(timeoutData.OriginalReason))
                 embed.AddField("Reason", timeoutData.OriginalReason, true);
             if (!string.IsNullOrWhiteSpace(customFieldTitle))
@@ -214,10 +214,10 @@ namespace Voidway_Bot {
             {
                 string footerAddendum = timeoutData.TargetWarnStatus switch
                 {
-                    TargetNotificationStatus.NOT_ATTEMPTED => ", not yet warned.",
-                    TargetNotificationStatus.SUCCESS => ", already warned.",
-                    TargetNotificationStatus.FAILURE => ", warn failed, likely strict privacy settings or left server.",
-                    TargetNotificationStatus.NOT_APPLICABLE => ", warning not applicable.",
+                    TargetNotificationStatus.NOT_ATTEMPTED => " | Not yet warned.",
+                    TargetNotificationStatus.SUCCESS => " | Already warned.",
+                    TargetNotificationStatus.FAILURE => " | Warn failed, likely strict privacy settings or left server.",
+                    TargetNotificationStatus.NOT_APPLICABLE => " | Warning not applicable.",
                     _ => ", unknown if warned or not.",
                 };
 
@@ -225,8 +225,8 @@ namespace Voidway_Bot {
 
                 if (stillInServer && timeoutData.TargetWarnStatus == TargetNotificationStatus.NOT_ATTEMPTED)
                 {
-                    DiscordButtonComponent buttonSendLogReason = new(ButtonStyle.Primary, BUTTON_WARN_AUDITLOG_REASON, "Send warning (w/ audit log reason)");
-                    DiscordButtonComponent buttonSendCraftedReason = new(ButtonStyle.Secondary, BUTTON_WARN_PROVIDE_REASON, "Send warning (specify reason)");
+                    DiscordButtonComponent buttonSendLogReason = new(ButtonStyle.Primary, BUTTON_WARN_AUDITLOG_REASON, "Send Warning (Log Reason)");
+                    DiscordButtonComponent buttonSendCraftedReason = new(ButtonStyle.Secondary, BUTTON_WARN_PROVIDE_REASON, "Send Warning (Custom Reason)");
                     DiscordButtonComponent buttonDismiss = new(ButtonStyle.Danger, BUTTON_WARN_IGNORE, "Dismiss");
                     //DiscordActionRowComponent row = new(new DiscordButtonComponent[] { buttonSendLogReason, buttonSendCraftedReason, buttonDismiss });
                     dmb.AddComponents(buttonSendLogReason, buttonSendCraftedReason, buttonDismiss);
@@ -279,9 +279,9 @@ namespace Voidway_Bot {
                 Title = $"Message {actionType}",
                 Color = DiscordColor.Gray,
                 Description = desc.Trim(),
-                Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"User ID: {message.Author.Id} | Message ID: {message.Id}" }
+                Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"Username: {message.Author.Username}\nUser ID: {message.Author.Id}\nMessage ID: {message.Id}" }
             };
-            embed.AddField("User", $"{message.Author.Username}", true)
+            embed.AddField("User", $"<@{message.Author.Id}>", true)
                  .AddField("Channel", $"<#{message.Channel!.Id}>", true)
                  .AddField("Original Time", $"<t:{message.Timestamp.ToUnixTimeSeconds()}:f>", true);
 
@@ -430,7 +430,7 @@ namespace Voidway_Bot {
                         break;
                     case BUTTON_WARN_IGNORE:
 
-                        footer = footer.Split(',')[0] + ", not warned (dismissed).";
+                        footer = footer.Split(',')[0] + " | Not warned (Dismissed).";
                         await RemoveInteractionComponents(waitOnMsg);
                         await res.Result.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new() { Content = "Dismissed!", IsEphemeral = true });
                         break;
@@ -463,7 +463,7 @@ namespace Voidway_Bot {
         {
             try
             {
-                await member.SendMessageAsync($"The moderators in **{serverName}** have {action} you for the following reason:\n\"{reason}\"\n\n*This bot does not relay messages to the staff of that server. If you want clarification, DM a moderator/admin in that server.*");
+                await member.SendMessageAsync($"The moderators in **{serverName}** have {action} you for the following reason:\n\"{reason}\"\n\n*This bot does not relay messages to the staff of that server. If you want clarification, message a moderator / admin in that server.*");
 
                 return true;
             }
