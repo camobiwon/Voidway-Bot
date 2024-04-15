@@ -214,7 +214,7 @@ namespace Voidway_Bot {
             {
                 string footerAddendum = timeoutData.TargetWarnStatus switch
                 {
-                    TargetNotificationStatus.NOT_ATTEMPTED => "\nNot yet warned.",
+                    TargetNotificationStatus.NOT_ATTEMPTED => "",
                     TargetNotificationStatus.SUCCESS => "\nAlready warned.",
                     TargetNotificationStatus.FAILURE => "\nWarn Failed. Likely strict privacy settings or left server.",
                     TargetNotificationStatus.NOT_APPLICABLE => "\nWarning not applicable.",
@@ -392,7 +392,7 @@ namespace Voidway_Bot {
                         else
                             await alFollowup.ModifyAsync(alFollowup.Content + " Failed! Could be due to them leaving or their privacy settings!");
 
-                        footer = footer.Split('\n')[0] + "Warned for this interaction.";
+                        footer = footer.Split('\n')[0] + "\nWarned for this interaction.";
                         await RemoveInteractionComponents(waitOnMsg, footer);
                         break;
                     case BUTTON_WARN_PROVIDE_REASON:
