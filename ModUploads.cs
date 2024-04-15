@@ -252,9 +252,15 @@ namespace Voidway_Bot {
             Logger.Put($"New mod available: ID= {modId}; NameID= {modData.NameId}; tags= {string.Join(',', tags.Select(t => t.Name))}");
 
 
-            if (modData.MaturityOption == MaturityOption.Explicit || tags.Any(t => t.Name == "Adult 18+"))
+            if (modData.MaturityOption == MaturityOption.Explicit)
             {
                 Logger.Put($"Bailing on posting mod: {modData.NameId} ({modId}) as mod is NSFW");
+                return;
+            }
+            
+            if (modData.Visible != Visibility.Public)
+            {
+                Logger.Put($"Bailing on posting mod: {modData.NameId} ({modId}) as mod is not public");
                 return;
             }
 
