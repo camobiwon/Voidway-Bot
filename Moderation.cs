@@ -392,7 +392,7 @@ namespace Voidway_Bot {
                         else
                             await alFollowup.ModifyAsync(alFollowup.Content + " Failed! Could be due to them leaving or their privacy settings!");
 
-                        footer = footer.Split(',')[0] + ", warned.";
+                        footer = footer.Split('\n')[0] + "Warned for this interaction.";
                         await RemoveInteractionComponents(waitOnMsg, footer);
                         break;
                     case BUTTON_WARN_PROVIDE_REASON:
