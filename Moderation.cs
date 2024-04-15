@@ -190,8 +190,8 @@ namespace Voidway_Bot {
             DiscordEmbedBuilder embed = new() {
                 Title = $"User {actionType}",
                 Color = color,
-                Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"User: {victim.Username} ({victim.Id})" }
-            };
+                Footer = new DiscordEmbedBuilder.EmbedFooter() { Text = $"" } //User: {victim.Username} ({victim.Id})
+			};
             DiscordMessageBuilder dmb = new();
 
             embed.AddField("User", $"<@{victim.Id}>", true);
