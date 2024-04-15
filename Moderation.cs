@@ -425,8 +425,8 @@ namespace Voidway_Bot {
 
                         await askWarnTxtMsg.ModifyAsync(warnCustomTxtRes ? $"Successfully warned {timedOutUser.Username} with that reason!" : $"Failed to warn {timedOutUser.Username} - their privacy settings may be too strict or they may have left.");
 
-                        footer = footer.Split(',')[0] + ", warned.";
-                        await RemoveInteractionComponents(waitOnMsg);
+						footer = footer.Split('\n')[0] + "\nWarned for this interaction.";
+						await RemoveInteractionComponents(waitOnMsg, footer);
                         break;
                     case BUTTON_WARN_IGNORE:
 
