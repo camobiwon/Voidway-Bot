@@ -196,7 +196,7 @@ namespace Voidway_Bot {
 
             embed.AddField("User", $"<@{victim.Id}>", true);
             if (!string.IsNullOrWhiteSpace(timeoutData.ModeratorName))
-                embed.AddField("Moderator", $"<@{timeoutData.ModeratorName}>", true);
+                embed.AddField("Moderator", timeoutData.ModeratorName, true);
             if (!string.IsNullOrWhiteSpace(timeoutData.OriginalReason))
                 embed.AddField("Reason", timeoutData.OriginalReason, true);
             if (!string.IsNullOrWhiteSpace(customFieldTitle))
