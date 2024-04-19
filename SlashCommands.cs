@@ -53,6 +53,7 @@ namespace Voidway_Bot
             else return false;
         }
 
+        /*
         // Technically, this is the exact same thing as Timeout, but it's got a new command entry because it has a more user-friendly description.
         [SlashCommand("retimeout", "Changes a user's timeout, and logs it with a reason.")]
         [SlashRequirePermissions(Permissions.ModerateMembers, false)]
@@ -117,9 +118,10 @@ namespace Voidway_Bot
             //    "Old end time",
             //    $"<t:{currTimeout.Value.ToUnixTimeSeconds()}:t>");
         }
+        */
 
         // this is technically redundant to discord's timeout dialogue, except that thing gives ZERO granular control.
-        [SlashCommand("timeout", "Times out a user, optionally DMs them the reason why, and logs it with a reason.")]
+        [SlashCommand("timeout", "Times out / updates a timeout on a user, by default DMs them the reason why, and logs it with a reason.")]
         [SlashRequirePermissions(Permissions.ModerateMembers, false)]
         public async Task AddTimeout(
             InteractionContext ctx,
@@ -132,11 +134,12 @@ namespace Voidway_Bot
             [Option("reason", "Why this user is being timed out")]
             string reason,
             [Option("notifyWithReason", "DMs the user telling them the exact reason why they were muted.")]
-            bool notifyWithReasonImmediately = false
+            bool notifyWithReasonImmediately = true
             )
         {
             DiscordMember victim = (DiscordMember)_victim;
             DateTimeOffset until = OffsetFromTimeType(unit, count);
+            /*
             // dont timeout if already timed out
             if (victim.CommunicationDisabledUntil.HasValue && victim.CommunicationDisabledUntil > DateTime.Now)
             {
@@ -147,6 +150,7 @@ namespace Voidway_Bot
                 });
                 return;
             }
+            */
 
             try
             {
@@ -203,16 +207,14 @@ namespace Voidway_Bot
             return now.Add(span * count);
         }
 
-        [SlashCommand("voidwaykick", "Kicks a user, optionally DMs them the reason why, and logs it with a reason.")]
+        [SlashCommand("voidwaykick", "Kicks a user, DMs them the reason why, and logs it with a reason.")]
         [SlashRequirePermissions(Permissions.KickMembers, false)]
         public async Task Kick(
             InteractionContext ctx,
             [Option("user", "The user to kick")]
             DiscordUser _victim,
             [Option("reason", "Why this user is being kicked")]
-            string reason,
-            [Option("notifyWithReason", "DMs the user telling them the exact reason why they were kicked.")]
-            bool notifyWithReasonImmediately = false
+            string reason
             )
         {
             DiscordMember victim = (DiscordMember)_victim;
@@ -225,13 +227,10 @@ namespace Voidway_Bot
                 reason = $"By {ctx.User.Username}: " + reason;
                 // this is so fugly LMFAO
                 VoidwayModerationData.TargetNotificationStatus notifStatus =
-                    notifyWithReasonImmediately ?
-                        (
                             await Moderation.SendWarningMessage(victim, "kicked", ogReason, ctx.Guild.Name)
                             ? VoidwayModerationData.TargetNotificationStatus.SUCCESS
                             : VoidwayModerationData.TargetNotificationStatus.FAILURE
-                        )
-                        : VoidwayModerationData.TargetNotificationStatus.NOT_ATTEMPTED;
+                        ;
 
                 moderationsPerformedByCommand[reason] = new(ogReason, ctx.User.Username, notifStatus);
                 await Task.Delay(1000);
@@ -258,7 +257,7 @@ namespace Voidway_Bot
             }
         }
 
-        [SlashCommand("voidwayban", "Kicks a user, optionally DMs them the reason why, and logs it with a reason.")]
+        [SlashCommand("voidwayban", "Kicks a user, DMs them the reason why, and logs it with a reason.")]
         [SlashRequirePermissions(Permissions.BanMembers, false)]
         public async Task Ban(
             InteractionContext ctx,
@@ -267,9 +266,7 @@ namespace Voidway_Bot
             [Option("deletemsgdays", "How many days back to purge their messages (0-7)")]
             long delDays,
             [Option("reason", "Why this user is being banned")]
-            string reason,
-            [Option("notifyWithReason", "DMs the user telling them the exact reason why they were banned.")]
-            bool notifyWithReasonImmediately = false
+            string reason
             )
         {
             DiscordMember victim = (DiscordMember)_victim;
@@ -280,17 +277,14 @@ namespace Voidway_Bot
 
                 string ogReason = reason;
                 reason = $"By {ctx.User.Username}: " + reason;
-                // this is so fugly LMFAO
-                VoidwayModerationData.TargetNotificationStatus notifStatus =
-                    notifyWithReasonImmediately ?
-                        (
-                            await Moderation.SendWarningMessage(victim, "banned", ogReason, ctx.Guild.Name)
-                            ? VoidwayModerationData.TargetNotificationStatus.SUCCESS
-                            : VoidwayModerationData.TargetNotificationStatus.FAILURE
-                        )
-                        : VoidwayModerationData.TargetNotificationStatus.NOT_ATTEMPTED;
+				// this is so fugly LMFAO
+				VoidwayModerationData.TargetNotificationStatus notifStatus =
+							await Moderation.SendWarningMessage(victim, "banned", ogReason, ctx.Guild.Name)
+							? VoidwayModerationData.TargetNotificationStatus.SUCCESS
+							: VoidwayModerationData.TargetNotificationStatus.FAILURE
+						;
 
-                moderationsPerformedByCommand[reason] = new(ogReason, ctx.User.Username, notifStatus);
+				moderationsPerformedByCommand[reason] = new(ogReason, ctx.User.Username, notifStatus);
                 await victim.BanAsync((int)Math.Clamp(delDays, 0, 7), reason);
 
 
