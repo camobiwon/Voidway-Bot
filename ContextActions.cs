@@ -30,7 +30,7 @@ namespace Voidway_Bot
             });
         }
 
-        [ContextMenu(ApplicationCommandType.MessageContextMenu, "Thread owner: Pin message", true)]
+        [ContextMenu(ApplicationCommandType.MessageContextMenu, "Thread Owner: Pin Message", true)]
         [SlashRequireBotPermissions(Permissions.ManageMessages)]
         [SlashRequireThreadOwner]
         public async Task PinThreadMessage(ContextMenuContext ctx)
@@ -72,7 +72,7 @@ namespace Voidway_Bot
             });
         }
 
-        [ContextMenu(ApplicationCommandType.MessageContextMenu, "Thread owner: Unpin message", true)]
+        [ContextMenu(ApplicationCommandType.MessageContextMenu, "Thread Owner: Unpin Message", true)]
         [SlashRequireBotPermissions(Permissions.ManageMessages)]
         [SlashRequireThreadOwner]
         public async Task UnpinThreadMessage(ContextMenuContext ctx)
@@ -114,7 +114,7 @@ namespace Voidway_Bot
             });
         }
 
-        [ContextMenu(ApplicationCommandType.MessageContextMenu, "Thread owner: Delete message", true)]
+        [ContextMenu(ApplicationCommandType.MessageContextMenu, "Thread Owner: Delete Message", true)]
         [SlashRequireBotPermissions(Permissions.ManageMessages)]
         [SlashRequireThreadOwner]
         public async Task DeleteThreadMessage(ContextMenuContext ctx)
@@ -156,7 +156,7 @@ namespace Voidway_Bot
             });
         }
 
-        [ContextMenu(ApplicationCommandType.UserContextMenu, "Moderation: Check mod notes", true)]
+        [ContextMenu(ApplicationCommandType.UserContextMenu, "Mod: Mod Notes", true)]
         [SlashRequireUserPermissions(Permissions.ManageMessages)]
         public async Task CheckModNotes(ContextMenuContext ctx)
         {
@@ -218,7 +218,7 @@ namespace Voidway_Bot
         }
 
 
-        [ContextMenu(ApplicationCommandType.UserContextMenu, "Moderation: Kick", true)]
+        [ContextMenu(ApplicationCommandType.UserContextMenu, "Mod: Kick", true)]
         [SlashRequireUserPermissions(Permissions.ManageMessages)]
         public async Task ModalKick(ContextMenuContext ctx)
         {

@@ -121,7 +121,7 @@ namespace Voidway_Bot
         */
 
         // this is technically redundant to discord's timeout dialogue, except that thing gives ZERO granular control.
-        [SlashCommand("timeout", "Times out / updates a timeout on a user, by default DMs them the reason why, and logs it with a reason.")]
+        [SlashCommand("timeout", "Times out / updates a timeout on a user, DMs them the reason why, and logs it with a reason.")]
         [SlashRequirePermissions(Permissions.ModerateMembers, false)]
         public async Task AddTimeout(
             InteractionContext ctx,
@@ -132,9 +132,7 @@ namespace Voidway_Bot
             [Option("timeUnit", "The unit of time to apply the timeout in")]
             TimeType unit,
             [Option("reason", "Why this user is being timed out")]
-            string reason,
-            [Option("notifyWithReason", "DMs the user telling them the exact reason why they were muted.")]
-            bool notifyWithReasonImmediately = true
+            string reason
             )
         {
             DiscordMember victim = (DiscordMember)_victim;
@@ -154,20 +152,15 @@ namespace Voidway_Bot
 
             try
             {
-                if (notifyWithReasonImmediately)
-                    await ctx.DeferAsync(true); // sending messages takes time - defer so we have enough time to DM and get back to the user
+                await ctx.DeferAsync(true); // sending messages takes time - defer so we have enough time to DM and get back to the user
 
                 string ogReason = reason;
                 reason = $"By {ctx.User.Username}: " + reason;
                 // this is so fugly LMFAO
                 VoidwayModerationData.TargetNotificationStatus notifStatus =
-                    notifyWithReasonImmediately ?
-                        (
                             await Moderation.SendWarningMessage(victim, "muted", ogReason, ctx.Guild.Name)
-                            ? VoidwayModerationData.TargetNotificationStatus.SUCCESS 
-                            : VoidwayModerationData.TargetNotificationStatus.FAILURE
-                        )
-                        : VoidwayModerationData.TargetNotificationStatus.NOT_ATTEMPTED;
+                            ? VoidwayModerationData.TargetNotificationStatus.SUCCESS
+                            : VoidwayModerationData.TargetNotificationStatus.FAILURE;
 
                 moderationsPerformedByCommand[reason] = new(ogReason, ctx.User.Username, notifStatus);
                 await victim.TimeoutAsync(until, reason);
@@ -277,14 +270,14 @@ namespace Voidway_Bot
 
                 string ogReason = reason;
                 reason = $"By {ctx.User.Username}: " + reason;
-				// this is so fugly LMFAO
-				VoidwayModerationData.TargetNotificationStatus notifStatus =
-							await Moderation.SendWarningMessage(victim, "banned", ogReason, ctx.Guild.Name)
-							? VoidwayModerationData.TargetNotificationStatus.SUCCESS
-							: VoidwayModerationData.TargetNotificationStatus.FAILURE
-						;
+                // this is so fugly LMFAO
+                VoidwayModerationData.TargetNotificationStatus notifStatus =
+                            await Moderation.SendWarningMessage(victim, "banned", ogReason, ctx.Guild.Name)
+                            ? VoidwayModerationData.TargetNotificationStatus.SUCCESS
+                            : VoidwayModerationData.TargetNotificationStatus.FAILURE
+                        ;
 
-				moderationsPerformedByCommand[reason] = new(ogReason, ctx.User.Username, notifStatus);
+                moderationsPerformedByCommand[reason] = new(ogReason, ctx.User.Username, notifStatus);
                 await victim.BanAsync((int)Math.Clamp(delDays, 0, 7), reason);
 
 
