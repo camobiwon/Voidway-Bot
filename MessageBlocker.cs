@@ -18,6 +18,7 @@ namespace Voidway_Bot
 
         internal static void HandleMessages(DiscordClient client)
         {
+            Logger.Put("Adding handler for message blocking", Logger.Reason.Trace);
             client.MessageCreated += (_, e) => { FilterMessage(e); return Task.CompletedTask; };
         }
 

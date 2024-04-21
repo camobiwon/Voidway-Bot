@@ -50,6 +50,7 @@ namespace Voidway_Bot {
         static Dictionary<DiscordUser, DateTime> ignoreOaiFromUsersUntilAfter = new();
 
         internal static void HandleModeration(DiscordClient discord) {
+            Logger.Put("Adding handlers for moderation events", Logger.Reason.Trace);
             discord.GuildMemberRemoved += (client, e) => { KickHandler(e); return Task.CompletedTask; }; // "An event handler for GUILD_MEMBER_REMOVED took too long to execute" GOD DAMN I DO NOT CAAAARREEEEEEE
             discord.GuildMemberUpdated += (client, e) => { TimeoutHandler(e); return Task.CompletedTask; };
             discord.GuildMemberUpdated += (client, e) => HoistHandler(e.MemberAfter);

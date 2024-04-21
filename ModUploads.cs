@@ -107,6 +107,8 @@ namespace Voidway_Bot {
         }
 
         internal static async void HandleModUploads(DiscordClient discord) {
+            Logger.Put("Adding handlers for mod.io", Logger.Reason.Trace);
+
             Credentials cred;
 
             (string token, string oa2) = Config.GetModioTokens();
