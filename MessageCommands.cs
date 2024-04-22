@@ -20,7 +20,7 @@ namespace Voidway_Bot
         private static async void HandleMessage(DSharpPlus.EventArgs.MessageCreateEventArgs e)
         {
             if (e.Guild is null || e.Author is not DiscordMember member) return;
-            if (Config.IsUserOwner(member.Id)) return;
+            if (!Config.IsUserOwner(member.Id)) return;
             if (!e.MentionedUsers.Contains(Bot.CurrUser) || (e.Message.MessageType.HasValue && e.Message.MessageType.Value.HasFlag(MessageType.Reply))) return;
 
 
