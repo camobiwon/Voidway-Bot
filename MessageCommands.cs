@@ -23,7 +23,9 @@ namespace Voidway_Bot
             if (Config.IsUserOwner(member.Id)) return;
             if (!e.MentionedUsers.Contains(Bot.CurrUser) || (e.Message.MessageType.HasValue && e.Message.MessageType.Value.HasFlag(MessageType.Reply))) return;
 
+
             string[] args = e.Message.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries).Skip(1).ToArray();
+            Logger.Put($"Message command from owner {e.Author} - args = [{string.Join(", ", args)}]", Logger.Reason.Debug);
 
             if (args.Length == 0) return;
 
@@ -35,7 +37,10 @@ namespace Voidway_Bot
                         Process proc = Process.GetCurrentProcess();
                         await e.Channel.SendMessageAsync($"PID: {proc.Id}");
                     }
-                    catch { }
+                    catch(Exception ex)
+                    {
+                        Logger.Error("Exception while sending PID", ex);
+                    }
 
                     break;
                 default:
