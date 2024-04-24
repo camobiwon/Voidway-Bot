@@ -14,17 +14,17 @@ namespace Voidway_Bot
         public static void HandleMessages(DiscordClient client)
         {
             Logger.Put("Adding handler for message commands", Logger.Reason.Trace);
-            client.MessageCreated += (_, e) => { HandleMessage(e); return Task.CompletedTask; };
+            client.MessageCreated += HandleMessage;
         }
 
-        private static async void HandleMessage(DSharpPlus.EventArgs.MessageCreateEventArgs e)
+        private static async Task HandleMessage(DiscordClient client, DSharpPlus.EventArgs.MessageCreateEventArgs e)
         {
             if (e.Guild is null || e.Author is not DiscordMember member) return;
             if (!Config.IsUserOwner(member.Id)) return;
             if (!e.MentionedUsers.Contains(Bot.CurrUser) || (e.Message.MessageType.HasValue && e.Message.MessageType.Value.HasFlag(MessageType.Reply))) return;
 
 
-            string[] args = e.Message.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries).Skip(1).ToArray();
+            string[] args = e.Message.Content.Replace($"<@{client.CurrentUser.Id}>", "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
             Logger.Put($"Message command from owner {e.Author} - args = [{string.Join(", ", args)}]", Logger.Reason.Debug);
 
             if (args.Length == 0) return;
