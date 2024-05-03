@@ -60,6 +60,7 @@ namespace Voidway_Bot {
 
             Moderation.HandleModeration(discord);
             ModUploads.HandleModUploads(discord);
+            MessageCommands.HandleMessages(discord);
             MessageBlocker.HandleMessages(discord);
 
             DebugCommands.HandleRelaunch();
