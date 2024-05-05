@@ -219,7 +219,7 @@ namespace Voidway_Bot
 
 
         [ContextMenu(ApplicationCommandType.UserContextMenu, "Mod: Kick", true)]
-        [SlashRequireUserPermissions(Permissions.ManageMessages)]
+        [SlashRequireUserPermissions(Permissions.KickMembers)]
         public async Task ModalKick(ContextMenuContext ctx)
         {
             if (ctx.TargetMember is null)
