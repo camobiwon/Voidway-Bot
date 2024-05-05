@@ -362,10 +362,12 @@ namespace Voidway_Bot
         [SlashCommand("getlogs", "Retrieves the most logs that will fit into a 2000 char message.")]
         [SlashRequireVoidwayOwner]
         private static async Task GetLogs(
-            InteractionContext ctx,
-            [Option("Reverse", "Shows the reverse (start?) of the logs instead of its default order")]
-            bool reverse)
+            InteractionContext ctx)
+            //[Option("Reverse", "Shows the reverse (start?) of the logs instead of its default order")]
+            //bool reverse)
         {
+            const bool reverse = false;
+
             StringBuilder sb = new(2000);
             if (Logger.logStatements.IsEmpty)
             {
@@ -392,7 +394,14 @@ namespace Voidway_Bot
             Process proc = Process.GetCurrentProcess();
 
             TimeSpan uptime = DateTime.Now - proc.StartTime;
-            await ctx.CreateResponseAsync($"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s", true);
+            try
+            {
+                await ctx.CreateResponseAsync($"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s", true);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Error while attempting to send uptime", ex);
+            }
         }
 
         [SlashCommand("pid", "Sends PID in msg(s), so don't use in normal chats.")]
