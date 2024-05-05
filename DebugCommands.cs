@@ -396,7 +396,12 @@ namespace Voidway_Bot
             TimeSpan uptime = DateTime.Now - proc.StartTime;
             try
             {
-                await ctx.CreateResponseAsync($"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s", true);
+                await ctx.DeferAsync(true);
+                var dfmb = new DiscordFollowupMessageBuilder()
+                    .WithContent($"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s")
+                    .AsEphemeral(true);
+                await ctx.FollowUpAsync(dfmb);
+                //await ctx.CreateResponseAsync($"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s", true);
             }
             catch (Exception ex)
             {
