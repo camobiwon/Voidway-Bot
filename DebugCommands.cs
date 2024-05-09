@@ -147,8 +147,10 @@ namespace Voidway_Bot
             {
                 outputMessage.AppendLine("Unable to get remote-to-local commit diff names.");
                 if (exception is not null)
+                {
                     outputMessage.Append(exception.ToString());
-                goto SENDMESSAGE;
+                    goto SENDMESSAGE;
+                }
             }
             else
             {
