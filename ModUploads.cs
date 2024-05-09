@@ -326,7 +326,7 @@ namespace Voidway_Bot {
                     if (upChannel is not null)
                     {
                         uploadChannels[uType].Add(upChannel);
-                        Logger.Put($"Channel #{upChannel} (in {upChannel.Guild.Name}) will be used for {uType} mods, making a new ");
+                        Logger.Put($"Channel #{upChannel} (in {upChannel.Guild.Name}) will be used for {uType} mods");
                         announcementChannelCounter++;
                     }
 

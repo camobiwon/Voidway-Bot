@@ -50,6 +50,8 @@ namespace Voidway_Bot
             string aheadCountOutput = "";
             bool aheadOfRemote = false;
             string commitNames = "";
+            string showResult = "";
+
 
             Exception? exception = null;
 
@@ -99,6 +101,13 @@ namespace Voidway_Bot
                     git.WaitForExit();
                     commitNames = git.StandardOutput.ReadToEnd().TrimEnd();
                     Logger.Put($"Output from {git.StartInfo.FileName} {git.StartInfo.Arguments}: {commitNames}", Logger.Reason.Debug);
+
+                    git.StartInfo.Arguments = $"show -s";
+                    Logger.Put($"Executing command: {git.StartInfo.FileName} {git.StartInfo.Arguments}", Logger.Reason.Debug);
+                    git.Start();
+                    git.WaitForExit();
+                    showResult = git.StandardOutput.ReadToEnd().TrimEnd();
+                    Logger.Put($"Output from {git.StartInfo.FileName} {git.StartInfo.Arguments}: {showResult}", Logger.Reason.Debug);
                 }
                 catch (Exception ex)
                 {
@@ -139,6 +148,15 @@ namespace Voidway_Bot
                 //outputMessage.AppendLine($"Here's a list of the commits between the two:\n\t{string.Join("\n\t", commits.ToArray())}");
                 outputMessage.AppendLine($"Here's a list of the commits between the two:\n{commitNames}");
             }
+
+            if (string.IsNullOrEmpty(showResult))
+            {
+                outputMessage.AppendLine("Unable to get commit details.");
+                if (exception is not null)
+                    outputMessage.Append(exception.ToString());
+                goto SENDMESSAGE;
+            }
+            else outputMessage.AppendLine($"Here's the details of the current commit:\n{showResult}");
 
         // bro this is such shit code never use labels EVER bruh
         SENDMESSAGE:
