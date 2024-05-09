@@ -68,11 +68,19 @@ namespace Voidway_Bot
                         StartInfo = new ProcessStartInfo()
                         {
                             FileName = "git",
-                            Arguments = "rev-list --all --count",
+                            Arguments = "fetch",
                             CreateNoWindow = true,
                             RedirectStandardOutput = true,
                         },
                     };
+
+                    Logger.Put($"Executing command: {git.StartInfo.FileName} {git.StartInfo.Arguments}", Logger.Reason.Debug);
+                    git.Start();
+                    git.WaitForExit();
+                    string fetchOutput = git.StandardOutput.ReadToEnd().TrimEnd();
+                    Logger.Put($"Output from {git.StartInfo.FileName} {git.StartInfo.Arguments}: {fetchOutput}", Logger.Reason.Debug);
+
+                    git.StartInfo.Arguments = "rev-list --all --count";
                     Logger.Put($"Executing command: {git.StartInfo.FileName} {git.StartInfo.Arguments}", Logger.Reason.Debug);
                     git.Start();
                     git.WaitForExit();
