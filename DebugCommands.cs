@@ -156,7 +156,7 @@ namespace Voidway_Bot
             {
                 //var commits = commitNames.Split('\n', StringSplitOptions.TrimEntries).Select(cn => $"({cn[..7]}) - {cn}");
                 //outputMessage.AppendLine($"Here's a list of the commits between the two:\n\t{string.Join("\n\t", commits.ToArray())}");
-                outputMessage.AppendLine($"Here's a list of the commits between the two:\n{commitNames}");
+                outputMessage.AppendLine($"Here's a list of the commits between the two:```\n{commitNames}```\n");
             }
 
             if (string.IsNullOrEmpty(showResult))
@@ -166,7 +166,7 @@ namespace Voidway_Bot
                     outputMessage.Append(exception.ToString());
                 goto SENDMESSAGE;
             }
-            else outputMessage.AppendLine($"Here's the details of the current commit:\n{showResult}");
+            else outputMessage.AppendLine($"Here's the details of the current commit:```\n{showResult}```");
 
         // bro this is such shit code never use labels EVER bruh
         SENDMESSAGE:
