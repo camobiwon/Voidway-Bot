@@ -59,6 +59,7 @@ namespace Voidway_Bot {
             discord.GuildBanAdded += (client, e) => BanAddHandler(e);
             discord.GuildBanRemoved += (client, e) => BanRemoveHandler(e);
             discord.MessageDeleted += (client, e) => MessageEmbed(e.Guild, e.Message, "Deleted");
+            discord.MessagesBulkDeleted += (client, e) => HandleBulkDeletion(e.Guild, e.Messages);
             discord.MessageDeleted += (client, e) => HandleUserMessageDeleted(e.Guild, e.Message);
             discord.MessageUpdated += (client, e) => MessageEmbed(e.Guild, e.Message, "Edited", e.MessageBefore);
             discord.MessageCreated += (client, e) => HandleUserMessage(e.Author, e.Message);
@@ -242,6 +243,19 @@ namespace Voidway_Bot {
 
             if (dmb.Components.Count > 0)
                 HandleWarnButtons(timeoutData, victim, msg);
+        }
+
+        static async Task HandleBulkDeletion(DiscordGuild guild, IReadOnlyList<DiscordMessage> messages)
+        {
+            if (messages.Count == 0)
+                return;
+
+            bool sameChannel = messages.All(m => m.Channel! == messages[0].Channel!);
+            Logger.Put($"{messages.Count} messages bulk deleted. {(sameChannel ? "In " + messages[0].Channel : "From varying channels, so someone was probably banned.")}");
+            foreach (DiscordMessage msg in messages)
+            {
+                await MessageEmbed(guild, msg, "Bulk Deleted");
+            }
         }
 
         private static async Task MessageEmbed(DiscordGuild guild, DiscordMessage message, string actionType, DiscordMessage? pastMessage = null) {
