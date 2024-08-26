@@ -97,7 +97,10 @@ namespace Voidway_Bot {
                             break;
                         case ModEventType.MOD_COMMENT_ADDED:
                             if (Bot.OpenAiClient is not null && Config.IsModeratingModioComments())
+                            {
+                                Logger.Put($"Dispatching comment flag with event ID {modEvent.Id}", Logger.Reason.Debug);
                                 FlagModioCommentIfNecessary(modEvent.ModId, modEvent.UserId, modEvent.DateAdded);
+                            }
                             break;
                         default:
                             break;
@@ -172,7 +175,7 @@ namespace Voidway_Bot {
                 if (res is null) return;
 
 #if DEBUG
-                Logger.Put($"Comment from {commenterUsername} on {parentMod.NameId} was {(res.Flagged ? "flagged" : "not flagged")}. Highest score was {Math.Round(res.HighestFlagScore * 100, 2)}% for {res.CategoryScores.Max(kvp => kvp.Key)}", Logger.Reason.Debug);
+                Logger.Put($"Comment from {commenterUsername} (ID {comment.Id}) on {parentMod.NameId} was {(res.Flagged ? "flagged" : "not flagged")}. Highest score was {Math.Round(res.HighestFlagScore * 100, 2)}% for {res.CategoryScores.Max(kvp => kvp.Key)}", Logger.Reason.Debug);
 #endif
                 
                 if (!res.Flagged) return;
@@ -181,7 +184,7 @@ namespace Voidway_Bot {
                 if (commenterUsername is not null && commenterNameId is not null)
                     sb.Append($" from [{commenterUsername}](<https://mod.io/g/{bonelabGame.NameId}/u/{commenterNameId}/info#comments>)");
 
-                sb.AppendLine($" on the mod [{parentMod.Name}](<{parentMod.ProfileUrl}>) has been flagged by OpenAI in the following categories:");
+                sb.AppendLine($" on the mod [{parentMod.Name}](<{parentMod.ProfileUrl}#{comment.Id}>) has been flagged by OpenAI in the following categories:");
 
                 foreach (var flagged in res.FlaggedCategories)
                 {
