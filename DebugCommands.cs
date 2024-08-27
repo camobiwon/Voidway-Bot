@@ -467,7 +467,7 @@ namespace Voidway_Bot
         private async Task Ping(InteractionContext ctx)
         {
             TimeSpan ping = DateTime.Now - ctx.Interaction.CreationTimestamp;
-            await ctx.DeferAsync(true);
+            //await ctx.DeferAsync(true);
             DateTime preMessage = DateTime.Now;
             await ctx.CreateResponseAsync($"Pong!\n*{Math.Round(ping.TotalMilliseconds, 2)}ms*", true);
             TimeSpan postMessage = DateTime.Now - preMessage;
