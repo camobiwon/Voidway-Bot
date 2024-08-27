@@ -390,7 +390,12 @@ namespace Voidway_Bot
         [SlashCommand("getlogs", "Retrieves the most logs that will fit into a 2000 char message.")]
         [SlashRequireVoidwayOwner]
         private static async Task GetLogs(
-            InteractionContext ctx)
+            InteractionContext ctx,
+            [Option("filterFor", "Only return logs that contain a specific string.")]
+            string? filterFor = null,
+            [Option("filterOut", "Only return logs that DON'T contain a specific string.")]
+            string? filterOut = null
+            )
             //[Option("Reverse", "Shows the reverse (start?) of the logs instead of its default order")]
             //bool reverse)
         {
@@ -408,6 +413,10 @@ namespace Voidway_Bot
             var logs = reverse ? Logger.logStatements : Logger.logStatements.Reverse();
             foreach (string log in logs)
             {
+                if (filterFor is not null && !log.Contains(filterFor, StringComparison.InvariantCultureIgnoreCase))
+                    continue;
+                if (filterOut is not null && log.Contains(filterOut, StringComparison.InvariantCultureIgnoreCase))
+                    continue;
                 if (log.Length + sb.Length >= 2000) break;
                 sb.AppendLine(log);
             }
@@ -422,11 +431,13 @@ namespace Voidway_Bot
             Process proc = Process.GetCurrentProcess();
 
             TimeSpan uptime = DateTime.Now - proc.StartTime;
+            string uptimeStr = $"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s";
+            string memoryStr = $"Allocated {Math.Round(proc.PrivateMemorySize64 / 1024.0 / 1024.0, 2)}MB, currently using {Math.Round(proc.WorkingSet64 / 1024.0 / 1024.0, 2)}MB";
             try
             {
                 await ctx.DeferAsync(true);
                 var dfmb = new DiscordFollowupMessageBuilder()
-                    .WithContent($"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s")
+                    .WithContent($"{uptimeStr}\n{memoryStr}")
                     .AsEphemeral(true);
                 await ctx.FollowUpAsync(dfmb);
                 //await ctx.CreateResponseAsync($"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s", true);
