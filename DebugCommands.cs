@@ -461,5 +461,18 @@ namespace Voidway_Bot
             }
             catch { }
         }
+
+        [SlashCommand("ping", "Measures ping.")]
+        [SlashRequireUserPermissions(Permissions.ManageMessages)]
+        private async Task Ping(InteractionContext ctx)
+        {
+            TimeSpan ping = DateTime.Now - ctx.Interaction.CreationTimestamp;
+            await ctx.DeferAsync(true);
+            DateTime preMessage = DateTime.Now;
+            await ctx.CreateResponseAsync($"Pong!\n*{Math.Round(ping.TotalMilliseconds, 2)}ms*", true);
+            TimeSpan postMessage = DateTime.Now - preMessage;
+            DiscordMessage res = await ctx.GetOriginalResponseAsync();
+            await res.ModifyAsync(res.Content.TrimEnd('*') + $"to get interaction*\n*{Math.Round(postMessage.TotalMilliseconds, 2)}ms to message*");
+        }
     }
 }
