@@ -474,7 +474,10 @@ namespace Voidway_Bot
                 .AsEphemeral(true);
             DiscordMessage res = await ctx.FollowUpAsync(builder);
             TimeSpan postMessage = DateTime.Now - res.CreationTimestamp;
-            await res.ModifyAsync(res.Content.TrimEnd('*') + $"to get interaction*\n*{Math.Round(postMessage.TotalMilliseconds, 2)}ms to message*");
+            var editBuilder = new DiscordWebhookBuilder()
+                .WithContent(builder.Content!.TrimEnd('*') + $"to get interaction*\n*{Math.Round(postMessage.TotalMilliseconds, 2)}ms to message*");
+            await ctx.EditFollowupAsync(res.Id, editBuilder)
+            //await res.ModifyAsync(res.Content.TrimEnd('*') + $"to get interaction*\n*{Math.Round(postMessage.TotalMilliseconds, 2)}ms to message*");
         }
     }
 }
