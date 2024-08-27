@@ -467,11 +467,13 @@ namespace Voidway_Bot
         private async Task Ping(InteractionContext ctx)
         {
             TimeSpan ping = DateTime.Now - ctx.Interaction.CreationTimestamp;
-            //await ctx.DeferAsync(true);
-            DateTime preMessage = DateTime.Now;
-            await ctx.CreateResponseAsync($"Pong!\n*{Math.Round(ping.TotalMilliseconds, 2)}ms*", true);
-            TimeSpan postMessage = DateTime.Now - preMessage;
-            DiscordMessage res = await ctx.GetOriginalResponseAsync();
+            await ctx.DeferAsync(true);
+            //DateTime preMessage = DateTime.Now;
+            var builder = new DiscordFollowupMessageBuilder()
+                .WithContent($"Pong!\n*{Math.Round(ping.TotalMilliseconds, 2)}ms*")
+                .AsEphemeral(true);
+            DiscordMessage res = await ctx.FollowUpAsync(builder);
+            TimeSpan postMessage = DateTime.Now - res.CreationTimestamp;
             await res.ModifyAsync(res.Content.TrimEnd('*') + $"to get interaction*\n*{Math.Round(postMessage.TotalMilliseconds, 2)}ms to message*");
         }
     }
