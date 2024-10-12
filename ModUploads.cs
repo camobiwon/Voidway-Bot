@@ -174,8 +174,10 @@ namespace Voidway_Bot {
                 var res = moderationRes.Results.FirstOrDefault();
                 if (res is null) return;
 
+                double maxVal = Math.Round(res.HighestFlagScore * 100, 2);
+                string maxCat = res.CategoryScores.Max(kvp => kvp.Key)!;
 #if DEBUG
-                Logger.Put($"Comment from {commenterUsername} (ID {comment.Id}) on {parentMod.NameId} was {(res.Flagged ? "flagged" : "not flagged")}. Highest score was {Math.Round(res.HighestFlagScore * 100, 2)}% for {res.CategoryScores.Max(kvp => kvp.Key)}", Logger.Reason.Debug);
+                Logger.Put($"Comment from {commenterUsername} (ID {comment.Id}) on {parentMod.NameId} was {(res.Flagged ? "flagged" : "not flagged")}. Highest score was {maxVal}% for {maxCat}", Logger.Reason.Debug);
 #endif
                 
                 if (!res.Flagged) return;
@@ -186,9 +188,21 @@ namespace Voidway_Bot {
 
                 sb.AppendLine($" on the mod [{parentMod.Name}](<{parentMod.ProfileUrl}#{comment.Id}>) has been flagged by OpenAI in the following categories:");
 
+                if (res.FlaggedCategories.Count != 0)
+                {
+                    sb.Append("Highest category: ");
+                    sb.Append(maxCat);
+                    sb.Append(" (*");
+                    sb.Append(maxVal);
+                    sb.AppendLine("%*)");
+                }
+
                 foreach (var flagged in res.FlaggedCategories)
                 {
                     sb.Append(flagged);
+                    sb.Append(" (*");
+                    sb.Append(Math.Round(res.CategoryScores[flagged] * 100, 2));
+                    sb.Append("%*)");
                     sb.Append(", ");
                 }
 
