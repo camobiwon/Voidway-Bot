@@ -347,8 +347,11 @@ namespace Voidway_Bot
         {
             [SlashCommand(nameof(Config.ConfigValues.serverModNotesChannels), "Get / set a config value")]
             [SlashRequireVoidwayOwner]
-            public async Task ModNotesChannel(InteractionContext ctx, [Option("Value", "The value to assign, or nothing to retrieve the value.")] long value = 0)
+            public async Task ModNotesChannel(InteractionContext ctx, [Option("Value", "The value to assign, or nothing to retrieve the value.")] string? sValue = null)
             {
+                ulong.TryParse(sValue, System.Globalization.NumberStyles.AllowLeadingWhite | System.Globalization.NumberStyles.AllowTrailingWhite, null, out ulong value);
+
+                // failed parse defaults to 0 so this is fine
                 if (value != 0)
                 {
                     await Config.ModifyConfig(cv => cv.serverModNotesChannels[ctx.Guild.Id.ToString()] = (ulong)value);
