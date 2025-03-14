@@ -505,7 +505,7 @@ namespace Voidway_Bot {
             bool hasUnityProj = filePaths.Any(p => p.EndsWith(".meta"));
             bool hasDll = filePaths.Any(p => p.EndsWith(".dll"));
             bool hasZip = filePaths.Any(p => p.EndsWith(".zip"));
-            bool hasTiktokData = filePaths.Any(p => p.Replace(' ', '_').Contains("tiktok_data")) // this has somehow happened **twice**.
+            bool hasTiktokData = filePaths.Any(p => p.Replace(' ', '_').Contains("tiktok_data")); // this has somehow happened **twice**.
 
             if (isLikelyValidMod)
                 ret |= FileUploadHeuristic.MarrowMod;
