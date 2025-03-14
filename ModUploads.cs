@@ -47,6 +47,7 @@ namespace Voidway_Bot {
             Zip = 1 << 12,
             FileTooLarge = 1 << 13,
             MarrowReplacer = 1 << 14,
+            TiktokData = 1 << 15, // this has happened TWICE somehow.
         }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -504,6 +505,7 @@ namespace Voidway_Bot {
             bool hasUnityProj = filePaths.Any(p => p.EndsWith(".meta"));
             bool hasDll = filePaths.Any(p => p.EndsWith(".dll"));
             bool hasZip = filePaths.Any(p => p.EndsWith(".zip"));
+            bool hasTiktokData = filePaths.Any(p => p.Replace(' ', '_').Contains("tiktok_data")) // this has somehow happened **twice**.
 
             if (isLikelyValidMod)
                 ret |= FileUploadHeuristic.MarrowMod;
@@ -527,6 +529,8 @@ namespace Voidway_Bot {
                 ret |= FileUploadHeuristic.Zip;
             if (isLikelyReplacerMod)
                 ret |= FileUploadHeuristic.MarrowReplacer;
+            if (hasTiktokData)
+                ret |= FileUploadHeuristic.TiktokData;
 
             return ret;
         }
