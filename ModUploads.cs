@@ -77,7 +77,7 @@ namespace Voidway_Bot {
 
                 IReadOnlyList<ModEvent> events;
                 try {
-                    events = await bonelabMods.GetEvents(lastModioEvent).ToList();
+                    events = await bonelabMods.GetEvents(Filter.Custom("id", Operator.GreaterThan, lastModioEvent.ToString())).ToList();
                     if (events == null) throw new NullReferenceException("Event list was null for some arbitrary reason.");
                 } catch (Exception ex) {
                     Logger.Warn($"Failed to fetch new mods! {ex}");
