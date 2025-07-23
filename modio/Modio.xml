@@ -44,47 +44,52 @@
             Initializes a new instance of <see cref="T:Modio.Client"/> with a custom host and <paramref name="credentials"/>.
             </summary>
         </member>
+        <member name="M:Modio.Client.#ctor(System.Uri,Modio.Credentials,System.Net.Http.HttpClient)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.Client"/> with a custom host, custom <paramref name="credentials"/>, and a custom <paramref name="httpClient"/>.
+            </summary>
+        </member>
         <member name="M:Modio.Client.SubmitReport(Modio.NewReport)">
             <summary>
             Report a resource on mod.io.
             </summary>
         </member>
-        <member name="M:Modio.Client.Download(System.UInt32,System.UInt32,System.IO.FileInfo)">
+        <member name="M:Modio.Client.Download(System.UInt32,System.UInt32,System.IO.FileInfo,System.Threading.CancellationToken)">
             <summary>
             Downloads the mod's primary file to <paramref name="dest"/>.
             </summary>
         </member>
-        <member name="M:Modio.Client.Download(System.UInt32,System.UInt32,System.IO.Stream)">
+        <member name="M:Modio.Client.Download(System.UInt32,System.UInt32,System.IO.Stream,System.Threading.CancellationToken)">
             <summary>
             Downloads the mod's primary file to <paramref name="stream"/>.
             </summary>
         </member>
-        <member name="M:Modio.Client.Download(System.UInt32,System.UInt32,System.UInt32,System.IO.FileInfo)">
+        <member name="M:Modio.Client.Download(System.UInt32,System.UInt32,System.UInt32,System.IO.FileInfo,System.Threading.CancellationToken)">
             <summary>
             Downloads the mod file to <paramref name="dest"/>.
             </summary>
         </member>
-        <member name="M:Modio.Client.Download(System.UInt32,System.UInt32,System.UInt32,System.IO.Stream)">
+        <member name="M:Modio.Client.Download(System.UInt32,System.UInt32,System.UInt32,System.IO.Stream,System.Threading.CancellationToken)">
             <summary>
             Downloads the mod file to <paramref name="stream"/>.
             </summary>
         </member>
-        <member name="M:Modio.Client.Download(Modio.Models.Mod,System.IO.FileInfo)">
+        <member name="M:Modio.Client.Download(Modio.Models.Mod,System.IO.FileInfo,System.Threading.CancellationToken)">
             <summary>
             Downloads the mod's primary file to <paramref name="dest"/>.
             </summary>
         </member>
-        <member name="M:Modio.Client.Download(Modio.Models.Mod,System.IO.Stream)">
+        <member name="M:Modio.Client.Download(Modio.Models.Mod,System.IO.Stream,System.Threading.CancellationToken)">
             <summary>
             Downloads the mod's primary file to <paramref name="stream"/>.
             </summary>
         </member>
-        <member name="M:Modio.Client.Download(Modio.Models.File,System.IO.FileInfo)">
+        <member name="M:Modio.Client.Download(Modio.Models.File,System.IO.FileInfo,System.Threading.CancellationToken)">
             <summary>
             Downloads the mod file to <paramref name="dest"/>.
             </summary>
         </member>
-        <member name="M:Modio.Client.Download(Modio.Models.File,System.IO.Stream)">
+        <member name="M:Modio.Client.Download(Modio.Models.File,System.IO.Stream,System.Threading.CancellationToken)">
             <summary>
             Downloads the mod file to <paramref name="stream"/>.
             </summary>
@@ -129,6 +134,11 @@
             Request an access token on behalf of a Steam user.
             </summary>
         </member>
+        <member name="M:Modio.AuthClient.External(Modio.EpicGamesAuth)">
+            <summary>
+            Request an access token on behalf of a Epic Games user.
+            </summary>
+        </member>
         <member name="M:Modio.AuthClient.External(Modio.GalaxyAuth)">
             <summary>
             Request an access token on behalf of a GOG Galaxy user.
@@ -152,6 +162,11 @@
         <member name="M:Modio.AuthClient.External(Modio.SwitchAuth)">
             <summary>
             Request an access token on behalf of a Nintendo Switch user.
+            </summary>
+        </member>
+        <member name="M:Modio.AuthClient.External(Modio.AppleAuth)">
+            <summary>
+            Request an access token on behalf of a Apple user.
             </summary>
         </member>
         <member name="M:Modio.AuthClient.External(Modio.DiscordAuth)">
@@ -214,7 +229,7 @@
             The mod id of the endpoint.
             </summary>
         </member>
-        <member name="M:Modio.DependenciesClient.Get">
+        <member name="M:Modio.DependenciesClient.Get(System.Boolean)">
             <summary>
             Get all dependencies the mod has selected.
             </summary>
@@ -299,7 +314,7 @@
             Get all files that are published for the corresponding mod.
             </summary>
         </member>
-        <member name="M:Modio.FilesClient.Add(Modio.NewFile)">
+        <member name="M:Modio.FilesClient.Add(Modio.NewFile,System.Threading.CancellationToken)">
             <summary>
             Upload a file for the corresponding mod.
             </summary>
@@ -542,11 +557,6 @@
         <member name="M:Modio.ModsClient.GetEvents(Modio.Filters.Filter)">
             <summary>
             Get all mods events for the corresponding game sorted by latest event first.
-            </summary>
-        </member>
-        <member name="M:Modio.ModsClient.GetEvents(System.UInt32)">
-            <summary>
-            Get all mods events for the corresponding game after a given event ID sorted by latest event first.
             </summary>
         </member>
         <member name="M:Modio.ModsClient.GetStatistics(Modio.Filters.Filter)">
@@ -1227,7 +1237,7 @@
              Filter operators of mod.io
              </summary>
             
-             <seealso>https://docs.mod.io/#filtering</seealso>
+             <seealso>https://docs.mod.io/restapiref/#filtering</seealso>
         </member>
         <member name="F:Modio.Filters.Operator.Equal">
             <summary>
@@ -1500,6 +1510,33 @@
             and an OAuth2 access token.
             </summary>
         </member>
+        <member name="T:Modio.AppleAuth">
+             <summary>
+             See <see cref="M:Modio.AuthClient.External(Modio.AppleAuth)"/>.
+             </summary>
+            
+             <seealso>https://docs.mod.io/restapiref/#apple</seealso>
+        </member>
+        <member name="P:Modio.AppleAuth.IdToken">
+            <summary>
+            The ID token supplied by the EOS SDK.
+            </summary>
+        </member>
+        <member name="P:Modio.AppleAuth.TermsAccepted">
+            <summary>
+            Has the user accepted the Terms of Use.
+            </summary>
+        </member>
+        <member name="P:Modio.AppleAuth.ExpiredAt">
+            <summary>
+            Unix timestamp of date in which the returned token will expire.
+            </summary>
+        </member>
+        <member name="M:Modio.AppleAuth.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.AppleAuth"/> with the required NSA ID.
+            </summary>
+        </member>
         <member name="T:Modio.AuthService">
             <summary>
             The 3rd party authentication service that will be used after
@@ -1507,6 +1544,9 @@
             </summary>
         </member>
         <member name="F:Modio.AuthService.Steam">
+            
+        </member>
+        <member name="F:Modio.AuthService.EpicGames">
             
         </member>
         <member name="F:Modio.AuthService.Gog">
@@ -1524,6 +1564,9 @@
         <member name="F:Modio.AuthService.Oculus">
             
         </member>
+        <member name="F:Modio.AuthService.Apple">
+            
+        </member>
         <member name="F:Modio.AuthService.Discord">
             
         </member>
@@ -1532,7 +1575,7 @@
              See <see cref="M:Modio.AuthClient.External(Modio.DiscordAuth)"/>.
              </summary>
             
-             <seealso>https://docs.mod.io/#authenticate-via-discord</seealso>
+             <seealso>https://docs.mod.io/restapiref/#discord</seealso>
         </member>
         <member name="P:Modio.DiscordAuth.Token">
             <summary>
@@ -1559,12 +1602,44 @@
             Initializes a new instance of <see cref="T:Modio.DiscordAuth"/> with the required data.
             </summary>
         </member>
+        <member name="T:Modio.EpicGamesAuth">
+             <summary>
+             See <see cref="M:Modio.AuthClient.External(Modio.EpicGamesAuth)"/>.
+             </summary>
+            
+             <seealso>https://docs.mod.io/restapiref/#epic-games</seealso>
+        </member>
+        <member name="P:Modio.EpicGamesAuth.IdToken">
+            <summary>
+            The ID token supplied by the EOS SDK.
+            </summary>
+        </member>
+        <member name="P:Modio.EpicGamesAuth.Email">
+            <summary>
+            The users email address.
+            </summary>
+        </member>
+        <member name="P:Modio.EpicGamesAuth.TermsAccepted">
+            <summary>
+            Has the user accepted the Terms of Use.
+            </summary>
+        </member>
+        <member name="P:Modio.EpicGamesAuth.ExpiredAt">
+            <summary>
+            Unix timestamp of date in which the returned token will expire.
+            </summary>
+        </member>
+        <member name="M:Modio.EpicGamesAuth.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of <see cref="T:Modio.EpicGamesAuth"/> with the required NSA ID.
+            </summary>
+        </member>
         <member name="T:Modio.GalaxyAuth">
              <summary>
              See <see cref="M:Modio.AuthClient.External(Modio.GalaxyAuth)"/>.
              </summary>
             
-             <seealso>https://docs.mod.io/#authenticate-via-gog-galaxy</seealso>
+             <seealso>https://docs.mod.io/restapiref/#gog-galaxy</seealso>
         </member>
         <member name="P:Modio.GalaxyAuth.AppData">
             <summary>
@@ -1596,7 +1671,7 @@
              See <see cref="M:Modio.AuthClient.External(Modio.ItchioAuth)"/>.
              </summary>
             
-             <seealso>https://docs.mod.io/#authenticate-via-itch-io</seealso>
+             <seealso>https://docs.mod.io/restapiref/#itch-io</seealso>
         </member>
         <member name="P:Modio.ItchioAuth.Token">
             <summary>
@@ -1628,7 +1703,7 @@
              See <see cref="M:Modio.AuthClient.External(Modio.OculusAuth)"/>.
              </summary>
             
-             <seealso>https://docs.mod.io/#authenticate-via-oculus</seealso>
+             <seealso>https://docs.mod.io/restapiref/#meta-quest</seealso>
         </member>
         <member name="P:Modio.OculusAuth.Token">
             <summary>
@@ -1670,7 +1745,7 @@
              See <see cref="M:Modio.AuthClient.External(Modio.SteamAuth)"/>.
              </summary>
             
-             <seealso>https://docs.mod.io/#authenticate-via-steam</seealso>
+             <seealso>https://docs.mod.io/restapiref/#steam</seealso>
         </member>
         <member name="P:Modio.SteamAuth.AppData">
             <summary>
@@ -1702,7 +1777,7 @@
              See <see cref="M:Modio.AuthClient.External(Modio.SwitchAuth)"/>.
              </summary>
             
-             <seealso>https://docs.mod.io/#authenticate-via-switch</seealso>
+             <seealso>https://docs.mod.io/restapiref/#nintendo-switch</seealso>
         </member>
         <member name="P:Modio.SwitchAuth.IdToken">
             <summary>
@@ -1734,7 +1809,7 @@
              See <see cref="M:Modio.AuthClient.External(Modio.XboxAuth)"/>.
              </summary>
             
-             <seealso>https://docs.mod.io/#authenticate-via-xbox-live</seealso>
+             <seealso>https://docs.mod.io/restapiref/#xbox-live</seealso>
         </member>
         <member name="P:Modio.XboxAuth.Token">
             <summary>
@@ -2294,8 +2369,11 @@
         </member>
         <member name="T:Modio.Models.ApiError">
             <remarks>
-            https://docs.mod.io/#error-object
+            https://docs.mod.io/restapiref/#error-object
             </remarks>
+        </member>
+        <member name="M:Modio.Models.ApiError.#ctor">
+            Creates a new instance of ApiError.
         </member>
         <member name="P:Modio.Models.ApiError.ErrorRef">
             <summary>
@@ -2314,7 +2392,7 @@
         </member>
         <member name="T:Modio.Models.Terms">
             <remarks>
-            https://docs.mod.io/#terms-object
+            https://docs.mod.io/restapiref/#terms-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Terms.Plaintext">
@@ -2334,7 +2412,7 @@
         </member>
         <member name="T:Modio.Models.Links">
             <remarks>
-            https://docs.mod.io/#terms-object
+            https://docs.mod.io/restapiref/#terms-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Links.Website">
@@ -2359,7 +2437,7 @@
         </member>
         <member name="T:Modio.Models.Link">
             <remarks>
-            https://docs.mod.io/#terms-object
+            https://docs.mod.io/restapiref/#terms-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Link.Text">
@@ -2379,7 +2457,7 @@
         </member>
         <member name="T:Modio.Models.Comment">
             <remarks>
-            https://docs.mod.io/#comment-object
+            https://docs.mod.io/restapiref/#comment-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Comment.Id">
@@ -2424,7 +2502,7 @@
         </member>
         <member name="T:Modio.Models.User">
             <remarks>
-            https://docs.mod.io/#user-object
+            https://docs.mod.io/restapiref/#user-object
             </remarks>
         </member>
         <member name="P:Modio.Models.User.Id">
@@ -2457,7 +2535,7 @@
             The user's avatar data.
             </summary>
             <remarks>
-            https://docs.mod.io/#avatar-object
+            https://docs.mod.io/restapiref/#avatar-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Avatar.Filename">
@@ -2482,7 +2560,7 @@
         </member>
         <member name="T:Modio.Models.Logo">
             <remarks>
-            https://docs.mod.io/#logo-object
+            https://docs.mod.io/restapiref/#logo-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Logo.Filename">
@@ -2530,9 +2608,18 @@
             Resource is deleted and only returned via the <see cref="T:Modio.UserClient">User</see> endpoints.
             </summary>
         </member>
+        <member name="T:Modio.Models.Converters.EmptyObjectConverter">
+             Deserialize empty objects for optional properties as `null`.
+            
+             The mod.io API returns `"field": {}` for some optional properties instead of
+             returning `"field": null` or omitting the field.
+            
+             This behaviour results in deserialization issues with mods without files
+             and user profiles without avatars.
+        </member>
         <member name="T:Modio.Models.File">
             <remarks>
-            https://docs.mod.io/#modfile-object
+            https://docs.mod.io/restapiref/#modfile-object
             </remarks>
         </member>
         <member name="P:Modio.Models.File.Id">
@@ -2612,7 +2699,7 @@
         </member>
         <member name="T:Modio.Models.FileHash">
             <remarks>
-            https://docs.mod.io/#filehash-object
+            https://docs.mod.io/restapiref/#filehash-object
             </remarks>
         </member>
         <member name="P:Modio.Models.FileHash.Md5">
@@ -2622,7 +2709,7 @@
         </member>
         <member name="T:Modio.Models.Download">
             <remarks>
-            https://docs.mod.io/#download-object
+            https://docs.mod.io/restapiref/#download-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Download.BinaryUrl">
@@ -2652,7 +2739,7 @@
         </member>
         <member name="T:Modio.Models.Game">
             <remarks>
-            https://docs.mod.io/#game-object
+            https://docs.mod.io/restapiref/#game-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Game.Id">
@@ -2777,7 +2864,7 @@
         </member>
         <member name="T:Modio.Models.Icon">
             <remarks>
-            https://docs.mod.io/#icon-object
+            https://docs.mod.io/restapiref/#icon-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Icon.Filename">
@@ -2807,7 +2894,7 @@
         </member>
         <member name="T:Modio.Models.Header">
             <remarks>
-            https://docs.mod.io/#header-image-object
+            https://docs.mod.io/restapiref/#header-image-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Header.Filename">
@@ -2940,6 +3027,21 @@
             Allow negative ratings
             </summary>
         </member>
+        <member name="F:Modio.Models.CommunityOptions.ALLOW_WEB_EDIT_MODS">
+            <summary>
+            Allow mods to be edited via web.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CommunityOptions.ALLOW_MOD_DEPENDENCIES">
+            <summary>
+            Allow mod dependencies.
+            </summary>
+        </member>
+        <member name="F:Modio.Models.CommunityOptions.ALLOW_GUIDES_COMMENTS">
+            <summary>
+            Allow comments on guides.
+            </summary>
+        </member>
         <member name="T:Modio.Models.RevenueOptions">
             <summary>
             Revenue capabilities mods can enable.
@@ -2992,7 +3094,7 @@
         </member>
         <member name="T:Modio.Models.TagOption">
             <remarks>
-            https://docs.mod.io/#game-tag-option-object
+            https://docs.mod.io/restapiref/#game-tag-option-object
             </remarks>
         </member>
         <member name="P:Modio.Models.TagOption.Name">
@@ -3017,12 +3119,12 @@
         </member>
         <member name="T:Modio.Models.Metadata">
             <remarks>
-            https://docs.mod.io/#metadata-kvp-object
+            https://docs.mod.io/restapiref/#metadata-kvp-object
             </remarks>
         </member>
         <member name="T:Modio.Models.Mod">
             <remarks>
-            https://docs.mod.io/#mod-object
+            https://docs.mod.io/restapiref/#mod-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Mod.Id">
@@ -3190,7 +3292,7 @@
             The mod's media links.
             </summary>
             <remarks>
-            https://docs.mod.io/#mod-media-object
+            https://docs.mod.io/restapiref/#mod-media-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Media.YouTube">
@@ -3213,7 +3315,7 @@
             The mod's image object (a gallery).
             </summary>
             <remarks>
-            https://docs.mod.io/#image-object
+            https://docs.mod.io/restapiref/#image-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Image.Filename">
@@ -3233,7 +3335,7 @@
         </member>
         <member name="T:Modio.Models.Dependency">
             <remarks>
-            https://docs.mod.io/#mod-dependencies-object
+            https://docs.mod.io/restapiref/#mod-dependencies-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Dependency.ModId">
@@ -3248,7 +3350,7 @@
         </member>
         <member name="T:Modio.Models.Tag">
             <remarks>
-            https://docs.mod.io/#mod-tag-object
+            https://docs.mod.io/restapiref/#mod-tag-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Tag.Name">
@@ -3263,7 +3365,7 @@
         </member>
         <member name="T:Modio.Models.Statistics">
             <remarks>
-            https://docs.mod.io/#mod-stats-object
+            https://docs.mod.io/restapiref/#mod-stats-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Statistics.ModId">
@@ -3412,7 +3514,7 @@
         </member>
         <member name="T:Modio.Models.Rating">
             <remarks>
-            https://docs.mod.io/#rating-object
+            https://docs.mod.io/restapiref/#rating-object
             </remarks>
         </member>
         <member name="P:Modio.Models.Rating.GameId">
@@ -3439,7 +3541,7 @@
         </member>
         <member name="T:Modio.Models.TeamMember">
             <remarks>
-            https://docs.mod.io/#team-member-object
+            https://docs.mod.io/restapiref/#team-member-object
             </remarks>
         </member>
         <member name="P:Modio.Models.TeamMember.Id">
