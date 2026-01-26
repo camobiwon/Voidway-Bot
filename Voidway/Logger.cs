@@ -1,0 +1,134 @@
+using CircularBuffer;
+using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text;
+
+namespace Voidway;
+
+internal static class Logger
+{
+    
+    const string PUT_DATE_FORMAT = "hh:mm:sstt"; // example: "12:33:05AM"
+    const string FILE_DATE_FORMAT = "yyyy-MM-dd h_m_stt"; // example: "2022-10-23 12_01_47AM"
+    readonly static int maxPutDateLength = PUT_DATE_FORMAT.Length;
+    internal static readonly CircularBuffer<string> logStatements = new(64);
+    static readonly StreamWriter logFile;
+
+    static Logger()
+    {
+        int maxFiles = Config.values.maxLogFiles;
+        if (!Directory.Exists(Config.values.logPath)) Directory.CreateDirectory(Config.values.logPath);
+        string filePath = Path.Combine(Config.values.logPath, DateTime.Now.ToString(FILE_DATE_FORMAT) + ".log");
+        string latestPath = Path.Combine(Config.values.logPath, "latest.log");
+
+        Console.WriteLine("Initializing logger");
+        logFile = File.AppendText(filePath);
+        
+        if (File.Exists(latestPath))
+            File.Delete(latestPath);
+        File.CreateSymbolicLink(latestPath, Path.GetFullPath(filePath));
+        
+        Put("Created stream writer - logger now active, writing to " + filePath);
+
+        // delete oldest log files over max log file count
+        // https://stackoverflow.com/questions/20486559/get-a-list-of-files-in-a-directory-in-descending-order-by-creation-date-using-c#20486570
+        DirectoryInfo dir = new(Config.values.logPath);
+        FileInfo[] files = dir.GetFiles().OrderByDescending(f => f.LastWriteTime).ToArray();
+        foreach (FileInfo file in files.Skip(maxFiles))
+        {
+            Put($"Deleting old log {file.Name}", LogType.Debug);
+            file.Delete();
+        }
+        if (files.Length > maxFiles) Put($"Deleted {files.Length - maxFiles} old log file{(files.Length - maxFiles == 1 ? "" : "s")}.");
+    }
+
+
+    public static void Error(string str) => PutInternal(str, LogType.Fatal, false);
+    public static void Error(string str, Exception ex) => PutInternal(str + "\n\t" + ex.ToString(), LogType.Fatal, false);
+
+    public static void Warn(string str) => PutInternal(str, LogType.Warn, false);
+    public static void Warn(string str, Exception ex) => PutInternal(str + "\n\t" + ex.ToString(), LogType.Warn, false);
+
+    public static void Put(string str) => PutInternal(str, LogType.Normal);
+
+    public static void Put(string str, LogType reason, bool cleanMultiline = true) => PutInternal(str, reason, cleanMultiline);
+
+    // private method so that GetCaller always has a consistent count of frames to ignore
+    private static void PutInternal(string str, LogType reason, bool cleanMultiline = true)
+    {
+        if (string.IsNullOrWhiteSpace(str)) str = "<N/A>";
+        else if (cleanMultiline) str = str.Replace("\r\n", " // ").Replace("\n", " // ");
+
+        string starter = $"[{GetPutTime()}] ";
+        string reasonStr = reason.logCaller ? $"{reason.name} @ {GetCaller()}" : reason.name;
+        string fileString = $"{starter}{reasonStr} -> {str}";
+
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write(starter);
+        Console.ForegroundColor = reason.nameColor;
+        Console.Write(reasonStr);
+        Console.ForegroundColor = reason.textColor;
+        Console.Write(" -> ");
+        Console.WriteLine(str);
+
+        Console.ResetColor();
+        if (reason.writeToFile)
+        {
+            logFile.WriteLine(fileString);
+            logFile.Flush();
+        }
+        logStatements.PushBack(fileString);
+    }
+
+    public static string EnsureShorterThan(string str, int maxLen, string cutoffSignifier = "...")
+    {
+        if (str.Length < maxLen) return str;
+
+        return str[..(maxLen - cutoffSignifier.Length)] + cutoffSignifier;
+    }
+
+    static string GetPutTime() => DateTime.Now.ToString(PUT_DATE_FORMAT).PadLeft(maxPutDateLength);
+
+    static string GetCaller()
+    {
+        StackTrace trace = new(1, false);
+        foreach (StackFrame frame in trace.GetFrames())
+        {
+            MethodBase? method = frame.GetMethod();
+            Type? decType = method?.DeclaringType;
+            if (method is null || decType is null) continue;
+            if (IsStepThrough(method)) continue;
+
+            if (IsMoveNext(decType))
+            {
+                return string.Concat(decType.DeclaringType!.Name, ".", decType.Name.Split('>').First().AsSpan(1));
+            }
+            
+
+            //if (decType != typeof(Logger) && decType != typeof(DiscordLogger) && IsTypeLoggable(decType))
+            //{
+            //    return decType.Name + '.' + method.Name;
+            //}
+        }
+        return "???";
+    }
+
+    static bool IsTypeLoggable(Type t)
+    {
+        // all this to avoid seeing "<MainAsync>d__1.MoveNext"
+        return t.GetCustomAttribute(typeof(CompilerGeneratedAttribute)) is null && t.Assembly == typeof(Logger).Assembly;
+    }
+
+
+    static bool IsMoveNext(Type t)
+    {
+        return t.GetCustomAttribute(typeof(CompilerGeneratedAttribute)) is not null && t.GetInterfaces().Any(i => i == typeof(IAsyncStateMachine));
+    }
+    
+    
+    static bool IsStepThrough(MethodBase m)
+    {
+        return m.GetCustomAttribute(typeof(DebuggerStepThroughAttribute)) is not null;
+    }
+}

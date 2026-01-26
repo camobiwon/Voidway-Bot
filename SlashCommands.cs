@@ -53,7 +53,7 @@ namespace Voidway_Bot
             else return false;
         }
 
-        /*
+        
         // Technically, this is the exact same thing as Timeout, but it's got a new command entry because it has a more user-friendly description.
         [SlashCommand("retimeout", "Changes a user's timeout, and logs it with a reason.")]
         [SlashRequirePermissions(Permissions.ModerateMembers, false)]
@@ -118,7 +118,7 @@ namespace Voidway_Bot
             //    "Old end time",
             //    $"<t:{currTimeout.Value.ToUnixTimeSeconds()}:t>");
         }
-        */
+        
 
         // this is technically redundant to discord's timeout dialogue, except that thing gives ZERO granular control.
         [SlashCommand("timeout", "Times out / updates a timeout on a user, DMs them the reason why, and logs it with a reason.")]
