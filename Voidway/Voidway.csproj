@@ -22,4 +22,12 @@
       </Compile>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\modio.net\Modio\Modio.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Modules\Modio\" />
+    </ItemGroup>
+
 </Project>

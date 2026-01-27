@@ -15,7 +15,12 @@ internal class Config
     
     internal string token = "";
     
-    public string modioToken = "";
+    public string modioApiKey = "";
     [TomlPrecedingComment("Can be left blank if you only use an API key w/o OAuth2")]
     public string modioOAuth = "";
+
+    [TomlPrecedingComment("Must be filled in to use AI moderation endpoints")]
+    public string openAiToken = "";
+
+    public ulong[] blockedUsers = [];
 }

@@ -11,22 +11,36 @@ public class ServerConfig
     
     [TomlNonSerialized]
     public ulong Id { get; private set; }
+    // not readonly because newly created configs have their files written and
+    // their loadedAt times updated so IsOld doesnt erroneously return false
+    [TomlNonSerialized]
+    private DateTime loadedAt = DateTime.Now;
 
     public ulong modLogChannel = 0;
     public ulong msgLogChannel = 0;
-    public ulong allModsChannel
-    
+    public ulong allModsChannel = 0;
+
+    private bool IsOld()
+    {
+        string path = string.Format(CFG_PATH_FORMAT, Id.ToString());
+        if (!Path.Exists(path))
+            return false;
+        FileInfo finf = new(path);
+
+        return loadedAt < finf.LastWriteTime;
+    }
     
     public static ServerConfig? GetConfig(ulong id)
     {
         var cfg = loadedConfigs.GetValueOrDefault(id) ?? LoadConfigFromFile(id);
 
-        if (cfg is null)
-        {
-            cfg = new();
-            cfg.Id = id;
-        }
+        if (cfg is not null) return cfg;
         
+        cfg = new();
+        cfg.Id = id;
+        WriteConfigToFile(cfg);
+        cfg.loadedAt = DateTime.Now; // so IsOld doesnt return "true"
+
         return cfg;
     }
 
@@ -54,5 +68,16 @@ public class ServerConfig
         }
 
         return null;
+    }
+
+    private static void WriteConfigToFile(ServerConfig? cfg)
+    {
+        if (cfg is null)
+            return;
+        
+        string path = string.Format(CFG_PATH_FORMAT, cfg.Id.ToString());
+        string tomlText = TomletMain.TomlStringFrom(cfg); 
+        
+        File.WriteAllText(path, tomlText);
     }
 }
