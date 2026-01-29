@@ -61,7 +61,8 @@ internal abstract partial class ModuleBase
             .HandleChannelCreated(AllEventsHandler)
             .HandleThreadCreated(AllEventsHandler)
             .HandleSessionCreated(AllEventsHandler)
-            .HandleUnknownEvent(AllEventsHandler));
+            .HandleUnknownEvent(AllEventsHandler)
+            .HandleGuildAuditLogCreated(AllEventsHandler));
 
         //if (GetType().GetCustomAttribute<CommandAttribute>() is not null)
         //    bot.clientBuilder.UseCommands(ce => ce.AddCommands(GetType()));

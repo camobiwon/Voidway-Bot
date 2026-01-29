@@ -29,7 +29,7 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
     private static readonly ModUploadType[] ModUploadTypes = Enum.GetValues<ModUploadType>();
     private static readonly string[] ModUploadTypeNames = Enum.GetNames(typeof(ModUploadType));
 
-    private readonly Dictionary<ModUploadType, List<DiscordChannel>> announcementChannels = new()
+    private static readonly Dictionary<ModUploadType, List<DiscordChannel>> announcementChannels = new()
     {
         { ModUploadType.Avatar, [] },
         { ModUploadType.Level, [] },
@@ -84,10 +84,10 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
         }
     }
 
-    private async Task AnnounceMod(ModioEventArgs args)
+    private static async Task AnnounceMod(ModioEventArgs args)
     {
-        // give uploader an extra 2 minutes to make thumbnail changes or something
-        await Task.Delay(120 * 1000);
+        // give uploader an extra minute to make thumbnail changes or something
+        await Task.Delay(60 * 1000);
         
         var modClient = args.ModsClient[args.Event.ModId];
         var modData = await modClient.Get();
@@ -100,14 +100,14 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
             Logger.Put($"Mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) was already announced! Ignoring! (found via #ID)");
             return;
         }
-        if (modData.NameId is not null && announcedMods.ContainsKey((uint)modData.NameId.GetHashCode()))
+        if (modData.NameId is not null && announcedMods.ContainsKey(unchecked((uint)modData.NameId.GetHashCode())))
         {
             Logger.Put($"Mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) was already announced! Ignoring! (found via NameID hashcode)");
             return;
         }
         announcedMods[modData.Id] = messageList;
         if (modData.NameId is not null)
-            announcedMods[(uint)modData.NameId.GetHashCode()] = messageList;
+            announcedMods[unchecked((uint)modData.NameId.GetHashCode())] = messageList;
         
         // Spam checks
         if (Config.values.modioTagSpamThreshold != -1 && modData.Tags.Count >= Config.values.modioTagSpamThreshold)
@@ -118,6 +118,13 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
         if (uploadType == ModUploadType.Unknown)
         {
             Logger.Warn($"Mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) was not recognized (from tags) as any actual mod.");
+            return;
+        }
+        
+        // scanned mod checks
+        if (ModScanning.DontAnnounceThese.Contains(modData.Id))
+        {
+            Logger.Put($"Mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) was already scanned and is designated to not be announced.");
             return;
         }
 
@@ -142,7 +149,6 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
 
             foreach (var channel in announcementChannels[uploadType])
             {
-                
                 try
                 {
                     var msg = await channel.SendMessageAsync(messageBuilder);
@@ -155,6 +161,15 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
                 }
             }
         }
+        
+        Logger.Put($"Sent {sentMessageCount} messages to announce {modData.NameId}");
+        // untrack after a while because we do not need to care about shit past like, a day
+        _ = Task.Delay(TimeSpan.FromDays(1)).ContinueWith(_ =>
+        {
+            announcedMods.Remove(modData.Id);
+            if (modData.NameId is not null)
+                announcedMods.Remove(unchecked((uint)modData.NameId.GetHashCode()));
+        });
     }
 
     public static async Task UnannounceMod(uint modId)
@@ -290,11 +305,27 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
                 channels.Add(await guildKvp.Value.GetChannelAsync(cfg.utilityChanel));
             }
         }
+
+        int totalChannels = announcementChannels.Sum(kvp => kvp.Value.Count);
+        Logger.Put($"Got {totalChannels} channels for Mod.IO announcements");
+        if (totalChannels == 0)
+            return;
+        
+        foreach (var channelKvp in announcementChannels)
+        {
+            Logger.Put($" - {channelKvp.Key}: {channelKvp.Value.Count} channel(s)");
+        }
     }
     
     [RequireApplicationOwner]
-    public static async Task ForceAnnounceMod(SlashCommandContext ctx, long modNumberId)
+    public static async Task ForceAnnounceMod(SlashCommandContext ctx, long modNumberId = 0, string nameId = "")
     {
+        if (modNumberId == 0 && string.IsNullOrEmpty(nameId))
+        {
+            await ctx.RespondAsync("Hey you need to give a number ID or a Name ID (ex. `mod-name-or-something`).", true);
+            return;
+        }
+        
         uint modId = unchecked((uint)modNumberId);
         var clint = ModioEvents.BonelabClient; 
 
@@ -304,16 +335,40 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
             return;
         }
 
-        new ModEvent()
+        if (modId == 0)
+        {
+            try
+            {
+                var mod = await clint.Search(global::Modio.Filters.ModFilter.NameId.Eq(nameId)).First();
+                if (mod is null)
+                    throw new NullReferenceException("Could not find a mod with Name ID " + nameId);
+                
+                modId = mod.Id;
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"Failed to find a mod with the NameID '{nameId}'", ex);
+                await ctx.RespondAsync("Couldn't find a mod with that Name ID... Try grabbing it from the mod's URL?", true);
+                return;
+            }
+        }
+
+        // remove from the "don't announce" list because an owner said "announce it anyway"
+        ModScanning.DontAnnounceThese.Remove(modId);
+
+        var eventData = new ModEvent()
         {
             DateAdded = DateTimeOffset.Now.ToUnixTimeSeconds(),
             EventType = ModEventType.MOD_AVAILABLE,
             ModId = modId,
             Id = modId,
-            UserId = 0, // not used by my code, lol. therefore dont care
+            UserId = 0, // not used by my code, lol. therefore don't care
         };
-        new ModioEventArgs()
-        
-        
+        var args = new ModioEventArgs(clint, eventData);
+
+        await ctx.DeferResponseAsync(true);
+        await AnnounceMod(args);
+
+        await ctx.FollowupAsync("Ok! Announced the mod!", true);
     }
 }

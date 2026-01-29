@@ -28,6 +28,7 @@ internal abstract partial class ModuleBase
         ChannelCreatedEvent =           async (c, a) => { if (!DontPropagate.Contains(a)) await ChannelCreated(c, a);         };
         ThreadCreatedEvent =            async (c, a) => { if (!DontPropagate.Contains(a)) await ThreadCreated(c, a);          };
         SessionCreatedEvent =           async (c, a) => { if (!DontPropagate.Contains(a)) await SessionCreated(c, a);         };
+        GuildAuditLogCreatedEvent =           async (c, a) => { if (!DontPropagate.Contains(a)) await GuildAuditLogCreated(c, a);         };
         UnknownEventEvent =             async (c, a) => { if (!DontPropagate.Contains(a)) await UnknownEvent(c, a);           };
     }
 
@@ -66,6 +67,10 @@ internal abstract partial class ModuleBase
     static readonly MethodInfo BaseSessionCreated = ReflectionHelper.GetMethod(nameof(SessionCreated));
     private Func<DiscordClient, SessionCreatedEventArgs, Task> SessionCreatedEvent;
     protected virtual Task SessionCreated(DiscordClient client, SessionCreatedEventArgs args) => Task.CompletedTask;
+    
+    static readonly MethodInfo BaseGuildAuditLogCreated = ReflectionHelper.GetMethod(nameof(GuildAuditLogCreated));
+    private Func<DiscordClient, GuildAuditLogCreatedEventArgs, Task> GuildAuditLogCreatedEvent;
+    protected virtual Task GuildAuditLogCreated(DiscordClient client, GuildAuditLogCreatedEventArgs args) => Task.CompletedTask;
 
     static readonly MethodInfo BaseUnknownEvent = ReflectionHelper.GetMethod(nameof(UnknownEvent));
     private Func<DiscordClient, UnknownEventArgs, Task> UnknownEventEvent;
