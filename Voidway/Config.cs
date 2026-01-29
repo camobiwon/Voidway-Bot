@@ -23,4 +23,7 @@ internal class Config
     public string openAiToken = "";
 
     public ulong[] blockedUsers = [];
+
+    [TomlPrecedingComment("Doesn't announce mods that have this many (or more) tags. Set to -1 (or a really high number) to disable.")]
+    public int modioTagSpamThreshold = 15;
 }

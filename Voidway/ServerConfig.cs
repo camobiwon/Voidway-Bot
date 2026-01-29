@@ -16,9 +16,17 @@ public class ServerConfig
     [TomlNonSerialized]
     private DateTime loadedAt = DateTime.Now;
 
+    [TomlPrecedingComment("Moderation section")]
     public ulong modLogChannel = 0;
     public ulong msgLogChannel = 0;
+    
+    [TomlPrecedingComment("Mod.IO mod announcements")]
     public ulong allModsChannel = 0;
+    public ulong avatarChannel = 0;
+    public ulong levelChannel = 0;
+    public ulong spawnableChanel = 0;
+    public ulong utilityChanel = 0;
+    public ulong malformedUploadChannel = 0;
 
     private bool IsOld()
     {
@@ -30,13 +38,13 @@ public class ServerConfig
         return loadedAt < finf.LastWriteTime;
     }
     
-    public static ServerConfig? GetConfig(ulong id)
+    public static ServerConfig GetConfig(ulong id)
     {
         var cfg = loadedConfigs.GetValueOrDefault(id) ?? LoadConfigFromFile(id);
 
         if (cfg is not null) return cfg;
         
-        cfg = new();
+        cfg = new ServerConfig();
         cfg.Id = id;
         WriteConfigToFile(cfg);
         cfg.loadedAt = DateTime.Now; // so IsOld doesnt return "true"

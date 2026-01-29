@@ -1,0 +1,319 @@
+using System.Text;
+using System.Text.RegularExpressions;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.ContextChecks;
+using DSharpPlus.Commands.Processors.SlashCommands;
+using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
+using Modio.Models;
+
+namespace Voidway.Modules.Modio;
+
+[Flags]
+public enum ModUploadType // use bitshift operator to act as a bitfield
+{
+    Unknown = 0,
+    Avatar = 1 << 0,
+    Level = 1 << 1,
+    Spawnable = 1 << 2,
+    Utility = 1 << 3,
+}
+
+[Command("modposting")]
+internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
+{
+    public static readonly Dictionary<uint, List<DiscordMessage>> announcedMods = [];
+
+    private static readonly Regex LinkAndRequestParameter = new(@"(https:\/\/.+)(\?\w+)?");
+    
+    private static readonly ModUploadType[] ModUploadTypes = Enum.GetValues<ModUploadType>();
+    private static readonly string[] ModUploadTypeNames = Enum.GetNames(typeof(ModUploadType));
+
+    private readonly Dictionary<ModUploadType, List<DiscordChannel>> announcementChannels = new()
+    {
+        { ModUploadType.Avatar, [] },
+        { ModUploadType.Level, [] },
+        { ModUploadType.Spawnable, [] },
+        { ModUploadType.Utility, [] }
+    };
+    
+    
+    static ModUploadType IdentifyFromTags(IEnumerable<Tag> tags)
+    {
+        ModUploadType ret = ModUploadType.Unknown;
+        foreach (Tag tag in tags)
+        {
+            if (string.IsNullOrEmpty(tag.Name)) continue; // ignore empty tags
+
+            int uploadTypeIndex = ModUploadTypeNames.IndexOf(tag.Name);
+
+            if (uploadTypeIndex != -1)
+                ret |= ModUploadTypes[uploadTypeIndex]; // support the use of Flags by using bitwise operations
+        }
+        return ret;
+    }
+
+    protected override async Task InitOneShot(GuildDownloadCompletedEventArgs args)
+    {
+        ModioEvents.OnEvent += OnModioEvent;
+    }
+
+    private async Task OnModioEvent(ModioEventArgs args)
+    {
+        try
+        {
+            switch (args.Event.EventType)
+            {
+                case ModEventType.MOD_AVAILABLE:
+                    await AnnounceMod(args);
+                    break;
+                case ModEventType.MOD_EDITED:
+                    await UpdateAnnouncement(args.Event.ModId);
+                    break;
+                case ModEventType.MOD_DELETED:
+                case ModEventType.MOD_UNAVAILABLE:
+                    await UnannounceMod(args.Event.ModId);
+                    break;
+                default:
+                    return; // ignore
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"Exception while dispatching a '{args.Event.EventType}' event for a mod with the number id {args.Event.ModId}");
+        }
+    }
+
+    private async Task AnnounceMod(ModioEventArgs args)
+    {
+        // give uploader an extra 2 minutes to make thumbnail changes or something
+        await Task.Delay(120 * 1000);
+        
+        var modClient = args.ModsClient[args.Event.ModId];
+        var modData = await modClient.Get();
+        var uploadType = IdentifyFromTags(modData.Tags);
+        List<DiscordMessage> messageList = [];
+        
+        // duplicate announcement checks
+        if (announcedMods.TryGetValue(modData.Id, out var oldMessageList) && oldMessageList.Count != 0)
+        {
+            Logger.Put($"Mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) was already announced! Ignoring! (found via #ID)");
+            return;
+        }
+        if (modData.NameId is not null && announcedMods.ContainsKey((uint)modData.NameId.GetHashCode()))
+        {
+            Logger.Put($"Mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) was already announced! Ignoring! (found via NameID hashcode)");
+            return;
+        }
+        announcedMods[modData.Id] = messageList;
+        if (modData.NameId is not null)
+            announcedMods[(uint)modData.NameId.GetHashCode()] = messageList;
+        
+        // Spam checks
+        if (Config.values.modioTagSpamThreshold != -1 && modData.Tags.Count >= Config.values.modioTagSpamThreshold)
+        {
+            Logger.Put($"Mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) has {modData.Tags.Count} tags, at/over the {Config.values.modioTagSpamThreshold} threshold to be considered tagspam. Not announcing!");
+            return;
+        }
+        if (uploadType == ModUploadType.Unknown)
+        {
+            Logger.Warn($"Mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) was not recognized (from tags) as any actual mod.");
+            return;
+        }
+
+        string modName = (modData.Name ?? modData.NameId ?? "").Replace("&amp;", "&");
+        string authorText = modData.SubmittedBy?.Username is not null
+            ? $" created by **{modData.SubmittedBy.Username.Replace("&amp;", "&")}**"
+            : "";
+        string? modUrl = modData.ProfileUrl?.ToString();
+        string announcementText = $"**{modName}**{authorText}\n\n{modUrl}";
+        var messageBuilder = new DiscordMessageBuilder()
+            .WithAllowedMentions([])
+            .WithContent(announcementText);
+        
+        int sentMessageCount = 0;
+        foreach (var flag in ModUploadTypes)
+        {
+            if (flag == ModUploadType.Unknown)
+                continue; // ignore unknown lol
+
+            if (!uploadType.HasFlag(flag))
+                continue;
+
+            foreach (var channel in announcementChannels[uploadType])
+            {
+                
+                try
+                {
+                    var msg = await channel.SendMessageAsync(messageBuilder);
+                    messageList.Add(msg);
+                    sentMessageCount++;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn($"Exception while announcing mod {modName} (#ID {modData.Id}) to announcement channel {channel}", ex);
+                }
+            }
+        }
+    }
+
+    public static async Task UnannounceMod(uint modId)
+    {
+        if (!announcedMods.TryGetValue(modId, out var messageList) || messageList.Count == 0)
+            return;
+
+        Logger.Put("Unannouncing mod w/ #ID " + modId);
+        int unannounceCount = 0;
+        int failCount = 0;
+        for (var index = messageList.Count - 1; index >= 0; index--)
+        {
+            var announcement = messageList[index];
+            try
+            {
+                messageList.Remove(announcement);
+                await announcement.DeleteAsync();
+                unannounceCount++;
+            }
+            catch
+            {
+                failCount++;
+                // dnc
+            }
+        }
+        Logger.Put($"Unannounced mod w/ #ID {modId}. {unannounceCount} successful deletion(s), {failCount} failed deletion(s)");
+    }
+
+    public static async Task UpdateAnnouncement(uint modId)
+    {
+        if (!announcedMods.TryGetValue(modId, out var messageList) || messageList.Count == 0)
+            return;
+
+        int successCount = 0;
+        int failCount = 0;
+        foreach (var msg in messageList)
+        {
+            if (msg.Channel is null)
+                continue;
+            try
+            {
+                DiscordMessage updatedMessage = await msg.Channel.GetMessageAsync(msg.Id);
+
+                var updatedContent = LinkAndRequestParameter.Replace(updatedMessage.Content, LinkUpdater);
+                await updatedMessage.ModifyAsync(updatedContent);
+                successCount++;
+            }
+            catch
+            {
+                failCount++;
+                // dnc
+            }
+        }
+        
+        Logger.Put($"Finished updating announcements for modio mod w/ #ID {modId} -- {successCount} successes, {failCount} failures.");
+    }
+
+    private static string LinkUpdater(Match match)
+    {
+        if (match.Groups.Count == 0)
+        {
+            return match.Value + "?1";
+        }
+        else if (match.Groups.Count == 2)
+        {
+            string reqString = match.Groups[1].Value;
+            if (!int.TryParse(reqString.TrimStart('?'), out var num))
+            {
+                Logger.Put($"Failed to parse number from second match group {reqString} (with ? removed from start) -- returning original full string {match.Value}");
+                return match.Value;
+            }
+            
+            return $"{match.Groups[0].Value}?{num + 1}"; 
+        }
+
+        Logger.Put(
+            $"Regex caught more than two groups, this was not intended!\nGroups: ['{string.Join("', '", match.Groups.Values.Select(g => g.Value))}']",
+            LogType.Normal, false);
+        return match.Value;
+    }
+
+
+    protected override async Task FetchGuildResources()
+    {
+        if (bot.DiscordClient is null)
+            return;
+
+
+        foreach (var channelList in announcementChannels.Values)
+        {
+            channelList.Clear();
+        }
+
+        foreach (var guildKvp in bot.DiscordClient.Guilds)
+        {
+            var cfg = ServerConfig.GetConfig(guildKvp.Key);
+            ulong idSum = cfg.allModsChannel + cfg.avatarChannel + cfg.levelChannel + cfg.spawnableChanel + cfg.utilityChanel;
+            if (idSum == 0)
+                continue; // lol ez
+            
+            var allModsChannel = cfg.allModsChannel == 0
+                ? null
+                : await guildKvp.Value.GetChannelAsync(cfg.allModsChannel);
+            if (allModsChannel is not null)
+            {
+                foreach (var channelList in announcementChannels.Values)
+                {
+                    channelList.Add(allModsChannel);
+                }
+            }
+
+            if (cfg.avatarChannel != 0)
+            {
+                var channels = announcementChannels[ModUploadType.Avatar];
+                channels.Add(await guildKvp.Value.GetChannelAsync(cfg.avatarChannel));
+            }
+            
+            if (cfg.levelChannel != 0)
+            {
+                var channels = announcementChannels[ModUploadType.Level];
+                channels.Add(await guildKvp.Value.GetChannelAsync(cfg.levelChannel));
+            }
+            
+            if (cfg.spawnableChanel != 0)
+            {
+                var channels = announcementChannels[ModUploadType.Spawnable];
+                channels.Add(await guildKvp.Value.GetChannelAsync(cfg.spawnableChanel));
+            }
+            
+            if (cfg.utilityChanel != 0)
+            {
+                var channels = announcementChannels[ModUploadType.Utility];
+                channels.Add(await guildKvp.Value.GetChannelAsync(cfg.utilityChanel));
+            }
+        }
+    }
+    
+    [RequireApplicationOwner]
+    public static async Task ForceAnnounceMod(SlashCommandContext ctx, long modNumberId)
+    {
+        uint modId = unchecked((uint)modNumberId);
+        var clint = ModioEvents.BonelabClient; 
+
+        if (clint is null)
+        {
+            await ctx.RespondAsync("The Mod.IO API wasn't initialized. Ask the operator to double check the logs and make sure their API key (and OAuth2 token, if applicable) are valid", true);
+            return;
+        }
+
+        new ModEvent()
+        {
+            DateAdded = DateTimeOffset.Now.ToUnixTimeSeconds(),
+            EventType = ModEventType.MOD_AVAILABLE,
+            ModId = modId,
+            Id = modId,
+            UserId = 0, // not used by my code, lol. therefore dont care
+        };
+        new ModioEventArgs()
+        
+        
+    }
+}

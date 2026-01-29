@@ -47,7 +47,7 @@ public class Bot
 
     private void InitializeModules()
     {
-        new IgnoreBots
+        new IgnoreBots(this);
     }
 
     public async Task ConnectAsync()
