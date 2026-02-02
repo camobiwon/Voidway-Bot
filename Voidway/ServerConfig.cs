@@ -26,7 +26,11 @@ public class ServerConfig
     public ulong levelChannel = 0;
     public ulong spawnableChanel = 0;
     public ulong utilityChanel = 0;
+    
+    [TomlPrecedingComment("Stuff for Mod.IO moderators")]
     public ulong malformedUploadChannel = 0;
+    public ulong commentModerationChannel = 0;
+    
 
     private bool IsOld()
     {
