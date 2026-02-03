@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Voidway.Modules;
 
-internal abstract partial class ModuleBase
+public abstract partial class ModuleBase
 {
 
     #region Statics

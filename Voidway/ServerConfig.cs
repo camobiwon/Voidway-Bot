@@ -17,7 +17,7 @@ public class ServerConfig
     private DateTime loadedAt = DateTime.Now;
 
     [TomlPrecedingComment("Moderation section")]
-    public ulong modLogChannel = 0;
+    public ulong moderationLogChannel = 0;
     public ulong msgLogChannel = 0;
     
     [TomlPrecedingComment("Mod.IO mod announcements")]
