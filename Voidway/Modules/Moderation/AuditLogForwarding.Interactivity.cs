@@ -11,6 +11,7 @@ public partial class AuditLogForwarding
     private const string BUTTON_SENDREASON_ID_START = $"{MOD_LOG_ID_START}sendreason.";
     private const string BUTTON_CRAFTREASON_ID_START = $"{MOD_LOG_ID_START}craftreason.";
     private const string MODAL_INPUTREASON_ID_START = $"{MOD_LOG_ID_START}inputreason.";
+    private const string MODAL_FIELD_INPUTREASON_ID_START = $"{MOD_LOG_ID_START}inputreason.field.";
     
     private static readonly Dictionary<string, Func<ComponentInteractionCreatedEventArgs, Task>> ButtonFollowups = [];
     private static readonly List<DiscordMessage> CurrentlyHandlingInteractionsOn = [];
@@ -36,7 +37,31 @@ public partial class AuditLogForwarding
             .WithContent("Uh, there doesn't seem to be anything set up to handle that button press. Check with the dev?");
         await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
     }
-    
+
+    protected override async Task ModalSubmitted(DiscordClient client, ModalSubmittedEventArgs args)
+    {
+        // not from us, ignore
+        if (!args.Id.StartsWith(MOD_LOG_ID_START))
+            return;
+        
+        // dispatch waiting interaction
+        if (ModalFollowups.TryGetValue(args.Id, out var followup))
+        {
+            await followup(args);
+            return;
+        }
+
+        
+        
+        Logger.Warn($"There was no handler set up for an interaction with the ID {args.Id} and the following value(s):\n\t'{string.Join(",\n\t'", args.Values)}'");
+        
+        var dirb = new DiscordInteractionResponseBuilder()
+            .AsEphemeral()
+            .WithContent("Uh, there doesn't seem to be anything set up to handle that modal. Check with the dev?");
+        await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+        
+    }
+
     public static void AddMessageButtons(DiscordMessageBuilder dmb, DiscordGuild guild, DiscordUser sendTo, ulong id, string actioned, string? autoReason)
     {
         bool hasAutoReason = !string.IsNullOrWhiteSpace(autoReason);
@@ -56,7 +81,7 @@ public partial class AuditLogForwarding
         if (!hasAutoReason)
             buttonAutoReason.Disable();
         else 
-            ButtonFollowups[buttonAutoReason.CustomId] = args => MessageUserWithReason(args, sendTo, actioned, autoReason ?? "<No reason provided>");
+            ButtonFollowups[buttonAutoReason.CustomId] = args => MessageUserWithReason(args, args.Message, sendTo, actioned, autoReason ?? "<No reason provided>");
 
         ButtonFollowups[buttonCraftReason.CustomId] = args => CraftReason(args, sendTo, actioned);
         ButtonFollowups[buttonDismiss.CustomId] = args => DismissButtonClicked(args, sendTo);
@@ -67,24 +92,26 @@ public partial class AuditLogForwarding
 
     private static async Task CraftReason(ComponentInteractionCreatedEventArgs args, DiscordUser sendTo, string actioned)
     {
-        var textField = new DiscordTextInputComponent()
+        var textField = new DiscordTextInputComponent(MODAL_FIELD_INPUTREASON_ID_START + args.Id)
         {
             Style = DiscordTextInputStyle.Paragraph,
             MaximumLength = 1000,
             Placeholder = $"What reason should be sent to {sendTo.Username} to tell them why they're {actioned}?",
-            Required = true
+            Required = true,
         };
 
         var modal = new DiscordModalBuilder()
             .AddTextInput(textField, "Enter a reason...")
             .WithCustomId(MODAL_INPUTREASON_ID_START + args.Message.Id);
-        
-        ModalFollowups[modal.CustomId] = async args =>
+
+        ModalFollowups[modal.CustomId] = async modalArgs =>
         {
-            args.Values
-        }
-        
-        args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.Modal, )
+            var reasonSubmission = (TextInputModalSubmission)modalArgs.Values[textField.CustomId];
+            string reason = reasonSubmission.Value;
+            await MessageUserWithReason(modalArgs, args.Message, sendTo, actioned, reason);
+        };
+
+        await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.Modal, modal);
     }
 
     private static async Task DismissButtonClicked(ComponentInteractionCreatedEventArgs args, DiscordUser? originalTarget)
@@ -124,11 +151,11 @@ public partial class AuditLogForwarding
         }
     }
 
-    private static async Task MessageUserWithReason(ComponentInteractionCreatedEventArgs args, DiscordUser sendTo,
+    private static async Task MessageUserWithReason(InteractionCreatedEventArgs args, DiscordMessage msg, DiscordUser sendTo,
         string actioned, string reason)
     {
         
-            if (CurrentlyHandlingInteractionsOn.Contains(args.Message))
+            if (CurrentlyHandlingInteractionsOn.Contains(msg))
             {
                 var holdOnBuilder = new DiscordInteractionResponseBuilder()
                     .WithContent("Currently responding to another button press, please wait!")
@@ -137,7 +164,7 @@ public partial class AuditLogForwarding
                 return;
             }
             
-            CurrentlyHandlingInteractionsOn.Add(args.Message);
+            CurrentlyHandlingInteractionsOn.Add(msg);
             
             var dwb = new DiscordWebhookBuilder();
             var dirb = new DiscordInteractionResponseBuilder()
@@ -155,7 +182,7 @@ public partial class AuditLogForwarding
                 Logger.Warn($"Failed to send message to {sendTo} @ creating DM channel", ex);
                 dwb.WithContent($"Failed to create DM channel with {sendTo.Username}");
                 await args.Interaction.EditOriginalResponseAsync(dwb);
-                CurrentlyHandlingInteractionsOn.Remove(args.Message);
+                CurrentlyHandlingInteractionsOn.Remove(msg);
                 return;
             }
 
@@ -165,7 +192,7 @@ public partial class AuditLogForwarding
             try
             {
                 await dmChannel.SendMessageAsync(
-                    $"The moderators in **{args.Guild}** have {actioned} you for the following reason:\n" +
+                    $"The moderators in **{args.Interaction.Guild}** have {actioned} you for the following reason:\n" +
                     $"\"{reason}\"\n" +
                     $"-# *This bot doesn't relay messages to the staff of that server. If you want clarification, message a moderator / admin in that server.*");
             }
@@ -174,7 +201,7 @@ public partial class AuditLogForwarding
                 Logger.Warn($"Failed to send message to moderated user {sendTo}", ex);
                 dwb.WithContent(dwb.Content + "\nTripped at the finish line, failed to edit message!\n-# Well, the important part got done, lol.");
                 await args.Interaction.EditOriginalResponseAsync(dwb);
-                CurrentlyHandlingInteractionsOn.Remove(args.Message);
+                CurrentlyHandlingInteractionsOn.Remove(msg);
                 return;
             }
 
@@ -183,25 +210,25 @@ public partial class AuditLogForwarding
             await args.Interaction.EditOriginalResponseAsync(dwb);
 
             // remove buttons for further invocations
-            var builder = new DiscordMessageBuilder(args.Message);
+            var builder = new DiscordMessageBuilder(msg);
             builder.ClearComponents();
             try
             {
-                await args.Message.ModifyAsync(builder);
+                await msg.ModifyAsync(builder);
             }
             catch (Exception ex)
             {
                 Logger.Warn("Failed to modify message to remove action components... Bruh?", ex);
                 dwb.WithContent(dwb.Content + "\nTripped at the finish line, failed to edit message!\n-# Well, the important part got done, lol.");
                 await args.Interaction.EditOriginalResponseAsync(dwb);
-                CurrentlyHandlingInteractionsOn.Remove(args.Message);
+                CurrentlyHandlingInteractionsOn.Remove(msg);
                 return;
             }
 
             dwb.WithContent(
                 $"-# *Sent {sendTo.Username} ({Formatter.Mention(sendTo)}) a message letting them know why they were {actioned}. Reason given: {reason}*");
             await args.Interaction.EditOriginalResponseAsync(dwb);
-            CurrentlyHandlingInteractionsOn.Remove(args.Message);
+            CurrentlyHandlingInteractionsOn.Remove(msg);
             
     }
 }

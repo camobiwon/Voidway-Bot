@@ -33,6 +33,7 @@ public abstract partial class ModuleBase
         GuildAuditLogCreatedEvent =     async (c, a) => { if (!DontPropagate.Contains(a)) await GuildAuditLogCreated(c, a);         };
         InteractionCreatedEvent =     async (c, a) => { if (!DontPropagate.Contains(a)) await InteractionCreated(c, a);         };
         ComponentInteractionCreatedEvent =     async (c, a) => { if (!DontPropagate.Contains(a)) await ComponentInteractionCreated(c, a);         };
+        ModalSubmittedEvent =     async (c, a) => { if (!DontPropagate.Contains(a)) await ModalSubmitted(c, a);         };
         UnknownEventEvent =             async (c, a) => { if (!DontPropagate.Contains(a)) await UnknownEvent(c, a);           };
     }
 
@@ -91,6 +92,10 @@ public abstract partial class ModuleBase
     static readonly MethodInfo BaseComponentInteractionCreated = ReflectionHelper.GetMethod(nameof(ComponentInteractionCreated));
     private Func<DiscordClient, ComponentInteractionCreatedEventArgs, Task> ComponentInteractionCreatedEvent;
     protected virtual Task ComponentInteractionCreated(DiscordClient client, ComponentInteractionCreatedEventArgs args) => Task.CompletedTask;
+    
+    static readonly MethodInfo BaseModalSubmitted = ReflectionHelper.GetMethod(nameof(ModalSubmitted));
+    private Func<DiscordClient, ModalSubmittedEventArgs, Task> ModalSubmittedEvent;
+    protected virtual Task ModalSubmitted(DiscordClient client, ModalSubmittedEventArgs args) => Task.CompletedTask;
 
     static readonly MethodInfo BaseUnknownEvent = ReflectionHelper.GetMethod(nameof(UnknownEvent));
     private Func<DiscordClient, UnknownEventArgs, Task> UnknownEventEvent;

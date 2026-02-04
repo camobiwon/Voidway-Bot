@@ -45,30 +45,47 @@ public partial class AuditLogForwarding
             case DiscordAuditLogActionType.Ban:
                 DiscordAuditLogBanEntry banLog = (DiscordAuditLogBanEntry)logEntry;
                 
-                bool userStillAccessible = false;
-                try
-                {
-                    var user = await client.GetUserAsync(banLog.Target.Id, true);
-                    userStillAccessible = true;
-                }
-                catch
-                {
-                    Logger.Put("Ignore the above D#+ log, just seeing if a banned user is still accessible (they're not)");
-                }
-                
-                options = new()
-                {
-                    Title = "User banned",
-                    UserResponsible = logEntry.UserResponsible,
-                    Reason = banLog.Reason,
-                    Color = DiscordColor.DarkRed,
-                    BuilderPostProcessor = userStillAccessible ? dmb => AddMessageButtons(dmb, args.Guild, banLog.Target, banLog.Id, "banned", logEntry.Reason) : null
-                };
-                
-                await LogModerationAction(args.Guild, options);
+                await LogActionAndProvideMessageOptions(client, args, logEntry, banLog.Target, "banned");
                 break;
             case DiscordAuditLogActionType.Kick:
+                DiscordAuditLogKickEntry kickLog =  (DiscordAuditLogKickEntry)logEntry;
                 
+                await LogActionAndProvideMessageOptions(client, args, logEntry, kickLog.Target, "kicked");
+                break;
+            
+            // this kind of has to be handled or have a handlER from the member update event to keep track of whether they're timed out beforehand  
+            // case DiscordAuditLogActionType.MemberUpdate:
+            //     DiscordAuditLogMemberUpdateEntry memberUpdateLog = (DiscordAuditLogMemberUpdateEntry)logEntry;
+            //     if (memberUpdateLog.Target.IsTimedOut)
+            //     
+            //     await LogActionAndProvideMessageOptions()
         }
+    }
+
+    private static async Task LogActionAndProvideMessageOptions(DiscordClient client, GuildAuditLogCreatedEventArgs args, DiscordAuditLogEntry logEntry, DiscordUser removedUser, string actioned)
+    {
+        DiscordAuditLogBanEntry banLog;
+        ModerationLogOptions options;
+        bool userStillAccessible = false;
+        try
+        {
+            var user = await client.GetUserAsync(removedUser.Id, true);
+            userStillAccessible = true;
+        }
+        catch
+        {
+            Logger.Put($"Ignore the above D#+ log, just seeing if a {actioned} user ({removedUser}) is still accessible (they're not)");
+        }
+                
+        options = new()
+        {
+            Title = "User banned",
+            UserResponsible = logEntry.UserResponsible,
+            Reason = logEntry.Reason,
+            Color = DiscordColor.DarkRed,
+            BuilderPostProcessor = userStillAccessible ? dmb => AddMessageButtons(dmb, args.Guild, removedUser, logEntry.Id, actioned, logEntry.Reason) : null
+        };
+                
+        await LogModerationAction(args.Guild, options);
     }
 }
