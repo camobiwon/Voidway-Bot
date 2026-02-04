@@ -202,7 +202,9 @@ internal partial class ModScanning(Bot bot) : ModuleBase(bot)
 
     private static async Task<ZipArchive?> GetZip(Download download)
     {
-        Stream stream = await downloadClient.GetStreamAsync(download.BinaryUrl);
+        if (download.BinaryUrl is null)
+            return null;
+        var stream = await downloadClient.GetStreamAsync(download.BinaryUrl);
         ZipArchive zip = new(stream);
         return zip;
     }

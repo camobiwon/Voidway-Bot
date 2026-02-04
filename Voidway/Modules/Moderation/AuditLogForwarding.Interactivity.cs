@@ -112,11 +112,12 @@ public partial class AuditLogForwarding
         };
 
         await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.Modal, modal);
+        await StripButtons(args.Message, "Messaged user");
     }
 
     private static async Task DismissButtonClicked(ComponentInteractionCreatedEventArgs args, DiscordUser? originalTarget)
     {
-        if (await StripButtons(args.Message))
+        if (await StripButtons(args.Message, "Not messaged"))
         {
             var dirbFail = new DiscordInteractionResponseBuilder()
                 .AsEphemeral()
@@ -131,13 +132,32 @@ public partial class AuditLogForwarding
         await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
     }
 
-    public static async Task<bool> StripButtons(DiscordMessage message)
+    public static async Task<bool> StripButtons(DiscordMessage message, string? addToFooter = null)
     {
-        if ((message.Components?.Count ?? 0) == 0)
+        if ((message.Components?.Count ?? 0) == 0 && string.IsNullOrWhiteSpace(addToFooter))
             return true;
         
         var dmb = new DiscordMessageBuilder(message);
         dmb.ClearComponents();
+        
+        var embedBuilders = dmb.Embeds.Select(embed => new DiscordEmbedBuilder(embed)).ToArray();
+
+        var targetEmbed = embedBuilders.Length switch
+        {
+            0 => null,
+            1 => embedBuilders[0],
+            // for anything more than 1, try to find the main embed
+            _ => embedBuilders.FirstOrDefault(e => e.Footer?.Text?.StartsWith("User:") ?? false)
+        };
+
+        if (targetEmbed is not null)
+        {
+            var footer = targetEmbed.Footer;
+            if (footer is not null)
+                footer.Text += "\n" + addToFooter;
+            else
+                targetEmbed.WithFooter(addToFooter);
+        }
         
         try
         {
@@ -210,15 +230,8 @@ public partial class AuditLogForwarding
             await args.Interaction.EditOriginalResponseAsync(dwb);
 
             // remove buttons for further invocations
-            var builder = new DiscordMessageBuilder(msg);
-            builder.ClearComponents();
-            try
+            if (!await StripButtons(msg, "Messaged user"))
             {
-                await msg.ModifyAsync(builder);
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn("Failed to modify message to remove action components... Bruh?", ex);
                 dwb.WithContent(dwb.Content + "\nTripped at the finish line, failed to edit message!\n-# Well, the important part got done, lol.");
                 await args.Interaction.EditOriginalResponseAsync(dwb);
                 CurrentlyHandlingInteractionsOn.Remove(msg);

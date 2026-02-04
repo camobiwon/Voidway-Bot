@@ -34,7 +34,7 @@ internal class CommentFlagging(Bot bot) : ModuleBase(bot)
             Channels.Add(channel);
         }
         
-        Logger.Put($"Got {Channels.Count} channels to send malformed Mod.IO comment auto-scan warnings to");
+        Logger.Put($"Got {Channels.Count} channels to send Mod.IO comment auto-scan warnings to");
     }
 
     protected override Task InitOneShot(GuildDownloadCompletedEventArgs args)

@@ -19,24 +19,24 @@ public abstract partial class ModuleBase
     private ModuleBase()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     {
-        GuildDownloadCompletedEvent =   async (c, a) => { if (!DontPropagate.Contains(a)) await GuildDownloadCompleted(c, a);         };
-        MessageCreatedEvent =           async (c, a) => { if (!DontPropagate.Contains(a)) await MessageCreated(c, a);         };
-        MessageUpdatedEvent =           async (c, a) => { if (!DontPropagate.Contains(a)) await MessageUpdated(c, a);         };
-        MessageDeletedEvent =           async (c, a) => { if (!DontPropagate.Contains(a)) await MessageDeleted(c, a);         };
-        MessagesBulkDeletedEvent =      async (c, a) => { if (!DontPropagate.Contains(a)) await MessagesBulkDeleted(c, a);         };
-        ReactionAddedEvent =            async (c, a) => { if (!DontPropagate.Contains(a)) await ReactionAdded(c, a);          };
-        ReactionRemovedEvent =          async (c, a) => { if (!DontPropagate.Contains(a)) await ReactionRemoved(c, a);        };
-        GuildMemberUpdatedEvent =       async (c, a) => { if (!DontPropagate.Contains(a)) await GuildMemberUpdated(c, a);     };
-        ChannelCreatedEvent =           async (c, a) => { if (!DontPropagate.Contains(a)) await ChannelCreated(c, a);         };
-        ThreadCreatedEvent =            async (c, a) => { if (!DontPropagate.Contains(a)) await ThreadCreated(c, a);          };
-        SessionCreatedEvent =           async (c, a) => { if (!DontPropagate.Contains(a)) await SessionCreated(c, a);         };
-        GuildAuditLogCreatedEvent =     async (c, a) => { if (!DontPropagate.Contains(a)) await GuildAuditLogCreated(c, a);         };
-        InteractionCreatedEvent =     async (c, a) => { if (!DontPropagate.Contains(a)) await InteractionCreated(c, a);         };
-        ComponentInteractionCreatedEvent =     async (c, a) => { if (!DontPropagate.Contains(a)) await ComponentInteractionCreated(c, a);         };
-        ModalSubmittedEvent =     async (c, a) => { if (!DontPropagate.Contains(a)) await ModalSubmitted(c, a);         };
-        UnknownEventEvent =             async (c, a) => { if (!DontPropagate.Contains(a)) await UnknownEvent(c, a);           };
+        GuildDownloadCompletedEvent =      async (c, a) => { if (!DontPropagate.Contains(a)) await GuildDownloadCompleted(c, a);         };
+        MessageCreatedEvent =              async (c, a) => { if (!DontPropagate.Contains(a)) await MessageCreated(c, a);         };
+        MessageUpdatedEvent =              async (c, a) => { if (!DontPropagate.Contains(a)) await MessageUpdated(c, a);         };
+        MessageDeletedEvent =              async (c, a) => { if (!DontPropagate.Contains(a)) await MessageDeleted(c, a);         };
+        MessagesBulkDeletedEvent =         async (c, a) => { if (!DontPropagate.Contains(a)) await MessagesBulkDeleted(c, a);         };
+        ReactionAddedEvent =               async (c, a) => { if (!DontPropagate.Contains(a)) await ReactionAdded(c, a);          };
+        ReactionRemovedEvent =             async (c, a) => { if (!DontPropagate.Contains(a)) await ReactionRemoved(c, a);        };
+        GuildMemberUpdatedEvent =          async (c, a) => { if (!DontPropagate.Contains(a)) await GuildMemberUpdated(c, a);     };
+        ChannelCreatedEvent =              async (c, a) => { if (!DontPropagate.Contains(a)) await ChannelCreated(c, a);         };
+        ThreadCreatedEvent =               async (c, a) => { if (!DontPropagate.Contains(a)) await ThreadCreated(c, a);          };
+        SessionCreatedEvent =              async (c, a) => { if (!DontPropagate.Contains(a)) await SessionCreated(c, a);         };
+        GuildAuditLogCreatedEvent =        async (c, a) => { if (!DontPropagate.Contains(a)) await GuildAuditLogCreated(c, a);         };
+        InteractionCreatedEvent =          async (c, a) => { if (!DontPropagate.Contains(a)) await InteractionCreated(c, a);         };
+        ComponentInteractionCreatedEvent = async (c, a) => { if (!DontPropagate.Contains(a)) await ComponentInteractionCreated(c, a);         };
+        ModalSubmittedEvent =              async (c, a) => { if (!DontPropagate.Contains(a)) await ModalSubmitted(c, a);         };
+        UnknownEventEvent =                async (c, a) => { if (!DontPropagate.Contains(a)) await UnknownEvent(c, a);           };
     }
-
+    
     static readonly MethodInfo BaseGuildDownloadCompleted = ReflectionHelper.GetMethod(nameof(GuildDownloadCompleted));
     private Func<DiscordClient, GuildDownloadCompletedEventArgs, Task> GuildDownloadCompletedEvent;
     protected virtual Task GuildDownloadCompleted(DiscordClient client, GuildDownloadCompletedEventArgs args) => Task.CompletedTask;
