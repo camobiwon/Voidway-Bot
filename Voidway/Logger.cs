@@ -58,7 +58,7 @@ internal static class Logger
     private static void PutInternal(string str, LogType reason, bool cleanMultiline = true)
     {
         if (string.IsNullOrWhiteSpace(str)) str = "<N/A>";
-        else if (cleanMultiline) str = str.Replace("\r\n", " // ").Replace("\n", " // ");
+        else if (cleanMultiline) str = str.ReplaceLineEndings(" // ");
 
         string starter = $"[{GetPutTime()}] ";
         string reasonStr = reason.logCaller ? $"{reason.name} @ {GetCaller()}" : reason.name;

@@ -1,5 +1,7 @@
+using DSharpPlus.Commands;
 using Modio;
 using OpenAI;
+using Voidway.ContextChecks;
 using Voidway.Modules;
 
 namespace Voidway;
@@ -31,22 +33,23 @@ public class Bot
     private DiscordClientBuilder discordBuilder;
     public DiscordClient? DiscordClient { get; private set; }
     public DiscordClientBuilder DiscordBuilder => DiscordClient is not null ? throw new InvalidOperationException() : discordBuilder;
-
-    
     
     public Bot(string discordToken)
     {
         DiscordIntents intents = DiscordIntents.AllUnprivileged | DiscordIntents.GuildMembers | DiscordIntents.MessageContents;
         discordBuilder = DiscordClientBuilder.CreateDefault(discordToken, intents);
-        
-        // probably the most jank/worst part of this but this wont have hundreds of modules so
-        // its fine and doesnt need priority ordering
+        discordBuilder.UseCommands((svc, cmds) =>
+        {
+            cmds.AddCheck<RequireThreadOwnerCheck>();
+        });
 
         InitializeModules();
     }
 
     private void InitializeModules()
     {
+        // probably the most jank/worst part of this but this wont have hundreds of modules,
+        // so its fine and doesnt need priority ordering beyond "init blockers first"
         new IgnoreBots(this);
     }
 

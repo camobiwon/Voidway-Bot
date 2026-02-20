@@ -1,0 +1,80 @@
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Voidway
+{
+    // do whatever the fuck this shit is in order to get dsharpplus to use Logger.Put
+    internal class DiscordLogger : ILogger
+    {
+        internal class Factory : ILoggerFactory
+        {
+            //List<ILoggerProvider> providers = new();
+            public void AddProvider(ILoggerProvider provider)
+            {
+                //providers.Add(provider);
+            }
+
+            public ILogger CreateLogger(string categoryName)
+            {
+                DiscordLogger logger = new(categoryName);
+                return logger;
+            }
+
+            public void Dispose() { }
+        }
+
+        static LogType ToReason(LogLevel level)
+            => level switch
+            {
+                LogLevel.Debug => LogType.Trace,
+                LogLevel.Information => LogType.Normal,
+                LogLevel.Warning => LogType.Warn,
+                LogLevel.Error => LogType.Fatal,
+                LogLevel.Critical => LogType.Fatal,
+                _ => throw new NotImplementedException(),
+            };
+
+        readonly string catName;
+
+        private DiscordLogger(string catName)
+        {
+            this.catName = catName;
+        }
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => default!;
+
+        public bool IsEnabled(LogLevel logLevel)
+        {
+            switch (logLevel)
+            {
+                case LogLevel.None:
+                case LogLevel.Trace:
+                case LogLevel.Debug when !Config.values.logDiscordDebug:
+                    return false;
+                default:
+                    return true;
+            }
+        }
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            if (!IsEnabled(logLevel)) return;
+
+            string message = formatter(state, exception);
+            LogType reason = ToReason(logLevel);
+
+            if (Config.values.ignoreDiscordLogsWith.Any(str =>
+                    message.Contains(str, StringComparison.InvariantCultureIgnoreCase)))
+                return;
+            
+            if (eventId.Name is not null) reason.name = eventId.Name;
+
+            Logger.Put(catName + " => " + message, reason);
+        }
+    }
+}

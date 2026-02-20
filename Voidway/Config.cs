@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Tomlet;
 using Tomlet.Attributes;
 
@@ -12,22 +13,78 @@ internal class Config
     
     public string logPath = "./logs/";
     public int maxLogFiles = 5;
+
+    #region DSharpPlus/Discord API config
     
-    internal string token = "";
+    public string discordToken = "";
+    
+    [TomlPrecedingComment("Warning, this shit WILL spam your logs. Only enable if you're experiencing startup issues.")]
+    public bool logDiscordDebug = false;
+    
+    public string[] ignoreDiscordLogsWith = [ "unknown event" ];
+    
+    #endregion
+
+    #region Mod.IO API config
     
     public string modioApiKey = "";
     [TomlPrecedingComment("Can be left blank if you only use an API key w/o OAuth2")]
     public string modioOAuth = "";
 
+    #endregion
+
+    #region OpenAI API config
+    
     [TomlPrecedingComment("Must be filled in to use AI moderation endpoints")]
     public string openAiToken = "";
 
-    [TomlPrecedingComment("Discord users")]
+    #endregion
+
+    #region Discord behavior
+    
+    [TomlPrecedingComment("Discord user IDs")]
     public ulong[] blockedUsers = [];
 
+    #endregion
+
+    #region Mod.IO behavior
+    
     [TomlPrecedingComment("Doesn't announce mods that have this many (or more) tags. Set to -1 (or a really high number) to disable.")]
     public int modioTagSpamThreshold = 15;
-
     [TomlPrecedingComment("If a mod is larger than this, in MB, then the bot won't download it to check for malformed uploads")]
     public int modioMaxFilesize = 512;
+
+    #endregion
+    
+
+    static Config()
+    {
+        Console.WriteLine("Initializing config");
+        if (!File.Exists(CFG_PATH))
+        {
+            File.WriteAllText(CFG_PATH, TomletMain.TomlStringFrom(new Config())); // mmm triple parenthesis, v nice
+        }
+
+        ReadConfig();
+        WriteConfig();
+    }
+
+    public static void OutputRawTOML()
+    {
+        Console.WriteLine(File.ReadAllText(CFG_PATH));
+    }
+
+    [MemberNotNull(nameof(values))]
+    public static void ReadConfig()
+    {
+        string configText = File.ReadAllText(CFG_PATH);
+        values = TomletMain.To<Config>(configText);
+    }
+
+    public static void WriteConfig()
+    {
+        File.WriteAllText(CFG_PATH, TomletMain.TomlStringFrom(values));
+        ConfigChanged?.Invoke();
+    }
+    
 }

@@ -50,8 +50,6 @@ public partial class AuditLogForwarding
             await followup(args);
             return;
         }
-
-        
         
         Logger.Warn($"There was no handler set up for an interaction with the ID {args.Id} and the following value(s):\n\t'{string.Join(",\n\t'", args.Values)}'");
         
@@ -59,7 +57,6 @@ public partial class AuditLogForwarding
             .AsEphemeral()
             .WithContent("Uh, there doesn't seem to be anything set up to handle that modal. Check with the dev?");
         await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
-        
     }
 
     public static void AddMessageButtons(DiscordMessageBuilder dmb, DiscordGuild guild, DiscordUser sendTo, ulong id, string actioned, string? autoReason)
@@ -81,7 +78,7 @@ public partial class AuditLogForwarding
         if (!hasAutoReason)
             buttonAutoReason.Disable();
         else 
-            ButtonFollowups[buttonAutoReason.CustomId] = args => MessageUserWithReason(args, args.Message, sendTo, actioned, autoReason ?? "<No reason provided>");
+            ButtonFollowups[buttonAutoReason.CustomId] = args => MessageUserWithReason(args.Interaction, sendTo, actioned, autoReason ?? "<No reason provided>", args.Message);
 
         ButtonFollowups[buttonCraftReason.CustomId] = args => CraftReason(args, sendTo, actioned);
         ButtonFollowups[buttonDismiss.CustomId] = args => DismissButtonClicked(args, sendTo);
@@ -108,7 +105,7 @@ public partial class AuditLogForwarding
         {
             var reasonSubmission = (TextInputModalSubmission)modalArgs.Values[textField.CustomId];
             string reason = reasonSubmission.Value;
-            await MessageUserWithReason(modalArgs, args.Message, sendTo, actioned, reason);
+            await MessageUserWithReason(modalArgs.Interaction, sendTo, actioned, reason, args.Message);
         };
 
         await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.Modal, modal);
@@ -171,26 +168,30 @@ public partial class AuditLogForwarding
         }
     }
 
-    private static async Task MessageUserWithReason(InteractionCreatedEventArgs args, DiscordMessage msg, DiscordUser sendTo,
-        string actioned, string reason)
+    public static async Task MessageUserWithReason(DiscordInteraction interaction,
+        DiscordUser sendTo,
+        string actioned,
+        string reason,
+        DiscordMessage? auditLogMessage = null)
     {
         
-            if (CurrentlyHandlingInteractionsOn.Contains(msg))
+            if (auditLogMessage is not null && CurrentlyHandlingInteractionsOn.Contains(auditLogMessage))
             {
                 var holdOnBuilder = new DiscordInteractionResponseBuilder()
                     .WithContent("Currently responding to another button press, please wait!")
                     .AsEphemeral();
-                await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, holdOnBuilder);
+                await interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, holdOnBuilder);
                 return;
             }
             
-            CurrentlyHandlingInteractionsOn.Add(msg);
+            if (auditLogMessage is not null)
+                CurrentlyHandlingInteractionsOn.Add(auditLogMessage);
             
             var dwb = new DiscordWebhookBuilder();
             var dirb = new DiscordInteractionResponseBuilder()
                 .AsEphemeral(false)
                 .WithContent($"Creating DM channel with {sendTo.Username}...");
-            await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+            await interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
 
             DiscordChannel dmChannel;
             try
@@ -201,18 +202,19 @@ public partial class AuditLogForwarding
             {
                 Logger.Warn($"Failed to send message to {sendTo} @ creating DM channel", ex);
                 dwb.WithContent($"Failed to create DM channel with {sendTo.Username}");
-                await args.Interaction.EditOriginalResponseAsync(dwb);
-                CurrentlyHandlingInteractionsOn.Remove(msg);
+                await interaction.EditOriginalResponseAsync(dwb);
+                if (auditLogMessage is not null)
+                    CurrentlyHandlingInteractionsOn.Remove(auditLogMessage);
                 return;
             }
 
             dwb.WithContent($"Created DM channel with {sendTo.Username}\nSending message...");
-            await args.Interaction.EditOriginalResponseAsync(dwb);
+            await interaction.EditOriginalResponseAsync(dwb);
 
             try
             {
                 await dmChannel.SendMessageAsync(
-                    $"The moderators in **{args.Interaction.Guild}** have {actioned} you for the following reason:\n" +
+                    $"The moderators in **{interaction.Guild}** have {actioned} you for the following reason:\n" +
                     $"\"{reason}\"\n" +
                     $"-# *This bot doesn't relay messages to the staff of that server. If you want clarification, message a moderator / admin in that server.*");
             }
@@ -220,28 +222,34 @@ public partial class AuditLogForwarding
             {
                 Logger.Warn($"Failed to send message to moderated user {sendTo}", ex);
                 dwb.WithContent(dwb.Content + "\nTripped at the finish line, failed to edit message!\n-# Well, the important part got done, lol.");
-                await args.Interaction.EditOriginalResponseAsync(dwb);
-                CurrentlyHandlingInteractionsOn.Remove(msg);
+                await interaction.EditOriginalResponseAsync(dwb);
+                if (auditLogMessage is not null)
+                    CurrentlyHandlingInteractionsOn.Remove(auditLogMessage);
                 return;
             }
 
-            
-            dwb.WithContent($"Created DM channel with {sendTo.Username}\nSent message!\nCleaning up...");
-            await args.Interaction.EditOriginalResponseAsync(dwb);
 
-            // remove buttons for further invocations
-            if (!await StripButtons(msg, "Messaged user"))
+            if (auditLogMessage is not null)
             {
-                dwb.WithContent(dwb.Content + "\nTripped at the finish line, failed to edit message!\n-# Well, the important part got done, lol.");
-                await args.Interaction.EditOriginalResponseAsync(dwb);
-                CurrentlyHandlingInteractionsOn.Remove(msg);
-                return;
+                dwb.WithContent($"Created DM channel with {sendTo.Username}\nSent message!\nCleaning up...");
+                await interaction.EditOriginalResponseAsync(dwb);
+
+                // remove buttons for further invocations
+                if (!await StripButtons(auditLogMessage, "Messaged user"))
+                {
+                    dwb.WithContent(dwb.Content + "\nTripped at the finish line, failed to edit message!\n-# Well, the important part got done, lol.");
+                    await interaction.EditOriginalResponseAsync(dwb);
+                    CurrentlyHandlingInteractionsOn.Remove(auditLogMessage);
+                    return;
+                }
             }
+            
 
             dwb.WithContent(
-                $"-# *Sent {sendTo.Username} ({Formatter.Mention(sendTo)}) a message letting them know why they were {actioned}. Reason given: {reason}*");
-            await args.Interaction.EditOriginalResponseAsync(dwb);
-            CurrentlyHandlingInteractionsOn.Remove(msg);
+                $"-# *Sent {sendTo.Username} ({Formatter.Mention(sendTo)}) a message letting them know why they were {actioned}.\nReason given: {reason}*");
+            await interaction.EditOriginalResponseAsync(dwb);
+            if (auditLogMessage is not null)
+                CurrentlyHandlingInteractionsOn.Remove(auditLogMessage);
             
     }
 }

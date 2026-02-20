@@ -1,7 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
+using DSharpPlus.Entities.AuditLogs;
 using Newtonsoft.Json;
+using Tomlet;
+using Tomlet.Models;
 
 namespace Voidway;
+
 
 internal class PersistentData
 {
@@ -11,6 +15,11 @@ internal class PersistentData
 
     // values
     public List<string> filenameFlagList = [ ".*epstein.*", ".*school.*" ];
+    public Dictionary<ulong, Dictionary<ulong, ulong>> modNoteMessages = []; // guild id -> member id ->  
+
+    // guild -> day -> user -> <info>
+    public Dictionary<ulong, Dictionary<DateOnly, Dictionary<ulong, int>>> observedMessages = [];
+    public Dictionary<ulong, Dictionary<DateOnly, Dictionary<ulong, List<string>>>> moderationActions = [];
     
     // plumbing
     static PersistentData()
@@ -22,7 +31,7 @@ internal class PersistentData
         }
 
         AppDomain.CurrentDomain.ProcessExit += (_, _) => WritePersistentData();
-
+        
         ReadPersistentData();
         WritePersistentData();
     }

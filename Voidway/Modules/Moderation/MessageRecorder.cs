@@ -38,6 +38,10 @@ public class MessageRecorder(Bot bot) : ModuleBase(bot)
     {
         if (!logChannels.TryGetValue(args.Guild, out var channel))
             return;
+
+        // it would probably be an ouroboros to log things that happen in the log channel
+        if (logChannels.Values.Contains(channel))
+            return;
         
         DiscordMessage msgAfter = args.Message;
         DiscordMessage? msgBefore = args.MessageBefore;

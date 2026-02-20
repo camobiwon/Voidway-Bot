@@ -19,6 +19,7 @@ public class ServerConfig
     [TomlPrecedingComment("Moderation section")]
     public ulong moderationLogChannel = 0;
     public ulong msgLogChannel = 0;
+    public ulong memberModNotesChannel = 0;
     
     [TomlPrecedingComment("Mod.IO mod announcements")]
     public ulong allModsChannel = 0;
@@ -30,7 +31,18 @@ public class ServerConfig
     [TomlPrecedingComment("Stuff for Mod.IO moderators")]
     public ulong malformedUploadChannel = 0;
     public ulong commentModerationChannel = 0;
+
     
+    [TomlPrecedingComment("Removes game invites from non-privileged users ")]
+    public bool filterGameInvites = false;
+    [TomlInlineComment("Use {0} to include the server's name.")]
+    public string sendWhenSomeoneSendsGameInvites = "";
+    public ulong[] exemptRolesFromInviteFilter = [];
+    
+    [TomlPrecedingComment("Thread owner controls")]
+    public bool threadOwnersCanDeleteMessages;
+    public bool threadOwnersCanRemoveThreadMembers;
+    public bool threadOwnersCanPinMessages;
 
     private bool IsOld()
     {

@@ -93,8 +93,8 @@ public partial class AuditLogForwarding(Bot bot) : ModuleBase(bot)
         // add extra field if needed
         if (options.ExtraField.HasValue)
         {
-            var fieldOpts = options.ExtraField.Value;
-            deb.AddField(fieldOpts.Item1, fieldOpts.Item2, false);
+            var (name, content) = options.ExtraField.Value;
+            deb.AddField(name, content, false);
         }
         
         options.EmbedPostProcessor?.Invoke(deb);

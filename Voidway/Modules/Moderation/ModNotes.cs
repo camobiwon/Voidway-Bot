@@ -1,0 +1,185 @@
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.ContextChecks;
+using DSharpPlus.Commands.Processors.SlashCommands;
+using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
+using DSharpPlus.Exceptions;
+
+namespace Voidway.Modules.Moderation;
+
+[Command("modnotes")]
+public class ModNotes(Bot bot) : ModuleBase(bot)
+{
+    private const string NOTES_FORMAT = "Notes for {0}:\n{1}";
+    private const string SPLIT_ON = ":\n";
+    private static readonly Dictionary<string, Func<ModalSubmittedEventArgs, Task>> ModalFollowups = [];
+
+
+    private static async Task<DiscordChannel?> GetNotesChannel(DiscordMember member)
+    {
+        if (!PersistentData.values.modNoteMessages.TryGetValue(member.Guild.Id, out var inGuildDict))
+            return null;
+
+        if (!inGuildDict.TryGetValue(member.Id, out var msgId))
+            return null;
+
+        var cfg = ServerConfig.GetConfig(member.Guild.Id);
+        if (cfg.memberModNotesChannel == default)
+            return null;
+
+        try
+        {
+            var channel = await member.Guild.GetChannelAsync(cfg.memberModNotesChannel);
+            return channel;
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"Configured mod note channel {cfg.memberModNotesChannel} not found in {member.Guild}");
+            return null;
+        }
+
+    }
+    
+    private static async Task<DiscordMessage?> GetNotesMessage(DiscordMember member)
+    {
+        if (!PersistentData.values.modNoteMessages.TryGetValue(member.Guild.Id, out var inGuildDict))
+            return null;
+
+        if (!inGuildDict.TryGetValue(member.Id, out var msgId))
+            return null;
+        
+        var channel = await GetNotesChannel(member);
+        if (channel is null)
+            return null;
+        
+        try
+        {
+            var message = await channel.GetMessageAsync(msgId);
+            return message;
+        }
+        catch (Exception ex)
+        {
+            inGuildDict[member.Guild.Id] = msgId;
+            return null;
+        }
+    }
+        
+    private const string VOIDWAY_NOTES_ID_START = "void.modnotes.";
+    private const string VOIDWAY_NOTES_MODAL_ID_START = $"{VOIDWAY_NOTES_ID_START}check.";
+    private const string VOIDWAY_MODAL_FIELD_START = $"{VOIDWAY_NOTES_ID_START}in.";
+    private const string VOIDWAY_NOTES_FIELD_START =  $"{VOIDWAY_MODAL_FIELD_START}txt.";
+    protected override async Task ModalSubmitted(DiscordClient client, ModalSubmittedEventArgs args)
+        {
+            // not from us, ignore
+            if (!args.Id.StartsWith(VOIDWAY_NOTES_ID_START))
+                return;
+            
+            // dispatch waiting interaction
+            if (ModalFollowups.TryGetValue(args.Id, out var followup))
+            {
+                await followup(args);
+                return;
+            }
+            
+            Logger.Warn($"There was no handler set up for an interaction with the ID {args.Id} and the following value(s):\n\t'{string.Join(",\n\t'", args.Values)}'");
+            
+            var dirb = new DiscordInteractionResponseBuilder()
+                .AsEphemeral()
+                .WithContent("Uh, there doesn't seem to be anything set up to handle that modal. Check with the dev?");
+            await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+        }
+
+    [Command("notes")]
+    [RequireGuild]
+    [RequirePermissions(DiscordPermission.ModerateMembers)]
+    [SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
+    public async Task GetModNotes(SlashCommandContext ctx, DiscordMember targetMember)
+    {
+        if (ctx.Member is null || ctx.Guild is null)
+        {
+            await ctx.RespondAsync("Huh... I seem to be missing important information for this interaction... Try again later?", true);
+            return;
+        }
+        
+        var notesChannel = await GetNotesChannel(ctx.Member);
+        if (notesChannel is null)
+        {
+            await ctx.RespondAsync("This server doesn't have a mod notes channel set up", true);
+            return;
+        }
+        
+        var notesMessage = await GetNotesMessage(ctx.Member);
+        string[]? splitContent = notesMessage?.Content.Split(SPLIT_ON);
+        string? notesStr = null;
+        if (splitContent is not null)
+        {
+            notesStr = splitContent.Length > 1
+                ? string.Join(SPLIT_ON, splitContent[1..])
+                : "";
+        }
+        
+        Logger.Put($"Checking mod notes for {targetMember} at the request of {ctx.Member}, sending modal (itx id {ctx.Interaction.Id})...");
+
+        var notesInput = new DiscordTextInputComponent(
+            VOIDWAY_NOTES_FIELD_START + targetMember.Id,
+            "What would other moderators need to know about this user?",
+            style: DiscordTextInputStyle.Paragraph,
+            max_length: 1900);
+        notesInput.Value = notesStr;
+        
+        var modalBuilder = new DiscordModalBuilder()
+            .WithCustomId(VOIDWAY_NOTES_MODAL_ID_START + ctx.Interaction.Id)
+            .WithTitle($"Mod notes for {targetMember.DisplayName} ({targetMember.Username})")
+            .AddTextInput(notesInput, $"Notes {(notesMessage is null ? "(Will create new message)" : "(Will edit existing message)")}");
+
+        ModalFollowups[modalBuilder.CustomId] = async (args) =>
+        {
+            var notesSubmission = (TextInputModalSubmission)args.Values[notesInput.CustomId];
+            string userStr = $"{targetMember.DisplayName} ({targetMember.Username}, {targetMember.Id})";
+            string newMessageContent = string.Format(NOTES_FORMAT, userStr, notesSubmission.Value);
+
+            var dirb = new DiscordInteractionResponseBuilder()
+                .AsEphemeral();
+
+            if (string.IsNullOrWhiteSpace(notesSubmission.Value) && notesMessage is null)
+            {
+                dirb.WithContent("Gotcha, I'll create a notes message another time.");
+                await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+                return;
+            }
+
+            if (notesMessage is null)
+            {
+                try
+                {
+                    notesMessage = await notesChannel.SendMessageAsync(newMessageContent);
+                    dirb.WithContent($"Created a [notes message]({notesMessage.JumpLink}) for that user!");
+                    await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn($"Failed to create a notes message in {notesChannel} (invoker {ctx.User})!");
+                    dirb.WithContent($"Failed to create a notes message -- {ex.GetType().FullName}: {ex.Message}");
+                    await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+                    return;
+                }
+            }
+
+            try
+            {
+                await notesMessage.ModifyAsync(newMessageContent);
+                dirb.WithContent($"Successfully edited notes message!");
+                await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Exception while modifying notes message for {targetMember}", ex);
+                dirb.WithContent($"Failed to edit notes message -- {ex.GetType().FullName}: {ex.Message}");
+                await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+            }
+            
+        };
+
+    }
+}
