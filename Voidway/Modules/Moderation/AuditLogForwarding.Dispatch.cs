@@ -7,6 +7,7 @@ using DSharpPlus.EventArgs;
 
 namespace Voidway.Modules.Moderation;
 
+//TODO: add ExtraField setting to bans, kicks, and mutes (ALSO add to command handlers)
 public partial class AuditLogForwarding
 {
     protected override async Task GuildAuditLogCreated(DiscordClient client, GuildAuditLogCreatedEventArgs args)
@@ -29,6 +30,7 @@ public partial class AuditLogForwarding
         }
 
         ModerationLogOptions options;
+        (string, string) moderationInfoField;
 
         switch (logEntry.ActionType)
         {
@@ -251,6 +253,7 @@ public partial class AuditLogForwarding
                     };
 
                     await LogModerationAction(args.Guild, options);
+                    break;
                 }
                 else if (changedRolesThatMatter.All(tup => !tup.Item1))
                 {
@@ -267,6 +270,7 @@ public partial class AuditLogForwarding
                     };
 
                     await LogModerationAction(args.Guild, options);
+                    break;
                 }
 
                 options = new()
@@ -317,6 +321,8 @@ public partial class AuditLogForwarding
                 $"Ignore the above D#+ log, just seeing if a {actioned} user ({removedUser}) is still accessible (they're not)");
         }
 
+        logExtraField ??= ("Moderation info", ModerationTracker.GetObservationStringFor(args.Guild.Id, removedUser.Id));
+        
         options = new()
         {
             Title = $"User {actioned}",
