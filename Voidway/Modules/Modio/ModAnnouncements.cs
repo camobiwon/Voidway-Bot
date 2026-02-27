@@ -19,7 +19,6 @@ public enum ModUploadType // use bitshift operator to act as a bitfield
     Utility = 1 << 3,
 }
 
-[Command("modposting")]
 internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
 {
     public static readonly Dictionary<uint, List<DiscordMessage>> announcedMods = [];

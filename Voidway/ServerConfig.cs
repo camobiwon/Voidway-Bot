@@ -100,8 +100,14 @@ public class ServerConfig
             return;
         
         string path = string.Format(CFG_PATH_FORMAT, cfg.Id.ToString());
+        string? folder = Path.GetDirectoryName(path);
+        if (folder is not null && !Directory.Exists(folder))
+            Directory.CreateDirectory(folder);
+        
         string tomlText = TomletMain.TomlStringFrom(cfg); 
         
         File.WriteAllText(path, tomlText);
     }
+    
+    
 }

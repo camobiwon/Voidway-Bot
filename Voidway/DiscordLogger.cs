@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,22 @@ namespace Voidway
     // do whatever the fuck this shit is in order to get dsharpplus to use Logger.Put
     internal class DiscordLogger : ILogger
     {
+        internal class Provider : ILoggerProvider
+        {
+            public void Dispose()
+            {
+                // if (Debugger.IsAttached)
+                //     throw new NotImplementedException();
+                // else
+                Logger.Warn("Logger disposed. When the hell does this happen?");
+            }
+
+            public ILogger CreateLogger(string categoryName)
+            {
+                return new DiscordLogger(categoryName);
+            }
+        }
+        
         internal class Factory : ILoggerFactory
         {
             //List<ILoggerProvider> providers = new();

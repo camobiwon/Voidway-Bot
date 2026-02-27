@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
@@ -75,6 +76,7 @@ public partial class ModuleBase
         }
     }
 
+    [SuppressMessage("ReSharper", "EmptyGeneralCatchClause")]
     protected DiscordUser? GetUser(DiscordEventArgs args)
     {
         dynamic dynargs = args;
@@ -104,5 +106,83 @@ public partial class ModuleBase
         catch { }
 
         return null;
+    }
+    
+    
+    public async Task<DiscordMessage?> GetMessageFromLink(string link)
+    {
+        if (bot.DiscordClient is null)
+        {
+            return null;
+        }
+        
+        if (!link.Contains("/channels/"))
+        {
+            Logger.Put("Invalid message link: " + link);
+            return null;
+        }
+
+        ulong? targetChannelId = null;
+        ulong? targetMessageId = null;
+
+        string[] linkParts = link.Split("/channels/");
+        if (linkParts.Length != 2)
+            return null;
+        // skip the first ID (the guild ID, or "@me" if a DM) because the Discord API /channels/ endpoint doesn't care 
+        ulong?[] ids = linkParts[1]
+            .Split('/')
+            .Skip(1)
+            .Select(str => ulong.TryParse(str, out ulong res) ? (ulong?)res : null)
+            .ToArray();
+        if (ids.Length >= 2)
+        {
+            targetChannelId = ids[0];
+            targetMessageId = ids[1];
+        }
+
+        if (!targetMessageId.HasValue || !targetChannelId.HasValue)
+            return null;
+
+        DiscordChannel? channel;
+        
+        try
+        {
+            channel = await bot.DiscordClient.GetChannelAsync(targetChannelId.Value);
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn("Caught exception while attempting to fetch channel for jump link " + link, ex);
+            return null;
+        }
+
+        try
+        {
+            DiscordMessage msg = await channel.GetMessageAsync(targetMessageId.Value);
+            return msg;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    internal static async Task<bool> TryReact(DiscordMessage message, params DiscordEmoji[] emojis)
+    {
+        try
+        {
+            foreach (DiscordEmoji emoji in emojis)
+            {
+                await message.CreateReactionAsync(emoji);
+
+                if (emojis.Length != 1) 
+                    await Task.Delay(1000); // discord is *really* tight on reaction ratelimits
+            }
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn("Exception while reacting to message", ex);
+            return false;
+        }
     }
 }

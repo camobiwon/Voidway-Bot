@@ -156,9 +156,11 @@ public partial class VoidwayActions
                 return;
             }
             
-            (string, string)? extraField = sendReason == loggedReason
+            string? description = sendReason == loggedReason
                 ? null
-                : ("Sent reason", sendReason);
+                : $"Sent reason: {sendReason}";
+            
+            var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, ctx.Member.Id));
 
             var options = new ModerationLogOptions()
             {
@@ -166,6 +168,7 @@ public partial class VoidwayActions
                 UserResponsible = ctx.Member,
                 Reason = loggedReason,
                 Color = DiscordColor.Red,
+                Description = description,
                 ExtraField = extraField,
             };
 
@@ -259,9 +262,11 @@ public partial class VoidwayActions
                 return;
             }
             
-            (string, string)? extraField = sendReason == loggedReason
+            string? description = sendReason == loggedReason
                 ? null
-                : ("Sent reason", sendReason);
+                : $"Sent reason: {sendReason}";
+            
+            var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, ctx.Member.Id));
 
             var options = new ModerationLogOptions()
             {
@@ -269,6 +274,7 @@ public partial class VoidwayActions
                 UserResponsible = ctx.Member,
                 Reason = loggedReason,
                 Color = DiscordColor.Yellow,
+                Description = description,
                 ExtraField = extraField,
             };
 
@@ -373,9 +379,12 @@ public partial class VoidwayActions
                 return;
             }
             
-            (string, string)? extraField = sendReason == loggedReason
-                ? null
-                : ("Sent reason", sendReason);
+            
+            string? description = sendReason == loggedReason
+                ? $"Ends in {Formatter.Timestamp(muteDuration, TimestampFormat.RelativeTime)}"
+                : $"Ends in {Formatter.Timestamp(muteDuration, TimestampFormat.RelativeTime)}\nSent reason: {sendReason}";
+            
+            var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, ctx.Member.Id));
 
             var options = new ModerationLogOptions()
             {
@@ -383,6 +392,7 @@ public partial class VoidwayActions
                 UserResponsible = ctx.Member,
                 Reason = loggedReason,
                 Color = DiscordColor.Yellow,
+                Description = description,
                 ExtraField = extraField,
             };
 

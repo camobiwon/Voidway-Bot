@@ -9,7 +9,7 @@
 
     <ItemGroup>
       <PackageReference Include="CircularBuffer" Version="1.4.0" />
-      <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02566" />
+      <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02572" />
       <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02566" />
       <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02566" />
       <PackageReference Include="OpenAI" Version="2.8.0" />

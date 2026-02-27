@@ -209,9 +209,9 @@ internal partial class ModScanning(Bot bot) : ModuleBase(bot)
         return zip;
     }
 
-    [Command("getflags"), Description("Get the list of RegExes that will trigger the bot to flag an upload in the configured channel(s)")]
+    [Command("getflags"), Description("Get the list of RegExes that will trigger the bot to flag an upload")]
     [RequirePermissions([], [DiscordPermission.Administrator])]
-    public static async Task GetAutoflagList(SlashCommandContext ctx)
+    public async Task GetAutoflagList(SlashCommandContext ctx)
     {
         if (PersistentData.values.filenameFlagList.Count == 0)
         {
@@ -223,9 +223,9 @@ internal partial class ModScanning(Bot bot) : ModuleBase(bot)
     }
     
     
-    [Command("removeflag"), Description("Remove something from the list of RegExes that will trigger the bot to flag an upload in the configured channel(s)")]
+    [Command("removeflag"), Description("Remove something from the list of RegExes that will trigger the bot to flag an upload")]
     [RequirePermissions([], [DiscordPermission.Administrator])]
-    public static async Task RemoveFromAutoflagList(SlashCommandContext ctx, [Description("Don't escape markdown formatting, just paste it as you would from a regex tester.")] string flagToRemove)
+    public async Task RemoveFromAutoflagList(SlashCommandContext ctx, [Description("Don't escape markdown formatting, just paste it as you would from a regex tester.")] string flagToRemove)
     {
         if (PersistentData.values.filenameFlagList.Count == 0)
         {
@@ -244,9 +244,9 @@ internal partial class ModScanning(Bot bot) : ModuleBase(bot)
         await ctx.RespondAsync($"Done! Here's the new flag list:\n- `{string.Join("\n- `", PersistentData.values.filenameFlagList)}`", true);
     }
     
-    [Command("addflag"), Description("Add something to the list of RegExes that will trigger the bot to flag an upload in the configured channel(s)")]
+    [Command("addflag"), Description("Add something to the list of RegExes that will trigger the bot to flag an upload")]
     [RequirePermissions([], [DiscordPermission.Administrator])]
-    public static async Task AddToAutoflagList(SlashCommandContext ctx, [Description("Don't escape markdown formatting, just paste it as you would from a regex tester.")] string flagToAdd)
+    public async Task AddToAutoflagList(SlashCommandContext ctx, [Description("Don't escape markdown formatting, just paste it as you would from a regex tester.")] string flagToAdd)
     {
         if (PersistentData.values.filenameFlagList.Contains(flagToAdd))
         {

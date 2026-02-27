@@ -17,12 +17,6 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
 
     private static async Task<DiscordChannel?> GetNotesChannel(DiscordMember member)
     {
-        if (!PersistentData.values.modNoteMessages.TryGetValue(member.Guild.Id, out var inGuildDict))
-            return null;
-
-        if (!inGuildDict.TryGetValue(member.Id, out var msgId))
-            return null;
-
         var cfg = ServerConfig.GetConfig(member.Guild.Id);
         if (cfg.memberModNotesChannel == default)
             return null;
@@ -93,7 +87,8 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
     [RequireGuild]
     [RequirePermissions(DiscordPermission.ModerateMembers)]
     [SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
-    public async Task GetModNotes(SlashCommandContext ctx, DiscordMember targetMember)
+    // [AllowedProcessors(typeof(UserCommandProcessor))]
+    public static async Task GetModNotes(SlashCommandContext ctx, DiscordMember targetMember)
     {
         if (ctx.Member is null || ctx.Guild is null)
         {
@@ -101,14 +96,21 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
             return;
         }
         
-        var notesChannel = await GetNotesChannel(ctx.Member);
-        if (notesChannel is null)
+        ulong notesChannelId = ServerConfig.GetConfig(ctx.Guild.Id).memberModNotesChannel;
+        if (notesChannelId == default)
         {
             await ctx.RespondAsync("This server doesn't have a mod notes channel set up", true);
             return;
         }
         
-        var notesMessage = await GetNotesMessage(ctx.Member);
+        var notesChannel = await GetNotesChannel(targetMember);
+        if (notesChannel is null)
+        {
+            await ctx.RespondAsync($"Hmm... I couldn't find a channel w/ ID {notesChannelId} here... Is config wrong?", true);
+            return;
+        }
+        
+        var notesMessage = await GetNotesMessage(targetMember);
         string[]? splitContent = notesMessage?.Content.Split(SPLIT_ON);
         string? notesStr = null;
         if (splitContent is not null)
@@ -153,8 +155,19 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
                 try
                 {
                     notesMessage = await notesChannel.SendMessageAsync(newMessageContent);
+                    
+                    if (!PersistentData.values.modNoteMessages.TryGetValue(ctx.Guild.Id, out var modNoteMessages))
+                    {
+                        modNoteMessages = [];
+                        PersistentData.values.modNoteMessages[ctx.Guild.Id] = modNoteMessages;
+                    }
+
+                    modNoteMessages[targetMember.Id] = notesMessage.Id;
+                    
                     dirb.WithContent($"Created a [notes message]({notesMessage.JumpLink}) for that user!");
                     await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+                    
+                    PersistentData.WritePersistentData();
                     return;
                 }
                 catch (Exception ex)
@@ -181,5 +194,6 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
             
         };
 
+        await ctx.RespondWithModalAsync(modalBuilder);
     }
 }

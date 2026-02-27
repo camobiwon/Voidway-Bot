@@ -74,6 +74,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
             return;
         }
         
+        var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, ctx.Member.Id));
         
         var options = new ModerationLogOptions()
         {
@@ -81,7 +82,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
             UserResponsible = ctx.Member,
             Reason = logReason,
             Color = DiscordColor.Yellow,
-            // ExtraField = extraField,
+            ExtraField = extraField,
         };
 
         await AuditLogForwarding.LogModerationAction(ctx.Guild, options);
@@ -144,6 +145,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
             return;
         }
         
+        var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, ctx.Member.Id));
         
         var options = new ModerationLogOptions()
         {
@@ -151,7 +153,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
             UserResponsible = ctx.Member,
             Reason = logReason,
             Color = DiscordColor.Yellow,
-            // ExtraField = extraField,
+            ExtraField = extraField,
         };
 
         await AuditLogForwarding.LogModerationAction(ctx.Guild, options);
@@ -217,17 +219,19 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
             return;
         }
         
-        var extraField =
-        (
-            "Ends in",
-            Formatter.Timestamp(duration, TimestampFormat.RelativeTime)
-        );
+        string? description = sendReason == logReason
+            ? $"Ends in {Formatter.Timestamp(duration, TimestampFormat.RelativeTime)}"
+            : $"Ends in {Formatter.Timestamp(duration, TimestampFormat.RelativeTime)}\nSent reason: {sendReason}";
+        
+        var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, ctx.Member.Id));
+        
         var options = new ModerationLogOptions()
         {
             Title = "User muted (via command)",
             UserResponsible = ctx.Member,
             Reason = logReason,
             Color = DiscordColor.Yellow,
+            Description = description,
             ExtraField = extraField,
         };
 
