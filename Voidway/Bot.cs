@@ -7,6 +7,9 @@ using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Commands.Processors.UserCommands;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Enums;
+using DSharpPlus.Interactivity.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Modio;
@@ -84,7 +87,13 @@ public class Bot
         if (ModuleBase.AllModules.Count == 0)
             throw new InvalidOperationException("Double check your init order!" +
                                                 "You should have at least ONE module before trying to add their cmds!");
-        
+
+        discordBuilder.UseInteractivity(new InteractivityConfiguration()
+        {
+            ButtonBehavior = ButtonPaginationBehavior.Disable,
+            PaginationBehaviour = PaginationBehaviour.WrapAround,
+            Timeout = TimeSpan.FromMinutes(1),
+        });
         discordBuilder.UseCommands((isp, ce) =>
         {
             ce.CommandErrored += CommandErrorHandler;
@@ -142,6 +151,8 @@ public class Bot
     {
         // probably the most jank/worst part of this but this wont have hundreds of modules,
         // so its fine and doesn't need priority ordering beyond "init blockers first"
+        
+        // blockers
         new IgnoreBots(this);
         new MessageRecorder(this);
         new InviteBlocker(this);
@@ -152,6 +163,7 @@ public class Bot
         new ModNotes(this);
         new VoidwayActions(this);
         new ThreadOwner(this);
+        new SlashCommands(this);
 
         // modio modules
         new ModAnnouncements(this);

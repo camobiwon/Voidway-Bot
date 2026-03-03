@@ -34,7 +34,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
             return;
         }
 
-        if (ctx.Member.Hierarchy >= ctx.Guild.CurrentMember.Hierarchy)
+        if (member.Hierarchy >= ctx.Member.Hierarchy)
         {
             await ctx.RespondAsync("You can't ban this member!", true);
             return;
@@ -52,6 +52,16 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         Logger.Put($"Banning {member} at the request of {ctx.Member}...");
 
         await AuditLogForwarding.MessageUserWithReason(ctx.Interaction, member, "banned", sendReason);
+        string? content = null;
+        try
+        {
+            var msg = await ctx.Interaction.GetOriginalResponseAsync();
+            content = msg.Content;
+        }
+        catch
+        {
+            // Whatever, it just rewrites the content instead of appending.
+        }
         DiscordWebhookBuilder dwb = new(); // will need to use after 
         
         AuditLogForwarding.IgnoreThese.PushBack(new AuditLogInfo(
@@ -63,14 +73,12 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         try
         {
             await member.BanAsync(deleteMessages ?? default, $"By {ctx.User.Username}: {logReason}");
-            dwb.WithContent($"Messaged & banned {member.Username}!");
-            await ctx.Interaction.EditOriginalResponseAsync(dwb);
+            await ctx.Interaction.RespondOrAppend($"{content}\nMessaged & banned {member.Username}!");
         }
         catch (Exception ex)
         {
             Logger.Error($"Failed to ban {member} (initiated by {ctx.User} for '{logReason}')! Details below", ex);
-            dwb.WithContent($"Failed to ban {member.Username} -- {ex.GetType().FullName}: {ex.Message}");
-            await ctx.Interaction.EditOriginalResponseAsync(dwb);
+            await ctx.Interaction.RespondOrAppend($"Failed to ban {member.Username} -- {ex.GetType().FullName}: {ex.Message}");
             return;
         }
         
@@ -105,7 +113,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
             return;
         }
 
-        if (ctx.Member.Hierarchy >= ctx.Guild.CurrentMember.Hierarchy)
+        if (member.Hierarchy >= ctx.Member.Hierarchy)
         {
             await ctx.RespondAsync("You can't kick this member!", true);
             return;
@@ -123,6 +131,16 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         Logger.Put($"Kicking {member} at the request of {ctx.Member}...");
 
         await AuditLogForwarding.MessageUserWithReason(ctx.Interaction, member, "kicked", sendReason);
+        string? content = null;
+        try
+        {
+            var msg = await ctx.Interaction.GetOriginalResponseAsync();
+            content = msg.Content;
+        }
+        catch
+        {
+            // Whatever, it just rewrites the content instead of appending.
+        }
         DiscordWebhookBuilder dwb = new(); // will need to use after 
         
         AuditLogForwarding.IgnoreThese.PushBack(new AuditLogInfo(
@@ -134,14 +152,12 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         try
         {
             await member.RemoveAsync($"By {ctx.User.Username}: {logReason}");
-            dwb.WithContent($"Messaged & kicked {member.Username}!");
-            await ctx.Interaction.EditOriginalResponseAsync(dwb);
+            await ctx.Interaction.RespondOrAppend($"{content}\nMessaged & kicked {member.Username}!");
         }
         catch (Exception ex)
         {
             Logger.Error($"Failed to kick {member} (initiated by {ctx.User} for '{logReason}')! Details below", ex);
-            dwb.WithContent($"Failed to kick {member.Username} -- {ex.GetType().FullName}: {ex.Message}");
-            await ctx.Interaction.EditOriginalResponseAsync(dwb);
+            await ctx.Interaction.RespondOrAppend($"Failed to kick {member.Username} -- {ex.GetType().FullName}: {ex.Message}");
             return;
         }
         
@@ -179,7 +195,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
             return;
         }
 
-        if (ctx.Member.Hierarchy >= ctx.Guild.CurrentMember.Hierarchy)
+        if (member.Hierarchy >= ctx.Member.Hierarchy)
         {
             await ctx.RespondAsync("You can't mute this member!", true);
             return;
@@ -197,7 +213,6 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         Logger.Put($"Muting {member} at the request of {ctx.Member}...");
 
         await AuditLogForwarding.MessageUserWithReason(ctx.Interaction, member, "muted", sendReason);
-        DiscordWebhookBuilder dwb = new(); // will need to use after 
         
         AuditLogForwarding.IgnoreThese.PushBack(new AuditLogInfo(
             ctx.Client.CurrentUser,
@@ -208,14 +223,12 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         try
         {
             await member.TimeoutAsync(DateTime.Now.Add(duration), $"By {ctx.User.Username}: {logReason}");
-            dwb.WithContent($"Messaged & muted {member.Username}, they'll be unmuted {Formatter.Timestamp(duration, TimestampFormat.RelativeTime)}!");
-            await ctx.Interaction.EditOriginalResponseAsync(dwb);
+            await ctx.Interaction.RespondOrAppend($"Messaged & muted {member.Username}, they'll be unmuted {Formatter.Timestamp(duration, TimestampFormat.RelativeTime)}!");
         }
         catch (Exception ex)
         {
             Logger.Error($"Failed to mute {member} (initiated by {ctx.User} for '{logReason}')! Details below", ex);
-            dwb.WithContent($"Failed to mute {member.Username} -- {ex.GetType().FullName}: {ex.Message}");
-            await ctx.Interaction.EditOriginalResponseAsync(dwb);
+            await ctx.Interaction.RespondOrAppend($"Failed to mute {member.Username} -- {ex.GetType().FullName}: {ex.Message}");
             return;
         }
         

@@ -21,12 +21,13 @@ public partial class AuditLogForwarding
         {
             if (ignoredInfo.Action != logEntry.ActionType)
                 continue;
-            if ((logEntry.CreationTimestamp - ignoredInfo.When).TotalSeconds > 1)
+            if ((logEntry.CreationTimestamp - ignoredInfo.When).TotalSeconds > 10)
                 continue;
             if (ignoredInfo.Initiator != logEntry.UserResponsible)
                 continue;
             
             Logger.Put($"Ignoring audit log action {logEntry.ActionType} by {ignoredInfo.Initiator} -- it was set to be ignored.");
+            return;
         }
 
         ModerationLogOptions options;
@@ -62,31 +63,27 @@ public partial class AuditLogForwarding
             // this kind of has to be handled or have a handlER from the member update event to keep track of whether they're timed out beforehand  
             case DiscordAuditLogActionType.MemberUpdate:
                 DiscordAuditLogMemberUpdateEntry memberUpdateLog = (DiscordAuditLogMemberUpdateEntry)logEntry;
-                if (memberUpdateLog.UserResponsible is not null
+                if (memberUpdateLog.UserResponsible is null
                     || memberUpdateLog.UserResponsible == memberUpdateLog.Target)
                     return; // user did it to themselves
                 
                 #region Timeout handling
+                
+                bool timedOutBefore = memberUpdateLog.TimeoutChange.Before.HasValue
+                                      && memberUpdateLog.TimeoutChange.Before.Value > DateTimeOffset.Now;
+                bool timedOutAfter = memberUpdateLog.TimeoutChange.After.HasValue
+                                      && memberUpdateLog.TimeoutChange.After.Value > DateTimeOffset.Now;
+                
 
-                bool newlyTimedOut = !(memberUpdateLog.MuteChange.Before ?? false)
-                                     && (memberUpdateLog.MuteChange.After ?? false);
-                bool timeoutChanged = (memberUpdateLog.MuteChange.Before ?? false)
-                                       && (memberUpdateLog.MuteChange.After ?? false);
-                bool timeoutRemoved = (memberUpdateLog.MuteChange.Before ?? false)
-                                      && !(memberUpdateLog.MuteChange.After ?? false);
-                
-                
+                bool newlyTimedOut = !timedOutBefore && timedOutAfter;
+                bool timeoutChanged = timedOutBefore && timedOutAfter;
+                bool timeoutRemoved = timedOutBefore && !timedOutAfter;
                 
                 DateTimeOffset? timeoutEnd = memberUpdateLog.Target.CommunicationDisabledUntil;
+                string? desc = timeoutEnd.HasValue ? $"Ends in {Formatter.Timestamp(timeoutEnd.Value)}" : null;
                 if (newlyTimedOut && timeoutEnd.HasValue)
                 {
-                    var extraField =
-                    (
-                        "Ends in",
-                        Formatter.Timestamp(timeoutEnd!.Value,
-                            TimestampFormat.RelativeTime)
-                    );
-                    await LogActionAndProvideMessageOptions(client, args, memberUpdateLog.Target, "muted", extraField, DiscordColor.Yellow);
+                    await LogActionAndProvideMessageOptions(client, args, memberUpdateLog.Target, "muted", color: DiscordColor.Yellow, desc: desc);
                     return;
                 }
 
@@ -99,8 +96,8 @@ public partial class AuditLogForwarding
                     
                     var extraField =
                     (
-                        "Ends in",
-                        Formatter.Timestamp(timeoutEnd!.Value, TimestampFormat.RelativeTime)
+                        "Moderation info",
+                        ModerationTracker.GetObservationStringFor(memberUpdateLog.Target)
                     );
 
                     if (!timeoutLengthened.HasValue)
@@ -108,6 +105,7 @@ public partial class AuditLogForwarding
                         options = new()
                         {
                             Title = "User mute duration changed",
+                            Description = desc,
                             Target = memberUpdateLog.Target,
                             UserResponsible = logEntry.UserResponsible,
                             Reason = logEntry.Reason,
@@ -120,6 +118,7 @@ public partial class AuditLogForwarding
                         options = new()
                         {
                             Title = $"User mute duration {(timeoutLengthened.Value ? "increased" : "decreased")}",
+                            Description = desc,
                             Target = memberUpdateLog.Target,
                             UserResponsible = logEntry.UserResponsible,
                             Reason = logEntry.Reason,
@@ -304,7 +303,7 @@ public partial class AuditLogForwarding
 
     private static async Task LogActionAndProvideMessageOptions(DiscordClient client,
         GuildAuditLogCreatedEventArgs args, DiscordUser removedUser, string actioned,
-        (string, string)? logExtraField = null, DiscordColor? color = null)
+        (string, string)? logExtraField = null, DiscordColor? color = null, string? desc = null)
 
     {
         DiscordAuditLogEntry logEntry = args.AuditLogEntry;
@@ -327,6 +326,7 @@ public partial class AuditLogForwarding
         {
             Title = $"User {actioned}",
             UserResponsible = logEntry.UserResponsible,
+            Description = desc,
             Reason = logEntry.Reason,
             Color = color ?? DiscordColor.Red,
             ExtraField =  logExtraField,

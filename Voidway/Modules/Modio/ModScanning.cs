@@ -6,6 +6,10 @@ using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Enums;
+using DSharpPlus.Interactivity.EventHandling;
+using DSharpPlus.Interactivity.Extensions;
 using Modio;
 using Modio.Models;
 using File = Modio.Models.File;
@@ -29,7 +33,7 @@ internal partial class ModScanning(Bot bot) : ModuleBase(bot)
             
             // in case its intentional that there are no flags
             if (PersistentData.values.filenameFlagList.Count == 0)
-                return field;
+                return [];
 
             foreach (var flagRegexStr in PersistentData.values.filenameFlagList)
             {
@@ -218,8 +222,22 @@ internal partial class ModScanning(Bot bot) : ModuleBase(bot)
             await ctx.RespondAsync("https://tenor.com/view/peter-griffin-chris-balls-sus-peter-gif-4662424033555008061", true);
             return;
         }
-        
-        await ctx.RespondAsync($"- `{string.Join("\n- `", PersistentData.values.filenameFlagList)}`", true);
+
+        List<Page> pages = [];
+        Page currPage = new("Page 1");
+        for (var i = 0; i < PersistentData.values.filenameFlagList.Count; i++)
+        {
+            if (i != 0 && i % 10 == 0)
+            {
+                pages.Add(currPage);
+                currPage = new Page($"Page {(i / 10) + 1}");
+            }
+            currPage.Content += $"\n`{PersistentData.values.filenameFlagList[i]}`";
+        }
+
+        pages.Add(currPage);
+        await ctx.Interaction.SendPaginatedResponseAsync(true, ctx.User, pages);
+        // await ctx.RespondAsync($"- `{string.Join("`\n- `", PersistentData.values.filenameFlagList)}`", true);
     }
     
     

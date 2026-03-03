@@ -122,6 +122,8 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
         
         Logger.Put($"Checking mod notes for {targetMember} at the request of {ctx.Member}, sending modal (itx id {ctx.Interaction.Id})...");
 
+        string observedModerations =
+            Logger.EnsureShorterThan(ModerationTracker.GetObservationStringFor(targetMember), 1969);
         var notesInput = new DiscordTextInputComponent(
             VOIDWAY_NOTES_FIELD_START + targetMember.Id,
             "What would other moderators need to know about this user?",
@@ -132,6 +134,7 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
         var modalBuilder = new DiscordModalBuilder()
             .WithCustomId(VOIDWAY_NOTES_MODAL_ID_START + ctx.Interaction.Id)
             .WithTitle($"Mod notes for {targetMember.DisplayName} ({targetMember.Username})")
+            .AddTextDisplay($"Observed moderation info:\n{observedModerations}")
             .AddTextInput(notesInput, $"Notes {(notesMessage is null ? "(Will create new message)" : "(Will edit existing message)")}");
 
         ModalFollowups[modalBuilder.CustomId] = async (args) =>
@@ -140,13 +143,9 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
             string userStr = $"{targetMember.DisplayName} ({targetMember.Username}, {targetMember.Id})";
             string newMessageContent = string.Format(NOTES_FORMAT, userStr, notesSubmission.Value);
 
-            var dirb = new DiscordInteractionResponseBuilder()
-                .AsEphemeral();
-
             if (string.IsNullOrWhiteSpace(notesSubmission.Value) && notesMessage is null)
             {
-                dirb.WithContent("Gotcha, I'll create a notes message another time.");
-                await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+                await args.Interaction.RespondOrAppend("Gotcha, I'll create a notes message another time.");
                 return;
             }
 
@@ -164,8 +163,7 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
 
                     modNoteMessages[targetMember.Id] = notesMessage.Id;
                     
-                    dirb.WithContent($"Created a [notes message]({notesMessage.JumpLink}) for that user!");
-                    await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+                    await args.Interaction.RespondOrAppend($"Created a [notes message]({notesMessage.JumpLink}) for that user!");
                     
                     PersistentData.WritePersistentData();
                     return;
@@ -173,8 +171,7 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
                 catch (Exception ex)
                 {
                     Logger.Warn($"Failed to create a notes message in {notesChannel} (invoker {ctx.User})!");
-                    dirb.WithContent($"Failed to create a notes message -- {ex.GetType().FullName}: {ex.Message}");
-                    await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+                    await args.Interaction.RespondOrAppend($"Failed to create a notes message -- {ex.GetType().FullName}: {ex.Message}");
                     return;
                 }
             }
@@ -182,14 +179,12 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
             try
             {
                 await notesMessage.ModifyAsync(newMessageContent);
-                dirb.WithContent($"Successfully edited notes message!");
-                await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+                await args.Interaction.RespondOrAppend($"Successfully edited notes message!");
             }
             catch (Exception ex)
             {
                 Logger.Error($"Exception while modifying notes message for {targetMember}", ex);
-                dirb.WithContent($"Failed to edit notes message -- {ex.GetType().FullName}: {ex.Message}");
-                await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+                await args.Interaction.RespondOrAppend($"Failed to edit notes message -- {ex.GetType().FullName}: {ex.Message}");
             }
             
         };

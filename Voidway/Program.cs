@@ -44,6 +44,7 @@ public static class Program
     {
         Logger.Error("Operator pressed Ctrl+C, exiting now.");
         Console.WriteLine();
+        PersistentData.WritePersistentData();
         Environment.Exit(0);
     }
 

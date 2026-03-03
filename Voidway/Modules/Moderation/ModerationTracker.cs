@@ -28,7 +28,8 @@ public class ModerationTracker(Bot bot) : ModuleBase(bot)
             guildMessageCalendar[Today] = userMessageCounts;
         }
 
-        userMessageCounts[args.Author.Id]++;
+        if (!userMessageCounts.TryAdd(args.Author.Id, 1))
+            userMessageCounts[args.Author.Id]++;
         
         periodicSaveCounter++;
         if (periodicSaveCounter > SAVE_PERIOD)

@@ -72,7 +72,7 @@ public partial class VoidwayActions
             return;
         }
 
-        if (ctx.Member.Hierarchy >= ctx.Guild.CurrentMember.Hierarchy)
+        if (targetMember.Hierarchy >= ctx.Member.Hierarchy)
         {
             await ctx.RespondAsync("You can't ban this member!", true);
             return;
@@ -148,13 +148,11 @@ public partial class VoidwayActions
             catch (Exception ex)
             {
                 Logger.Error($"Failed to ban {targetMember} (initiated by {ctx.User} for '{loggedReason}')! Details below", ex);
-
-                var dwb = new DiscordWebhookBuilder()
-                    .WithContent($"Failed to ban user! {ex.GetType().FullName} {ex.Message}");
-                await args.Interaction.EditOriginalResponseAsync(dwb);
-                
+                await args.Interaction.RespondOrAppend($"Failed to ban user! {ex.GetType().FullName} {ex.Message}");
                 return;
             }
+            
+            await ctx.Interaction.RespondOrAppend($"Done! User banned!");
             
             string? description = sendReason == loggedReason
                 ? null
@@ -191,7 +189,7 @@ public partial class VoidwayActions
             return;
         }
 
-        if (ctx.Member.Hierarchy >= ctx.Guild.CurrentMember.Hierarchy)
+        if (targetMember.Hierarchy >= ctx.Member.Hierarchy)
         {
             await ctx.RespondAsync("You can't kick this member!", true);
             return;
@@ -254,13 +252,13 @@ public partial class VoidwayActions
             catch (Exception ex)
             {
                 Logger.Error($"Failed to kick {targetMember} (initiated by {ctx.User} for '{loggedReason}')! Details below", ex);
-
-                var dwb = new DiscordWebhookBuilder()
-                    .WithContent($"Failed to kick user! {ex.GetType().FullName} {ex.Message}");
-                await args.Interaction.EditOriginalResponseAsync(dwb);
+                
+                await args.Interaction.RespondOrAppend($"Failed to kick user! {ex.GetType().FullName} {ex.Message}");
                 
                 return;
             }
+
+            await ctx.Interaction.RespondOrAppend($"Done! User kicked!");
             
             string? description = sendReason == loggedReason
                 ? null
@@ -297,7 +295,7 @@ public partial class VoidwayActions
             return;
         }
 
-        if (ctx.Member.Hierarchy >= ctx.Guild.CurrentMember.Hierarchy)
+        if (targetMember.Hierarchy >= ctx.Member.Hierarchy)
         {
             await ctx.RespondAsync("You can't mute this member!", true);
             return;
@@ -371,13 +369,11 @@ public partial class VoidwayActions
             catch (Exception ex)
             {
                 Logger.Error($"Failed to mute {targetMember} (initiated by {ctx.User} for '{loggedReason}')! Details below", ex);
-
-                var dwb = new DiscordWebhookBuilder()
-                    .WithContent($"Failed to mute user! {ex.GetType().FullName} {ex.Message}");
-                await args.Interaction.EditOriginalResponseAsync(dwb);
-                
+                await args.Interaction.RespondOrAppend($"Failed to mute user! {ex.GetType().FullName} {ex.Message}");
                 return;
             }
+            
+            await ctx.Interaction.RespondOrAppend($"Done! User muted!");
             
             
             string? description = sendReason == loggedReason

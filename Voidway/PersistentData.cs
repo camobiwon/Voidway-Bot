@@ -14,7 +14,7 @@ internal class PersistentData
     private const string PD_PATH = "./persistentData.json";
 
     // values
-    public List<string> filenameFlagList = [ ".*epstein.*", ".*school.*" ];
+    public List<string> filenameFlagList = [ ];
     public Dictionary<ulong, Dictionary<ulong, ulong>> modNoteMessages = []; // guild id -> member id -> message id  
 
     // guild -> day -> user -> <info>

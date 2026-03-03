@@ -34,8 +34,14 @@ public partial class AuditLogForwarding
         Logger.Warn($"There was no handler set up for an interaction with the ID {args.Id} on {args.Message}");
         var dirb = new DiscordInteractionResponseBuilder()
             .AsEphemeral()
-            .WithContent("Uh, there doesn't seem to be anything set up to handle that button press. Check with the dev?");
+            .WithContent("Uh, there doesn't seem to be anything set up to handle that button press. Check with the dev?\n" +
+                         "Either way, I'm going to remove the buttons from that message to avoid this happening again.");
         await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+        
+        if (args.Interaction.Message is not null)
+        {
+            await StripButtons(args.Interaction.Message, "Minor error - no button handler registered, oops!");
+        }
     }
 
     protected override async Task ModalSubmitted(DiscordClient client, ModalSubmittedEventArgs args)
@@ -114,7 +120,7 @@ public partial class AuditLogForwarding
 
     private static async Task DismissButtonClicked(ComponentInteractionCreatedEventArgs args, DiscordUser? originalTarget)
     {
-        if (await StripButtons(args.Message, "Not messaged"))
+        if (!await StripButtons(args.Message, "Not messaged"))
         {
             var dirbFail = new DiscordInteractionResponseBuilder()
                 .AsEphemeral()
@@ -154,6 +160,8 @@ public partial class AuditLogForwarding
                 footer.Text += "\n" + addToFooter;
             else
                 targetEmbed.WithFooter(addToFooter);
+
+            dmb.ClearEmbeds().AddEmbed(targetEmbed);
         }
         
         try
@@ -187,11 +195,7 @@ public partial class AuditLogForwarding
             if (auditLogMessage is not null)
                 CurrentlyHandlingInteractionsOn.Add(auditLogMessage);
             
-            var dwb = new DiscordWebhookBuilder();
-            var dirb = new DiscordInteractionResponseBuilder()
-                .AsEphemeral(false)
-                .WithContent($"Creating DM channel with {sendTo.Username}...");
-            await interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, dirb);
+            await interaction.RespondOrAppend($"Creating DM channel with {sendTo.Username}...");
 
             DiscordChannel dmChannel;
             try
@@ -201,15 +205,13 @@ public partial class AuditLogForwarding
             catch (Exception ex)
             {
                 Logger.Warn($"Failed to send message to {sendTo} @ creating DM channel", ex);
-                dwb.WithContent($"Failed to create DM channel with {sendTo.Username}");
-                await interaction.EditOriginalResponseAsync(dwb);
+                await interaction.RespondOrAppend($"Failed to create DM channel with {sendTo.Username}");
                 if (auditLogMessage is not null)
                     CurrentlyHandlingInteractionsOn.Remove(auditLogMessage);
                 return;
             }
 
-            dwb.WithContent($"Created DM channel with {sendTo.Username}\nSending message...");
-            await interaction.EditOriginalResponseAsync(dwb);
+            await interaction.RespondOrAppend($"Created DM channel with {sendTo.Username}\nSending message...");
 
             try
             {
@@ -221,8 +223,7 @@ public partial class AuditLogForwarding
             catch (Exception ex)
             {
                 Logger.Warn($"Failed to send message to moderated user {sendTo}", ex);
-                dwb.WithContent(dwb.Content + "\nTripped at the finish line, failed to edit message!\n-# Well, the important part got done, lol.");
-                await interaction.EditOriginalResponseAsync(dwb);
+                await interaction.RespondOrAppend($"Failed to send the message! *Whah!*");
                 if (auditLogMessage is not null)
                     CurrentlyHandlingInteractionsOn.Remove(auditLogMessage);
                 return;
@@ -231,23 +232,19 @@ public partial class AuditLogForwarding
 
             if (auditLogMessage is not null)
             {
-                dwb.WithContent($"Created DM channel with {sendTo.Username}\nSent message!\nCleaning up...");
-                await interaction.EditOriginalResponseAsync(dwb);
+                await interaction.RespondOrAppend($"Created DM channel with {sendTo.Username}\nSent message!\nCleaning up...");
 
                 // remove buttons for further invocations
                 if (!await StripButtons(auditLogMessage, "Messaged user"))
                 {
-                    dwb.WithContent(dwb.Content + "\nTripped at the finish line, failed to edit message!\n-# Well, the important part got done, lol.");
-                    await interaction.EditOriginalResponseAsync(dwb);
+                    await interaction.RespondOrAppend("Tripped at the finish line, failed to edit the log message!\n-# Well, the important part got done, lol.");
                     CurrentlyHandlingInteractionsOn.Remove(auditLogMessage);
                     return;
                 }
             }
             
-
-            dwb.WithContent(
-                $"-# *Sent {sendTo.Username} ({Formatter.Mention(sendTo)}) a message letting them know why they were {actioned}.\nReason given: {reason}*");
-            await interaction.EditOriginalResponseAsync(dwb);
+            await interaction.RespondOrAppend($"**Sent {sendTo.Username} ({Formatter.Mention(sendTo)}) a message letting them know why they were {actioned}.**" +
+                                              $"\n-# *Reason given: {reason}*");
             if (auditLogMessage is not null)
                 CurrentlyHandlingInteractionsOn.Remove(auditLogMessage);
             
