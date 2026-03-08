@@ -19,6 +19,7 @@ public enum ModUploadType // use bitshift operator to act as a bitfield
     Utility = 1 << 3,
 }
 
+[Command("modposting")]
 internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
 {
     public static readonly Dictionary<uint, List<DiscordMessage>> announcedMods = [];
@@ -64,7 +65,8 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
             switch (args.Event.EventType)
             {
                 case ModEventType.MOD_AVAILABLE:
-                    await AnnounceMod(args);
+                    // give uploader an extra minute to make thumbnail changes or something
+                    _ = Task.Delay(60 * 1000).ContinueWith((_) => AnnounceMod(args));
                     break;
                 case ModEventType.MOD_EDITED:
                     await UpdateAnnouncement(args.Event.ModId);
@@ -85,9 +87,6 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
 
     private static async Task AnnounceMod(ModioEventArgs args)
     {
-        // give uploader an extra minute to make thumbnail changes or something
-        await Task.Delay(60 * 1000);
-        
         var modClient = args.ModsClient[args.Event.ModId];
         var modData = await modClient.Get();
         var uploadType = IdentifyFromTags(modData.Tags);
@@ -317,6 +316,7 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
     }
     
     [RequireApplicationOwner]
+    [Command("announce")]
     public static async Task ForceAnnounceMod(SlashCommandContext ctx, long modNumberId = 0, string nameId = "")
     {
         if (modNumberId == 0 && string.IsNullOrEmpty(nameId))
@@ -354,6 +354,16 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
 
         // remove from the "don't announce" list because an owner said "announce it anyway"
         ModScanning.DontAnnounceThese.Remove(modId);
+
+        // also checks for duplicate announcements
+        if (announcedMods.Remove(modId, out var announcementMsgs))
+        {
+            var announceKvp = announcedMods.FirstOrDefault(kvp => kvp.Value == announcementMsgs);
+            if (announceKvp.Value is not null)
+            {
+                announcedMods.Remove(announceKvp.Key);
+            }
+        }
 
         var eventData = new ModEvent()
         {

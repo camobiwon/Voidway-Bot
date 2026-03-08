@@ -31,6 +31,7 @@ public class Bot
         {
             if (string.IsNullOrEmpty(Config.values.modioApiKey))
                 return null;
+            
             var options = new Client.Options(Config.values.modioApiKey);
             if (!string.IsNullOrEmpty(Config.values.modioOAuth))
                 options.Token = Config.values.modioOAuth;
@@ -65,7 +66,6 @@ public class Bot
         
         InitializeModules();
         SetupCommands();
-        
     }
 
     static Type[] GetCommandTypes()
@@ -163,7 +163,7 @@ public class Bot
         new ModNotes(this);
         new VoidwayActions(this);
         new ThreadOwner(this);
-        new SlashCommands(this);
+        new BotManagement(this);
 
         // modio modules
         new ModAnnouncements(this);
@@ -178,6 +178,9 @@ public class Bot
 
     public async Task ConnectAsync()
     {
+        if (ModIO.Value is not null)
+            await ModioEvents.Init(ModIO.Value);
+        
         DiscordClient = discordBuilder.Build();
         Clients[DiscordClient] = this;
         await DiscordClient.ConnectAsync();
