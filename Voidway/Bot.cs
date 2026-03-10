@@ -183,7 +183,9 @@ public class Bot
         
         DiscordClient = discordBuilder.Build();
         Clients[DiscordClient] = this;
+        Logger.Put("Connecting to Discord API!");
         await DiscordClient.ConnectAsync();
+        Logger.Put("Fully connected to Discord!");
     }
     
     
