@@ -28,7 +28,7 @@ public enum ModContentHeuristic : ulong
     MacExecutableOrInstaller = 1 << 18
 }
 
-partial class ModScanning
+partial class ModfileScanning
 {
     private static HttpClient downloadClient = new HttpClient();
     private static ModContentHeuristic ClassifyZipContents(ZipArchive zip)

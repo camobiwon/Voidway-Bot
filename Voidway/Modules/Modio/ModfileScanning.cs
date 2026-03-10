@@ -17,7 +17,7 @@ using File = Modio.Models.File;
 namespace Voidway.Modules.Modio;
 
 [Command("modscanning")]
-internal partial class ModScanning(Bot bot) : ModuleBase(bot)
+internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
 {
     public static List<uint> DontAnnounceThese = [];
     

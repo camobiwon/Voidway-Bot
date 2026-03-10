@@ -167,7 +167,7 @@ public class Bot
 
         // modio modules
         new ModAnnouncements(this);
-        new ModScanning(this);
+        new ModfileScanning(this);
         new CommentFlagging(this);
         
         foreach (var module in ModuleBase.AllModules)
