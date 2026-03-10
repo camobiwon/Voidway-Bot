@@ -329,7 +329,8 @@ public partial class VoidwayActions
             .WithCustomId(VOIDWAY_TIMEOUT_MODAL_ID_START + ctx.Interaction.Id)
             .WithTitle($"Mute {targetMember.Username}?")
             .AddTextInput(loggedReasonInput, "Reason (for audit log)")
-            .AddTextInput(sentReasonInput, "Reason (sent to user)");
+            .AddTextInput(sentReasonInput, "Reason (sent to user)")
+            .AddSelectMenu(durationMenu, "Duration");
 
         ModalFollowups[modalBuilder.CustomId] = async args =>
         {
