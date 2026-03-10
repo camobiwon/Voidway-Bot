@@ -152,7 +152,7 @@ public partial class VoidwayActions
                 return;
             }
             
-            await ctx.Interaction.RespondOrAppend($"Done! User banned!");
+            await args.Interaction.RespondOrAppend($"Done! User banned!");
             
             string? description = sendReason == loggedReason
                 ? null
@@ -258,7 +258,7 @@ public partial class VoidwayActions
                 return;
             }
 
-            await ctx.Interaction.RespondOrAppend($"Done! User kicked!");
+            await args.Interaction.RespondOrAppend($"Done! User kicked!");
             
             string? description = sendReason == loggedReason
                 ? null
@@ -373,7 +373,7 @@ public partial class VoidwayActions
                 return;
             }
             
-            await ctx.Interaction.RespondOrAppend($"Done! User muted!");
+            await args.Interaction.RespondOrAppend($"Done! User muted!");
             
             
             string? description = sendReason == loggedReason
