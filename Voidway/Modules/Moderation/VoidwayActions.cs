@@ -88,6 +88,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         {
             Title = "User banned (via command)",
             UserResponsible = ctx.Member,
+            Target = member,
             Reason = logReason,
             Color = DiscordColor.Yellow,
             ExtraField = extraField,
@@ -167,6 +168,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         {
             Title = "User kicked (via command)",
             UserResponsible = ctx.Member,
+            Target = member,
             Reason = logReason,
             Color = DiscordColor.Yellow,
             ExtraField = extraField,
@@ -242,6 +244,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         {
             Title = "User muted (via command)",
             UserResponsible = ctx.Member,
+            Target = member,
             Reason = logReason,
             Color = DiscordColor.Yellow,
             Description = description,

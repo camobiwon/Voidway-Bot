@@ -164,6 +164,7 @@ public partial class VoidwayActions
             {
                 Title = "User banned (via command)",
                 UserResponsible = ctx.Member,
+                Target = targetMember,
                 Reason = loggedReason,
                 Color = DiscordColor.Red,
                 Description = description,
@@ -270,6 +271,7 @@ public partial class VoidwayActions
             {
                 Title = "User kicked (via command)",
                 UserResponsible = ctx.Member,
+                Target = targetMember,
                 Reason = loggedReason,
                 Color = DiscordColor.Yellow,
                 Description = description,
@@ -387,6 +389,7 @@ public partial class VoidwayActions
             {
                 Title = "User muted (via command)",
                 UserResponsible = ctx.Member,
+                Target = targetMember,
                 Reason = loggedReason,
                 Color = DiscordColor.Yellow,
                 Description = description,
