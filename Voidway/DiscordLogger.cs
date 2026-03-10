@@ -89,7 +89,7 @@ namespace Voidway
                     message.Contains(str, StringComparison.InvariantCultureIgnoreCase)))
                 return;
             
-            if (eventId.Name is not null) reason.name = eventId.Name;
+            if (eventId.Name is not null) reason.name = $"{reason.name} @ {eventId.Name}";
 
             Logger.Put(catName + " => " + message, reason);
         }

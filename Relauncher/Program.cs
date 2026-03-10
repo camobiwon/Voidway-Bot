@@ -16,26 +16,6 @@ class Program
 
         string projFolder = Path.GetDirectoryName(parms.buildProject) ?? Environment.CurrentDirectory;
         string projFile = Path.GetFileName(parms.buildProject)!;
-
-        Process cleanProc = new()
-        {
-            StartInfo = new()
-            {
-                FileName = "dotnet",
-                Arguments = "clean",
-                WorkingDirectory = projFolder,
-                RedirectStandardOutput = true,
-            }
-        };
-        string cleanInvocation = $"{cleanProc.StartInfo.FileName} {cleanProc.StartInfo.Arguments} [in {projFolder}]";
-        cleanProc.Start();
-        cleanProc.WaitForExit();
-        string[] cleanLines = cleanProc.StandardOutput.ReadToEnd().Replace(projFolder, "$PWD").Split(Environment.NewLine);
-        string[] cleanLinesWithoutDeletions =
-            cleanLines.Where(str => !str.Contains("Deleting file")).ToArray();
-        string deletedFiles = $"*Not shown: {cleanLines.Length - cleanLinesWithoutDeletions.Length} deletions*";
-        string cleanOutput = string.Join(Environment.NewLine, cleanLinesWithoutDeletions) + "\n" + deletedFiles;
-        
         
         string dotnetBuildOutput;
         Process proc = new()
@@ -64,7 +44,7 @@ class Program
             }
         };
 
-        string runCommandsParameter = $"### {cleanInvocation}\n{cleanOutput}\n\n### {buildInvocation}\n{dotnetBuildOutput}";
+        string runCommandsParameter = $"### {buildInvocation}\n{dotnetBuildOutput}";
         proc.StartInfo.ArgumentList.Add(RelaunchParameters.RELAUNCHED_ARG);
         proc.StartInfo.ArgumentList.Add(runCommandsParameter);
         if (parms.initiatorId.HasValue)

@@ -173,7 +173,7 @@ public class BotManagement(Bot bot) : ModuleBase(bot)
 
         RelaunchParameters parms = new()
         {
-            buildProject = Path.Combine(rootFolder, "BoneBoard.csproj"),
+            buildProject = Path.Combine(rootFolder, "Voidway", "Voidway.csproj"),
             launchWorkingDir = Environment.CurrentDirectory,
             launchExecutable = currExecLocation,
             initiatorId = ctx.User.Id
