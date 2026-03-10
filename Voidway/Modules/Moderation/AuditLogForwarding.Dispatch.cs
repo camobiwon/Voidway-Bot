@@ -302,7 +302,7 @@ public partial class AuditLogForwarding
     }
 
     private static async Task LogActionAndProvideMessageOptions(DiscordClient client,
-        GuildAuditLogCreatedEventArgs args, DiscordUser removedUser, string actioned,
+        GuildAuditLogCreatedEventArgs args, DiscordUser targetUser, string actioned,
         (string, string)? logExtraField = null, DiscordColor? color = null, string? desc = null)
 
     {
@@ -311,28 +311,29 @@ public partial class AuditLogForwarding
         bool userStillAccessible = false;
         try
         {
-            var user = await client.GetUserAsync(removedUser.Id, true);
+            var user = await client.GetUserAsync(targetUser.Id, true);
             userStillAccessible = true;
         }
         catch
         {
             Logger.Put(
-                $"Ignore the above D#+ log, just seeing if a {actioned} user ({removedUser}) is still accessible (they're not)");
+                $"Ignore the above D#+ log, just seeing if a {actioned} user ({targetUser}) is still accessible (they're not)");
         }
 
-        logExtraField ??= ("Moderation info", ModerationTracker.GetObservationStringFor(args.Guild.Id, removedUser.Id));
+        logExtraField ??= ("Moderation info", ModerationTracker.GetObservationStringFor(args.Guild.Id, targetUser.Id));
         
         var capitalizedAction = actioned.Length > 1 ? char.ToUpper(actioned[0]) + actioned[1..] : actioned.ToUpper();
         options = new()
         {
             Title = $"User {capitalizedAction}",
+            Target = targetUser,
             UserResponsible = logEntry.UserResponsible,
             Description = desc,
             Reason = logEntry.Reason,
             Color = color ?? DiscordColor.Red,
             ExtraField =  logExtraField,
             BuilderPostProcessor = userStillAccessible
-                ? dmb => AddMessageButtons(dmb, args.Guild, removedUser, logEntry.Id, actioned, logEntry.Reason)
+                ? dmb => AddMessageButtons(dmb, args.Guild, targetUser, logEntry.Id, actioned, logEntry.Reason)
                 : null
         };
 
