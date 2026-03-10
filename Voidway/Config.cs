@@ -48,7 +48,9 @@ internal class Config
     #endregion
 
     #region Mod.IO behavior
-    
+
+    [TomlPrecedingComment("Checks mods' tags, names, and descriptions.")]
+    public string[] dontAnnounceModsWith = [ "18+", "nsfw" ];
     [TomlPrecedingComment("Doesn't announce mods that have this many (or more) tags. Set to -1 (or a really high number) to disable.")]
     public int modioTagSpamThreshold = 15;
     [TomlPrecedingComment("If a mod is larger than this, in MB, then the bot won't download it to check for malformed uploads")]

@@ -35,6 +35,7 @@ public class ServerConfig
     
     [TomlPrecedingComment("Removes game invites from non-privileged users ")]
     public bool filterGameInvites = false;
+    public ulong[] dontFilterGameInvitesIn = [];
     [TomlInlineComment("Use {0} to include the server's name.")]
     public string sendWhenSomeoneSendsGameInvites = "";
     public ulong[] exemptRolesFromInviteFilter = [];
@@ -94,7 +95,7 @@ public class ServerConfig
         return null;
     }
 
-    private static void WriteConfigToFile(ServerConfig? cfg)
+    public static void WriteConfigToFile(ServerConfig? cfg)
     {
         if (cfg is null)
             return;

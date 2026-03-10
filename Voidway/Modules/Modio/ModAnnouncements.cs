@@ -120,12 +120,46 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
         }
         
         // scanned mod checks
-        if (ModScanning.DontAnnounceThese.Contains(modData.Id))
+        if (ModfileScanning.DontAnnounceThese.Contains(modData.Id))
         {
             Logger.Put($"Mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) was already scanned and is designated to not be announced.");
             return;
         }
 
+        var desc = modData.DescriptionPlaintext ?? modData.Description ?? "";
+        var title = modData.Name ?? modData.NameId ?? "";
+        string[] tags = modData.Tags.Select(tag => tag.Name ?? "").ToArray();
+        foreach (string censorItem in Config.values.dontAnnounceModsWith)
+        {
+            if (tags.Any(t => t.Contains(censorItem, StringComparison.InvariantCultureIgnoreCase)))
+            {
+                var highlightedTags = tags.Select(t => t.Replace(censorItem, $">> {censorItem.ToUpper()} <<",
+                    StringComparison.InvariantCultureIgnoreCase));
+                Logger.Put(
+                    $"Tags on mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) contain '{censorItem}' -- ignoring!" +
+                    $"(Tags: {string.Join(", ", highlightedTags)}");
+                return;
+            }
+
+            if (desc.Contains(censorItem, StringComparison.InvariantCultureIgnoreCase))
+            {
+
+                Logger.Put(
+                    $"Description for mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) contains '{censorItem}' -- ignoring!" +
+                    $"{desc.Replace(censorItem, $">> {censorItem.ToUpper()} <<", StringComparison.InvariantCultureIgnoreCase)}");
+                return;
+            }
+            
+            if (title.Contains(censorItem, StringComparison.InvariantCultureIgnoreCase))
+            {
+
+                Logger.Put(
+                    $"Title for mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) contains '{censorItem}' -- ignoring!" +
+                    $"{title.Replace(censorItem, $">> {censorItem.ToUpper()} <<", StringComparison.InvariantCultureIgnoreCase)}");
+                return;
+            }
+        }
+        
         string modName = (modData.Name ?? modData.NameId ?? "").Replace("&amp;", "&");
         string authorText = modData.SubmittedBy?.Username is not null
             ? $" created by **{modData.SubmittedBy.Username.Replace("&amp;", "&")}**"
@@ -353,7 +387,7 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
         }
 
         // remove from the "don't announce" list because an owner said "announce it anyway"
-        ModScanning.DontAnnounceThese.Remove(modId);
+        ModfileScanning.DontAnnounceThese.Remove(modId);
 
         // also checks for duplicate announcements
         if (announcedMods.Remove(modId, out var announcementMsgs))
