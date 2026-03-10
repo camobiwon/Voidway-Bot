@@ -50,16 +50,23 @@ public class MessageRecorder(Bot bot) : ModuleBase(bot)
             return; // no text content changed, so probably nothing we can log
         if (!msgAfter.IsEdited)
             return; // probably discord firing off an event for an attachment refresh 
+
+        DiscordMessageBuilder msgBuilder = new DiscordMessageBuilder()
+            .SuppressEmbeds()
+            .WithAllowedMentions([]);
         
-        DiscordMessageBuilder msgBuilder = new DiscordMessageBuilder();
-        DiscordEmbedBuilder mainEmbed = Embedize(msgAfter);
-        mainEmbed.WithColor(DiscordColor.Gray);
+        var mainEmbed = new DiscordEmbedBuilder()
+            .WithTitle("Message Edited")
+            .AddField("New Content", string.IsNullOrEmpty(msgAfter.Content) ? "`[No Content]`" : msgAfter.Content)
+            .WithColor(DiscordColor.Gray);
+        
         
         
         if (msgBefore is not null)
         {
             mainEmbed.AddField("Old content",  msgBefore.Content);
-
+            AddMetadataFields(msgAfter, mainEmbed);
+            
             if (msgAfter.Attachments.Count != msgBefore.Attachments.Count)
             {
                 msgBuilder.AddEmbed(mainEmbed);
@@ -76,7 +83,7 @@ public class MessageRecorder(Bot bot) : ModuleBase(bot)
         else
         {
             mainEmbed.AddField("Old content",  "*Unknown -- original message not cached*");
-            
+            AddMetadataFields(msgAfter, mainEmbed);
             msgBuilder.AddEmbed(mainEmbed);
         }
         
@@ -118,8 +125,13 @@ public class MessageRecorder(Bot bot) : ModuleBase(bot)
     private static DiscordEmbedBuilder Embedize(DiscordMessage msg)
     {
         DiscordEmbedBuilder mainEmbed = new();
-        mainEmbed.AddField("Content", string.IsNullOrEmpty(msg.Content) ? "" : msg.Content);
+        mainEmbed.AddField("Content", string.IsNullOrEmpty(msg.Content) ? "`[No Content]`" : msg.Content);
         
+        return AddMetadataFields(msg, mainEmbed);
+    }
+
+    private static DiscordEmbedBuilder AddMetadataFields(DiscordMessage msg, DiscordEmbedBuilder mainEmbed)
+    {
         mainEmbed.AddField("User", msg.Author is null ? "*Unknown*" : Formatter.Mention(msg.Author), true)
             .AddField("Channel", msg.Channel is null ? "*Unknown*" : Formatter.Mention(msg.Channel), true)
             .AddField("Original Time", Formatter.Timestamp(msg.Timestamp, TimestampFormat.ShortDateTime), true);

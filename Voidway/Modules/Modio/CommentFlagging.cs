@@ -75,7 +75,7 @@ internal class CommentFlagging(Bot bot) : ModuleBase(bot)
         
         string? authorName = author.Username ?? author.NameId;
         if (!string.IsNullOrWhiteSpace(authorName) && !string.IsNullOrWhiteSpace(author.ProfileUrl?.ToString()))
-            authorName = $"[{authorName}]({author.ProfileUrl.ToString()}/info#comments)";
+            authorName = $"[{authorName}](https://mod.io/g/bonelab/{author.NameId}/info#comments)";
         authorName ??= $"<A user with the number ID {author.Id}>";
         
         string? modName = modData.Name ?? modData.NameId;
@@ -93,13 +93,17 @@ internal class CommentFlagging(Bot bot) : ModuleBase(bot)
                             $"\"{Logger.EnsureShorterThan(commentContent, 500, "... *(truncated)*")}\"\n" +
                             $"Highest flagged category: {maxCategoryStr}\n" +
                             $"-# All categories {allCategoriesStr}";
-
+        var dmb = new DiscordMessageBuilder()
+            .WithContent(messageStr)
+            .WithAllowedMentions([])
+            .SuppressEmbeds();
+        
         int successCount = 0;
         foreach (var channel in Channels)
         {
             try
             {
-                await channel.SendMessageAsync(messageStr);
+                await channel.SendMessageAsync(dmb);
                 successCount++;
             }
             catch (Exception ex)
