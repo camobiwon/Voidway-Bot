@@ -105,7 +105,7 @@ public partial class VoidwayActions
 
         var modalBuilder = new DiscordModalBuilder()
             .WithCustomId(VOIDWAY_BAN_MODAL_ID_START + ctx.Interaction.Id)
-            .WithTitle($"Ban {targetMember.DisplayName} ({targetMember.Username})?")
+            .WithTitle($"Ban {targetMember.Username}?")
             .AddTextInput(loggedReasonInput, "Reason (for audit log)")
             .AddTextInput(sentReasonInput, "Reason (sent to user)")
             .AddSelectMenu(deleteDurationMenu, "Delete message history");
@@ -218,7 +218,7 @@ public partial class VoidwayActions
 
         var modalBuilder = new DiscordModalBuilder()
             .WithCustomId(VOIDWAY_KICK_MODAL_ID_START + ctx.Interaction.Id)
-            .WithTitle($"Ban {targetMember.DisplayName} ({targetMember.Username})?")
+            .WithTitle($"Kick {targetMember.Username}?")
             .AddTextInput(loggedReasonInput, "Reason (for audit log)")
             .AddTextInput(sentReasonInput, "Reason (sent to user)");
 
@@ -327,7 +327,7 @@ public partial class VoidwayActions
 
         var modalBuilder = new DiscordModalBuilder()
             .WithCustomId(VOIDWAY_TIMEOUT_MODAL_ID_START + ctx.Interaction.Id)
-            .WithTitle($"Ban {targetMember.DisplayName} ({targetMember.Username})?")
+            .WithTitle($"Mute {targetMember.Username}?")
             .AddTextInput(loggedReasonInput, "Reason (for audit log)")
             .AddTextInput(sentReasonInput, "Reason (sent to user)");
 
