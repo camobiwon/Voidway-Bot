@@ -40,7 +40,7 @@ public partial class AuditLogForwarding
                 // Should this be handled in MessageRecorder?
                 options = new()
                 {
-                    Title = "Messages purged",
+                    Title = "Messages Purged",
                     UserResponsible = logEntry.UserResponsible,
                     Description = $"{msgLog.MessageCount} messages purged from {Formatter.Mention(msgLog.Channel)}",
                     Reason = msgLog.Reason,
@@ -104,7 +104,7 @@ public partial class AuditLogForwarding
                     {
                         options = new()
                         {
-                            Title = "User mute duration changed",
+                            Title = "User Mute Duration Changed",
                             Description = desc,
                             Target = memberUpdateLog.Target,
                             UserResponsible = logEntry.UserResponsible,
@@ -117,7 +117,7 @@ public partial class AuditLogForwarding
                     {
                         options = new()
                         {
-                            Title = $"User mute duration {(timeoutLengthened.Value ? "increased" : "decreased")}",
+                            Title = $"User Mute Duration {(timeoutLengthened.Value ? "Increased" : "Decreased")}",
                             Description = desc,
                             Target = memberUpdateLog.Target,
                             UserResponsible = logEntry.UserResponsible,
@@ -135,7 +135,7 @@ public partial class AuditLogForwarding
                 {
                     options = new()
                     {
-                        Title = "User unmuted",
+                        Title = "User Unmuted",
                         Target = memberUpdateLog.Target,
                         UserResponsible = logEntry.UserResponsible,
                         Reason = logEntry.Reason,
@@ -159,7 +159,7 @@ public partial class AuditLogForwarding
                     
                     options = new()
                     {
-                        Title = "User nickname changed",
+                        Title = "User Nickname Changed",
                         Target = memberUpdateLog.Target,
                         UserResponsible = logEntry.UserResponsible,
                         Reason = logEntry.Reason,
@@ -243,7 +243,7 @@ public partial class AuditLogForwarding
                     
                     options = new()
                     {
-                        Title = "User roles added",
+                        Title = "User Roles Added",
                         Target = memberUpdateLog.Target,
                         UserResponsible = logEntry.UserResponsible,
                         Description = $"```diff\n{descSb}\n```",
@@ -260,7 +260,7 @@ public partial class AuditLogForwarding
                     
                     options = new()
                     {
-                        Title = "User roles removed",
+                        Title = "User Roles Removed",
                         Target = memberUpdateLog.Target,
                         UserResponsible = logEntry.UserResponsible,
                         Description = $"```diff\n{descSb}\n```",
@@ -274,7 +274,7 @@ public partial class AuditLogForwarding
 
                 options = new()
                 {
-                    Title = "User roles changed",
+                    Title = "User Roles Changed",
                     Target = memberUpdateLog.Target,
                     UserResponsible = logEntry.UserResponsible,
                     Description = $"```diff\n{descSb}\n```",
@@ -289,7 +289,7 @@ public partial class AuditLogForwarding
                 banLog = (DiscordAuditLogBanEntry)logEntry;
                 options = new()
                 {
-                    Title = "User unbanned",
+                    Title = "User Unbanned",
                     Target = banLog.Target,
                     UserResponsible = logEntry.UserResponsible,
                     Reason = logEntry.Reason,
@@ -322,9 +322,10 @@ public partial class AuditLogForwarding
 
         logExtraField ??= ("Moderation info", ModerationTracker.GetObservationStringFor(args.Guild.Id, removedUser.Id));
         
+        var capitalizedAction = actioned.Length > 1 ? char.ToUpper(actioned[0]) + actioned[1..] : actioned.ToUpper();
         options = new()
         {
-            Title = $"User {actioned}",
+            Title = $"User {capitalizedAction}",
             UserResponsible = logEntry.UserResponsible,
             Description = desc,
             Reason = logEntry.Reason,

@@ -161,7 +161,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
 
     private static async Task AnnounceFlaggedFiles(Mod modData, List<string> flaggedFilenames)
     {
-        string desc = $"Flagged for...\n- {Logger.EnsureShorterThan(string.Join("\n- ", flaggedFilenames), 4000)}";
+        string desc = $"Flagged for...\n- {Logger.EnsureShorterThan(string.Join("\n- ", flaggedFilenames), 3950)}";
         
         DiscordEmbedBuilder deb = new()
         {
@@ -259,7 +259,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         
         PersistentData.WritePersistentData();
         AutoflagRegexes.Clear();
-        await ctx.RespondAsync($"Done! Here's the new flag list:\n- `{string.Join("\n- `", PersistentData.values.filenameFlagList)}`", true);
+        await ctx.RespondAsync($"Done! Here's the new flag list:\n- `{string.Join("`\n- `", PersistentData.values.filenameFlagList)}`", true);
     }
     
     [Command("addflag"), Description("Add something to the list of RegExes that will trigger the bot to flag an upload")]
@@ -275,6 +275,6 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         PersistentData.values.filenameFlagList.Add(flagToAdd);
         PersistentData.WritePersistentData();
         AutoflagRegexes.Clear();
-        await ctx.RespondAsync($"Done! Here's the new flag list:\n- `{string.Join("\n- `", PersistentData.values.filenameFlagList)}`", true);
+        await ctx.RespondAsync($"Done! Here's the new flag list:\n- `{string.Join("`\n- `", PersistentData.values.filenameFlagList)}`", true);
     }
 }
