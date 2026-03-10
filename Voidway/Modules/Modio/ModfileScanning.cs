@@ -127,6 +127,8 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
             Logger.Put($"Didn't get a file, bailing on scanning mod {modData.Name} ({modData.NameId}, #ID {modData.Id}).");
             return;
         }
+        
+        await ScanZipForFlaggedFilenames(zip, modData);
 
         var heuristics = ClassifyZipContents(zip);
 
@@ -134,10 +136,11 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         {
             DontAnnounceThese.Add(modData.Id);
             await AnnounceFileScan(modData, heuristics);
-            return;
         }
+    }
 
-
+    private static async Task ScanZipForFlaggedFilenames(ZipArchive zip, Mod modData)
+    {
         List<string> flaggedFilenames = [];
         
         foreach (var regex in AutoflagRegexes)
