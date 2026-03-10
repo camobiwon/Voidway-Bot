@@ -191,9 +191,9 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
                     if (censorUploadsInThisServer)
                         continue;
                     
-                    
-                    Logger.Put($"Continuing to announce {modData.Name} ({modData.NameId}, #ID {modData.Id}) despite its censored content due to server cfg!");
+                    Logger.Put($"Announcing {modData.Name} ({modData.NameId}, #ID {modData.Id}) despite censored content due to {channel.Guild.Name}'s cfg");
                 }
+                
                 try
                 {
                     var msg = await channel.SendMessageAsync(messageBuilder);
