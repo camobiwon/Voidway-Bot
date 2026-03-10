@@ -67,6 +67,14 @@ internal class CommentFlagging(Bot bot) : ModuleBase(bot)
         if (!moderationResult.Flagged)
             return;
         
+        var flaggedCategories = GetFlaggedCategories(moderationResult);
+        if (flaggedCategories.All(tuple => tuple.confidence > 0.5))
+        {
+            var max = flaggedCategories.MaxBy(tuple => tuple.confidence);
+            Logger.Put($"OpenAI says a comment is flagged but the highest confidence is {max.name} @ {Math.Round(max.confidence * 100, 2)}% so we ignore");
+            return;
+        }
+        
         // ok actually start building the "this person got flagged" message
         var author = commentData?.SubmittedBy;
 
@@ -85,7 +93,6 @@ internal class CommentFlagging(Bot bot) : ModuleBase(bot)
 
         string commentContent = Formatter.Sanitize(commentData!.Content).ReplaceLineEndings();
 
-        var flaggedCategories = GetFlaggedCategories(moderationResult);
         string maxCategoryStr = Stringify(flaggedCategories.OrderByDescending(tuple => tuple.confidence).First());
         string allCategoriesStr = string.Join(", ", flaggedCategories.Select(Stringify));
 
