@@ -20,7 +20,6 @@ public class ModerationTracker(Bot bot) : ModuleBase(bot)
             guildMessageCalendar = [];
             PersistentData.values.observedMessages.Add(args.Guild.Id, guildMessageCalendar);
         }
-
         
         if (!guildMessageCalendar.TryGetValue(Today, out var userMessageCounts))
         {
