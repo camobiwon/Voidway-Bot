@@ -108,15 +108,18 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
             announcedMods[unchecked((uint)modData.NameId.GetHashCode())] = messageList;
         
         // Spam checks
+        bool isSpamProbably = false;
         if (Config.values.modioTagSpamThreshold != -1 && modData.Tags.Count >= Config.values.modioTagSpamThreshold)
         {
             Logger.Put($"Mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) has {modData.Tags.Count} tags, at/over the {Config.values.modioTagSpamThreshold} threshold to be considered tagspam. Not announcing!");
-            return;
+            isSpamProbably = true;
+            // return;
         }
         if (uploadType == ModUploadType.Unknown)
         {
             Logger.Warn($"Mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) was not recognized (from tags) as any actual mod.");
-            return;
+            isSpamProbably = true;
+            // return;
         }
         
         // scanned mod checks
@@ -186,12 +189,12 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
             foreach (var channel in announcementChannels[uploadType])
             {
                 var censorUploadsInThisServer = !channel.GuildId.HasValue || !ServerConfig.GetConfig(channel.GuildId.Value).dontCensorModUploads;
-                if (hasCensoredContent)
+                if (hasCensoredContent || isSpamProbably)
                 {
                     if (censorUploadsInThisServer)
                         continue;
                     
-                    Logger.Put($"Announcing {modData.Name} ({modData.NameId}, #ID {modData.Id}) despite censored content due to {channel.Guild.Name}'s cfg");
+                    Logger.Put($"Announcing {modData.Name} ({modData.NameId}, #ID {modData.Id}) despite spam/censored content due to {channel.Guild.Name}'s cfg");
                 }
                 
                 try
