@@ -20,13 +20,14 @@ public class ServerConfig
     public ulong moderationLogChannel = 0;
     public ulong msgLogChannel = 0;
     public ulong memberModNotesChannel = 0;
-    
+
     [TomlPrecedingComment("Mod.IO mod announcements")]
     public ulong allModsChannel = 0;
     public ulong avatarChannel = 0;
     public ulong levelChannel = 0;
     public ulong spawnableChanel = 0;
     public ulong utilityChanel = 0;
+    public bool dontCensorModUploads = false;
     
     [TomlPrecedingComment("Stuff for Mod.IO moderators")]
     public ulong malformedUploadChannel = 0;

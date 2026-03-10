@@ -129,6 +129,7 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
         var desc = modData.DescriptionPlaintext ?? modData.Description ?? "";
         var title = modData.Name ?? modData.NameId ?? "";
         string[] tags = modData.Tags.Select(tag => tag.Name ?? "").ToArray();
+        bool hasCensoredContent = false;
         foreach (string censorItem in Config.values.dontAnnounceModsWith)
         {
             if (tags.Any(t => t.Contains(censorItem, StringComparison.InvariantCultureIgnoreCase)))
@@ -136,27 +137,30 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
                 var highlightedTags = tags.Select(t => t.Replace(censorItem, $">> {censorItem.ToUpper()} <<",
                     StringComparison.InvariantCultureIgnoreCase));
                 Logger.Put(
-                    $"Tags on mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) contain '{censorItem}' -- ignoring!" +
+                    $"Tags on mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) contain '{censorItem}' -- censoring!" +
                     $"(Tags: {string.Join(", ", highlightedTags)}");
-                return;
+                hasCensoredContent = true;
+                break;
             }
 
             if (desc.Contains(censorItem, StringComparison.InvariantCultureIgnoreCase))
             {
 
                 Logger.Put(
-                    $"Description for mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) contains '{censorItem}' -- ignoring!" +
+                    $"Description for mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) contains '{censorItem}' -- censoring!" +
                     $"{desc.Replace(censorItem, $">> {censorItem.ToUpper()} <<", StringComparison.InvariantCultureIgnoreCase)}");
-                return;
+                hasCensoredContent = true;
+                break;
             }
             
             if (title.Contains(censorItem, StringComparison.InvariantCultureIgnoreCase))
             {
 
                 Logger.Put(
-                    $"Title for mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) contains '{censorItem}' -- ignoring!" +
+                    $"Title for mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) contains '{censorItem}' -- censoring!" +
                     $"{title.Replace(censorItem, $">> {censorItem.ToUpper()} <<", StringComparison.InvariantCultureIgnoreCase)}");
-                return;
+                hasCensoredContent = true;
+                break;
             }
         }
         
@@ -181,6 +185,15 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
 
             foreach (var channel in announcementChannels[uploadType])
             {
+                var censorUploadsInThisServer = !channel.GuildId.HasValue || !ServerConfig.GetConfig(channel.GuildId.Value).dontCensorModUploads;
+                if (hasCensoredContent)
+                {
+                    if (censorUploadsInThisServer)
+                        continue;
+                    
+                    
+                    Logger.Put($"Continuing to announce {modData.Name} ({modData.NameId}, #ID {modData.Id}) despite its censored content due to server cfg!");
+                }
                 try
                 {
                     var msg = await channel.SendMessageAsync(messageBuilder);
