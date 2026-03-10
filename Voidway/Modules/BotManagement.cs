@@ -6,6 +6,7 @@ using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 
 namespace Voidway.Modules;
 
@@ -13,6 +14,17 @@ namespace Voidway.Modules;
 [RequireApplicationOwner]
 public class BotManagement(Bot bot) : ModuleBase(bot)
 {
+    protected override async Task InitOneShot(GuildDownloadCompletedEventArgs args)
+    {
+        var client = bot.DiscordClient;
+        if (client is null)
+            return;
+        var app = await client.GetCurrentApplicationAsync();
+        Logger.Put($"Owners: {string.Join(", ", app.Owners ?? [])}", LogType.Debug);
+        Logger.Put($"Team members: {string.Join(", ", app.Team?.Members ?? [])}", LogType.Debug);
+        Logger.Put($"Team: {app.Team}", LogType.Debug);
+    }
+
     [Command("reloadcfg")]
     [RequireApplicationOwner]
     public static async Task ReloadConfig(SlashCommandContext ctx)
