@@ -13,6 +13,9 @@ public class InviteBlocker(Bot bot) : ModuleBase(bot)
         var cfg = ServerConfig.GetConfig(args.Guild.Id);
         if (!cfg.filterGameInvites || string.IsNullOrWhiteSpace(cfg.sendWhenSomeoneSendsGameInvites))
             return; // dont filter invites in this server
+
+        if (cfg.dontFilterGameInvitesIn.Contains(args.Channel.Id))
+            return; // dont filter invites in this channel
         
         if (args.Message.Activity?.Type is not DiscordMessageActivityType.Join
             and not DiscordMessageActivityType.JoinRequest)
