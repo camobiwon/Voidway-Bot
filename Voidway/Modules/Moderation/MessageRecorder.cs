@@ -52,7 +52,6 @@ public class MessageRecorder(Bot bot) : ModuleBase(bot)
             return; // probably discord firing off an event for an attachment refresh 
 
         DiscordMessageBuilder msgBuilder = new DiscordMessageBuilder()
-            .SuppressEmbeds()
             .WithAllowedMentions([]);
         
         var mainEmbed = new DiscordEmbedBuilder()
