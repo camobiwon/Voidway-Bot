@@ -94,7 +94,7 @@ public partial class VoidwayActions
             max_length: 1024);
         var sentReasonInput = new DiscordTextInputComponent(
             VOIDWAY_USER_MESSAGE_REASON_FIELD_START + targetMember.Id,
-            "Not required, if left blank it will default to the logged reason...",
+            "Not reqd, defaults to the logged reason...",
             required: false,
             style: DiscordTextInputStyle.Paragraph,
             max_length: 1024);
@@ -211,7 +211,7 @@ public partial class VoidwayActions
             max_length: 1024);
         var sentReasonInput = new DiscordTextInputComponent(
             VOIDWAY_USER_MESSAGE_REASON_FIELD_START + targetMember.Id,
-            "Not required, if left blank it will default to the logged reason...",
+            "Not reqd, defaults to the logged reason...",
             required: false,
             style: DiscordTextInputStyle.Paragraph,
             max_length: 1024);
@@ -320,7 +320,7 @@ public partial class VoidwayActions
             max_length: 1024);
         var sentReasonInput = new DiscordTextInputComponent(
             VOIDWAY_USER_MESSAGE_REASON_FIELD_START + targetMember.Id,
-            "Not required, if left blank it will default to the logged reason...",
+            "Not reqd, defaults to the logged reason...",
             required: false,
             style: DiscordTextInputStyle.Paragraph,
             max_length: 1024);
