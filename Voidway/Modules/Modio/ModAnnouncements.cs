@@ -202,6 +202,8 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
                     var msg = await channel.SendMessageAsync(messageBuilder);
                     messageList.Add(msg);
                     sentMessageCount++;
+
+                    await TryReact(msg, DiscordEmoji.FromUnicode("👍"), DiscordEmoji.FromUnicode("👎"));
                 }
                 catch (Exception ex)
                 {
