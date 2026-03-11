@@ -162,7 +162,7 @@ public partial class VoidwayActions
 
             var options = new ModerationLogOptions()
             {
-                Title = "User banned (via command)",
+                Title = "User Banned (via command)",
                 UserResponsible = ctx.Member,
                 Target = targetMember,
                 Reason = loggedReason,
@@ -269,7 +269,7 @@ public partial class VoidwayActions
 
             var options = new ModerationLogOptions()
             {
-                Title = "User kicked (via command)",
+                Title = "User Kicked (via command)",
                 UserResponsible = ctx.Member,
                 Target = targetMember,
                 Reason = loggedReason,
@@ -387,7 +387,7 @@ public partial class VoidwayActions
 
             var options = new ModerationLogOptions()
             {
-                Title = "User muted (via command)",
+                Title = "User Muted (via command)",
                 UserResponsible = ctx.Member,
                 Target = targetMember,
                 Reason = loggedReason,

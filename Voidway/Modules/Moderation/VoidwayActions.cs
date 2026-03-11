@@ -86,7 +86,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         
         var options = new ModerationLogOptions()
         {
-            Title = "User banned (via command)",
+            Title = "User Banned (via command)",
             UserResponsible = ctx.Member,
             Target = member,
             Reason = logReason,
@@ -153,7 +153,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         try
         {
             await member.RemoveAsync($"By {ctx.User.Username}: {logReason}");
-            await ctx.Interaction.RespondOrAppend($"{content}\nMessaged & kicked {member.Username}!");
+            await ctx.Interaction.RespondOrAppend($"Messaged & kicked {member.Username}!");
         }
         catch (Exception ex)
         {
@@ -166,7 +166,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         
         var options = new ModerationLogOptions()
         {
-            Title = "User kicked (via command)",
+            Title = "User Kicked (via command)",
             UserResponsible = ctx.Member,
             Target = member,
             Reason = logReason,
@@ -242,7 +242,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         
         var options = new ModerationLogOptions()
         {
-            Title = "User muted (via command)",
+            Title = "User Muted (via command)",
             UserResponsible = ctx.Member,
             Target = member,
             Reason = logReason,
