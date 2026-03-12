@@ -38,11 +38,16 @@ public partial class AuditLogForwarding
             case DiscordAuditLogActionType.MessageBulkDelete:
                 DiscordAuditLogMessageEntry msgLog = (DiscordAuditLogMessageEntry)logEntry;
                 // Should this be handled in MessageRecorder?
+
+                string messageCount = msgLog.MessageCount?.ToString() ?? "Unknown amount (Thanks Discord!) of";
+                string channelMention = (msgLog.Channel?.Id ?? default) != default
+                                        ? Formatter.Mention(msgLog.Channel!)
+                                        : "unknown channel (Thanks Discord!)";
                 options = new()
                 {
                     Title = "Messages Purged",
                     UserResponsible = logEntry.UserResponsible,
-                    Description = $"{msgLog.MessageCount} messages purged from {Formatter.Mention(msgLog.Channel)}",
+                    Description = $"{messageCount} messages purged from {channelMention}",
                     Reason = msgLog.Reason,
                     Color = DiscordColor.Orange,
                 };
