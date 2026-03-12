@@ -31,7 +31,6 @@ public enum ModContentHeuristic : ulong
 
 partial class ModfileScanning
 {
-    private static HttpClient downloadClient = new HttpClient();
     private static ModContentHeuristic ClassifyZipContents(ZipArchive zip)
     {
         ModContentHeuristic ret = ModContentHeuristic.UnrecognizedNoMod;

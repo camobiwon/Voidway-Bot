@@ -19,10 +19,10 @@ namespace Voidway.Modules.Modio;
 [Command("modscanning")]
 internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
 {
-    public static List<uint> DontAnnounceThese = [];
+    public static HashSet<uint> DontAnnounceThese = [];
     
     private static int MaxFilesizeBytes => Config.values.modioMaxFilesize * 1024 * 1024;
-    private static HttpClient client;
+    private static readonly HttpClient DownloadClient = new HttpClient();
     private static readonly HashSet<DiscordChannel> Channels = [];
 
     private static List<Regex> AutoflagRegexes
@@ -145,16 +145,21 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
     {
         List<string> flaggedFilenames = [];
         
-        foreach (var regex in AutoflagRegexes)
+        foreach (var zipEntry in zip.Entries)
         {
-            foreach (var zipEntry in zip.Entries)
+            string displayName = zipEntry.FullName;
+            bool flagged = false;
+            foreach (var regex in AutoflagRegexes)
             {
                 if (regex.IsMatch(zipEntry.FullName))
                 {
-                    string bolded = regex.Replace(zipEntry.FullName, match => $"**{match.Value}**");
-                    flaggedFilenames.Add(bolded);
+                    displayName = regex.Replace(displayName, match => $"**{match.Value}**");
+                    flagged = true;
                 }
             }
+
+            if (flagged)
+                flaggedFilenames.Add(displayName);
         }
 
         if (flaggedFilenames.Count != 0)
@@ -166,7 +171,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
 
     private static async Task AnnounceFlaggedFiles(Mod modData, List<string> flaggedFilenames)
     {
-        string desc = $"Flagged for...\n- {Logger.EnsureShorterThan(string.Join("\n- ", flaggedFilenames), 3950)}";
+        string desc = $"Flagged for...\n- `{Logger.EnsureShorterThan(string.Join("`\n`", flaggedFilenames), 3950)}`";
         
         DiscordEmbedBuilder deb = new()
         {
@@ -185,7 +190,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
             await channel.SendMessageAsync(deb.Build());
         }
         
-        Logger.Put($"Announced in {Channels.Count} channel(s) that mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) was flagged for:\n{flaggedFilenames}", LogType.Normal, false);
+        Logger.Put($"Announced in {Channels.Count} channel(s) that mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) was flagged for:\n{string.Join(", ", flaggedFilenames)}", LogType.Normal, false);
     }
 
     private static async Task AnnounceFileScan(Mod modData, ModContentHeuristic filenameHeuristic)
@@ -213,7 +218,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
     {
         if (download.BinaryUrl is null)
             return null;
-        var stream = await downloadClient.GetStreamAsync(download.BinaryUrl);
+        var stream = await DownloadClient.GetStreamAsync(download.BinaryUrl);
         ZipArchive zip = new(stream);
         return zip;
     }
@@ -282,4 +287,5 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         AutoflagRegexes.Clear();
         await ctx.RespondAsync($"Done! Here's the new flag list:\n- `{string.Join("`\n- `", PersistentData.values.filenameFlagList)}`", true);
     }
+
 }
