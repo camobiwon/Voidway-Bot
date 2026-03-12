@@ -99,7 +99,7 @@ partial class ModfileScanning
         if (hasVideo)
             ret |= ModContentHeuristic.Video;
         
-        Logger.Put($"Detected {ret} from file extensions: {fileExtensions}", LogType.Trace);
+        Logger.Put($"Detected {ret} from file extensions: {string.Join(", ", fileExtensions)}", LogType.Trace);
 
         return ret;
     }
