@@ -6,7 +6,6 @@ using Tomlet.Models;
 
 namespace Voidway;
 
-
 internal class PersistentData
 {
     public static event Action? PersistentDataChanged;
