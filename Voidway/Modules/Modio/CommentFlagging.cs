@@ -59,31 +59,42 @@ internal class CommentFlagging(Bot bot) : ModuleBase(bot)
         
         var commentData = await search.First();
         var modData = await parentModClient.Get();
-        
+
         if (commentData?.Content is null)
+        {
+            Logger.Warn($"Mod.IO's API is well made: A comment (#ID {commentData?.Id.ToString() ?? "<NO ID LOL>"}) has no content? LOL? How?");
             return;
+        }
         
         var moderationResult = (await aiModeration.ClassifyTextAsync(commentData.Content)).Value;
         if (!moderationResult.Flagged)
+        {
+            Logger.Put($"Comment (#ID {commentData.Id}) wasn't flagged by OpenAI (Content {Logger.EnsureShorterThan(commentData.Content, 50)}).");
             return;
+        }
         
         var flaggedCategories = GetFlaggedCategories(moderationResult);
-        if (flaggedCategories.All(tuple => tuple.confidence > 0.5))
+        var max = flaggedCategories.MaxBy(tuple => tuple.confidence);
+        Logger.Put($"Comment (#ID {commentData.Id}) was flagged in {flaggedCategories.Count} categories (Content {Logger.EnsureShorterThan(commentData.Content, 50)})");
+        Logger.Put($"Flagged categories: {string.Join(", ", flaggedCategories.Select(tup => $"{tup.name}: {Math.Round(tup.confidence)}%"))})");
+        if (max.confidence < 0.5)
         {
-            var max = flaggedCategories.MaxBy(tuple => tuple.confidence);
-            Logger.Put($"OpenAI says a comment is flagged but the highest confidence is {max.name} @ {Math.Round(max.confidence * 100, 2)}% so we ignore");
+            Logger.Put($"OpenAI's highest confidence is {max.name} @ {Math.Round(max.confidence * 100, 2)}% so we ignore, lol.");
             return;
         }
         
         // ok actually start building the "this person got flagged" message
-        var author = commentData?.SubmittedBy;
+        var author = commentData.SubmittedBy;
 
         if (author is null)
+        {
+            Logger.Warn($"Mod.IO's API messed up! We got a FLAGGED comment (#ID {commentData.Id}, info above) but didn't get the AUTHOR that posted it!!!");
             return;
+        }
         
         string? authorName = author.Username ?? author.NameId;
         if (!string.IsNullOrWhiteSpace(authorName) && !string.IsNullOrWhiteSpace(author.ProfileUrl?.ToString()))
-            authorName = $"[{authorName}](https://mod.io/g/bonelab/{author.NameId}/info#comments)";
+            authorName = $"[{authorName}](https://mod.io/g/bonelab/u/{author.NameId}/info#comments)";
         authorName ??= $"<A user with the number ID {author.Id}>";
         
         string? modName = modData.Name ?? modData.NameId;

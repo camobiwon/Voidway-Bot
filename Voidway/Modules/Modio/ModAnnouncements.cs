@@ -213,6 +213,7 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
         }
         
         Logger.Put($"Sent {sentMessageCount} messages to announce {modData.NameId}");
+        _ = Task.Delay(TimeSpan.FromMinutes(15)).ContinueWith(_ => UpdateAnnouncement(modData.Id));
         // untrack after a while because we do not need to care about shit past like, a day
         _ = Task.Delay(TimeSpan.FromDays(1)).ContinueWith(_ =>
         {
@@ -245,7 +246,7 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
                 // dnc
             }
         }
-        Logger.Put($"Unannounced mod w/ #ID {modId}. {unannounceCount} successful deletion(s), {failCount} failed deletion(s)");
+        Logger.Put($"Unannounced mod w/ #ID {modId}. {unannounceCount} successful deletion(s) & {failCount} failed deletion(s)");
     }
 
     public static async Task UpdateAnnouncement(uint modId)
@@ -291,8 +292,10 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
                 Logger.Put($"Failed to parse number from second match group {reqString} (with ? removed from start) -- returning original full string {match.Value}");
                 return match.Value;
             }
-            
-            return $"{match.Groups[0].Value}?{num + 1}"; 
+
+            string ret = $"{match.Groups[0].Value}?{num + 1}"; 
+            Logger.Put($"Replacing for new embed {match} => {ret}");
+            return ret; 
         }
 
         Logger.Put(

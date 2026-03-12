@@ -81,8 +81,9 @@ internal static class Logger
         logStatements.PushBack(fileString);
     }
 
-    public static string EnsureShorterThan(string str, int maxLen, string cutoffSignifier = "...")
+    public static string EnsureShorterThan(string? str, int maxLen, string cutoffSignifier = "...")
     {
+        str ??= "<N/A>";
         if (str.Length < maxLen) return str;
 
         return str[..(maxLen - cutoffSignifier.Length)] + cutoffSignifier;
