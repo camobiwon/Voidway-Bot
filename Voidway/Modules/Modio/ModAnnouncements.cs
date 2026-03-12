@@ -280,11 +280,16 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
 
     private static string LinkUpdater(Match match)
     {
-        if (match.Groups.Count == 0)
+        var uniqueMatches = match.Groups.Cast<Group>()
+            .Select(g => g.ToString())
+            .Distinct()
+            .Where(str => !string.IsNullOrWhiteSpace(str))
+            .ToArray();
+        if (uniqueMatches.Length <= 1)
         {
             return match.Value + "?1";
         }
-        else if (match.Groups.Count == 2)
+        else if (uniqueMatches.Length == 2)
         {
             string reqString = match.Groups[1].Value;
             if (!int.TryParse(reqString.TrimStart('?'), out var num))

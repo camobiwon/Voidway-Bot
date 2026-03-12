@@ -69,13 +69,13 @@ internal class CommentFlagging(Bot bot) : ModuleBase(bot)
         var moderationResult = (await aiModeration.ClassifyTextAsync(commentData.Content)).Value;
         if (!moderationResult.Flagged)
         {
-            Logger.Put($"Comment (#ID {commentData.Id}) wasn't flagged by OpenAI (Content {Logger.EnsureShorterThan(commentData.Content, 50)}).");
+            Logger.Put($"Comment (#ID {commentData.Id}) wasn't flagged by OpenAI (Content: {Logger.EnsureShorterThan(commentData.Content, 50)}).");
             return;
         }
         
         var flaggedCategories = GetFlaggedCategories(moderationResult);
         var max = flaggedCategories.MaxBy(tuple => tuple.confidence);
-        Logger.Put($"Comment (#ID {commentData.Id}) was flagged in {flaggedCategories.Count} categories (Content {Logger.EnsureShorterThan(commentData.Content, 50)})");
+        Logger.Put($"Comment (#ID {commentData.Id}) was flagged in {flaggedCategories.Count} categories (Content: {Logger.EnsureShorterThan(commentData.Content, 50)})");
         Logger.Put($"Flagged categories: {string.Join(", ", flaggedCategories.Select(tup => $"{tup.name}: {Math.Round(tup.confidence)}%"))})");
         if (max.confidence < 0.5)
         {

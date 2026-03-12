@@ -88,7 +88,7 @@ public abstract partial class ModuleBase
 
         if (needStop)
         {
-            Logger.Put($"Event type {args.GetType().Name} was blocked from propagation by {GetType().Name}", LogType.Trace);
+            Logger.Put($"Event type {args.GetType().Name} was blocked from propagation by {GetType().Name}");
             DontPropagate.PushBack(args);
         }
         

@@ -25,7 +25,8 @@ public enum ModContentHeuristic : ulong
     TiktokData = 1 << 15, // this has happened TWICE somehow.
     Installer = 1 << 16,
     Executable = 1 << 17,
-    MacExecutableOrInstaller = 1 << 18
+    MacExecutableOrInstaller = 1 << 18,
+    Video = 1 << 19,
 }
 
 partial class ModfileScanning
@@ -41,6 +42,7 @@ partial class ModfileScanning
         string[] winExecExts = [".exe", ".bat", ".cmd", "ps1"];
         string[] winInstallerExts = [".msi", ".msix", ".appx", ".appxbundle"];
         string[] macAppAndInstallerExts = [".dmg", ".pkg", ".app", ".sh", ".command"];
+        string[] videoExts = [".mp4", ".webm", ".avi", ".mov"];
             
         string[] filePaths = zip.Entries.Select(ze => ze.FullName.ToLower()).ToArray();
         HashSet<string> fileExtensions = filePaths.Select(Path.GetExtension).ToHashSet()!;
@@ -63,6 +65,7 @@ partial class ModfileScanning
         bool hasInstaller = winInstallerExts.Any(fileExtensions.Contains);
         bool hasExecutable = winExecExts.Any(fileExtensions.Contains);
         bool hasMacExecOrInstaller = macAppAndInstallerExts.Any(fileExtensions.Contains);
+        bool hasVideo = videoExts.Any(fileExtensions.Contains);
 
         if (isLikelyValidMod)
             ret |= ModContentHeuristic.MarrowMod;
@@ -94,6 +97,10 @@ partial class ModfileScanning
             ret |= ModContentHeuristic.Executable;
         if (hasMacExecOrInstaller)
             ret |= ModContentHeuristic.MacExecutableOrInstaller;
+        if (hasVideo)
+            ret |= ModContentHeuristic.Video;
+        
+        Logger.Put($"Detected {ret} from file extensions: {fileExtensions}", LogType.Trace);
 
         return ret;
     }

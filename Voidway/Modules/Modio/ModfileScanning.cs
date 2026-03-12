@@ -131,12 +131,14 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         await ScanZipForFlaggedFilenames(zip, modData);
 
         var heuristics = ClassifyZipContents(zip);
-
-        if (!heuristics.HasFlag(ModContentHeuristic.MarrowMod) && !heuristics.HasFlag(ModContentHeuristic.MarrowReplacer))
+        
+        if (heuristics.HasFlag(ModContentHeuristic.MarrowMod) || heuristics.HasFlag(ModContentHeuristic.MarrowReplacer))
         {
-            DontAnnounceThese.Add(modData.Id);
-            await AnnounceFileScan(modData, heuristics);
+            return;
         }
+        
+        DontAnnounceThese.Add(modData.Id);
+        await AnnounceFileScan(modData, heuristics);
     }
 
     private static async Task ScanZipForFlaggedFilenames(ZipArchive zip, Mod modData)
