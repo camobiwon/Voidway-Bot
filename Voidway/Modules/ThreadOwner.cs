@@ -130,7 +130,7 @@ public class ThreadOwner(Bot bot) : ModuleBase(bot)
         
         if (!cfg.threadOwnersCanRemoveThreadMembers)
         {
-            await ctx.RespondAsync("This server doesn't let thread owners delete messages.", true);
+            await ctx.RespondAsync("This server doesn't let thread owners remove people from their threads.", true);
             return;
         }
 
@@ -146,5 +146,45 @@ public class ThreadOwner(Bot bot) : ModuleBase(bot)
             await ctx.RespondAsync($"There was an error: {ex.GetType().FullName} - {ex.Message}", true);
         }
 
+    }
+    
+    
+    // ReSharper disable once StringLiteralTypo
+    [Command("clear reactions")]
+    [SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
+    [RequireThreadOwner]
+    [RequireGuild]
+    public async Task ClearReactions(SlashCommandContext ctx, DiscordMessage msg)
+    {
+        if (ctx.Guild is null)
+        {
+            await ctx.RespondAsync("This can only be run from a server!", true);
+            return;
+        }
+        
+        if (ctx.Channel is not DiscordThreadChannel thread || thread.ThreadMetadata.IsArchived)
+        {
+            await ctx.RespondAsync("This can only be run from an active thread!", true);
+            return;
+        }
+        
+        var cfg = ServerConfig.GetConfig(ctx.Guild.Id);
+        
+        if (!cfg.threadOwnersCanClearReactions)
+        {
+            await ctx.RespondAsync("This server doesn't let thread owners clear message reactions.", true);
+            return;
+        }
+
+        try
+        {
+            await msg.DeleteAllReactionsAsync("Requested by thread owner");
+            await ctx.RespondAsync($"Done!", true);
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"Error while clearing reactions on ", ex);
+            await ctx.RespondAsync($"Failed to clear reactions (try letting the developer know!): {ex}", true);
+        }
     }
 }

@@ -32,7 +32,6 @@ public class ServerConfig
     [TomlPrecedingComment("Stuff for Mod.IO moderators")]
     public ulong malformedUploadChannel = 0;
     public ulong commentModerationChannel = 0;
-
     
     [TomlPrecedingComment("Removes game invites from non-privileged users ")]
     public bool filterGameInvites = false;
@@ -45,6 +44,7 @@ public class ServerConfig
     public bool threadOwnersCanDeleteMessages;
     public bool threadOwnersCanRemoveThreadMembers;
     public bool threadOwnersCanPinMessages;
+    public bool threadOwnersCanClearReactions;
 
     private bool IsOld()
     {
