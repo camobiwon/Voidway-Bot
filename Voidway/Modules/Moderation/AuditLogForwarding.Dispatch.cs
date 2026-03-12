@@ -63,17 +63,42 @@ public partial class AuditLogForwarding
             // this kind of has to be handled or have a handlER from the member update event to keep track of whether they're timed out beforehand  
             case DiscordAuditLogActionType.MemberUpdate:
                 DiscordAuditLogMemberUpdateEntry memberUpdateLog = (DiscordAuditLogMemberUpdateEntry)logEntry;
-                if (memberUpdateLog.UserResponsible is null
-                    || memberUpdateLog.UserResponsible == memberUpdateLog.Target)
+                bool timedOutBefore = memberUpdateLog.TimeoutChange.Before.HasValue
+                                      && memberUpdateLog.TimeoutChange.Before.Value > DateTime.Now;
+                bool timedOutAfter = memberUpdateLog.TimeoutChange.After.HasValue
+                                     && memberUpdateLog.TimeoutChange.After.Value > DateTime.Now;
+
+                #region AutoMod timing people out
+                
+                if (memberUpdateLog.UserResponsible is null)
+                {
+                    if (!timedOutBefore && timedOutAfter)
+                    {
+                        string? autoModDesc = memberUpdateLog.TimeoutChange.After.HasValue
+                            ? $"Ends in {Formatter.Timestamp(memberUpdateLog.TimeoutChange.After.Value)}"
+                            : null;
+                        var autoModTimeoutOptions = new ModerationLogOptions()
+                        {
+                            Title = "User Muted (by AutoMod)",
+                            Description = autoModDesc,
+                            UserResponsible = null,
+                            DoneByAutoMod = true,
+                            Target = memberUpdateLog.Target,
+                            Reason = logEntry.Reason,
+                            Color = DiscordColor.Grayple,
+                        };
+                        
+                        await LogModerationAction(args.Guild, autoModTimeoutOptions);
+                        return;
+                    }
+                }
+
+                #endregion
+                
+                if (memberUpdateLog.UserResponsible == memberUpdateLog.Target)
                     return; // user did it to themselves
                 
                 #region Timeout handling
-                
-                bool timedOutBefore = memberUpdateLog.TimeoutChange.Before.HasValue
-                                      && memberUpdateLog.TimeoutChange.Before.Value > DateTimeOffset.Now;
-                bool timedOutAfter = memberUpdateLog.TimeoutChange.After.HasValue
-                                      && memberUpdateLog.TimeoutChange.After.Value > DateTimeOffset.Now;
-                
 
                 bool newlyTimedOut = !timedOutBefore && timedOutAfter;
                 bool timeoutChanged = timedOutBefore && timedOutAfter;
@@ -81,13 +106,13 @@ public partial class AuditLogForwarding
                 
                 DateTimeOffset? timeoutEnd = memberUpdateLog.Target.CommunicationDisabledUntil;
                 string? desc = timeoutEnd.HasValue ? $"Ends in {Formatter.Timestamp(timeoutEnd.Value)}" : null;
-                if (newlyTimedOut && timeoutEnd.HasValue)
+                if (newlyTimedOut)
                 {
                     await LogActionAndProvideMessageOptions(client, args, memberUpdateLog.Target, "muted", color: DiscordColor.Yellow, desc: desc);
                     return;
                 }
 
-                if (timeoutChanged && timeoutEnd.HasValue)
+                if (timeoutChanged)
                 {
                     var timeoutBefore = memberUpdateLog.TimeoutChange.Before;
                     bool? timeoutLengthened = !timeoutBefore.HasValue
@@ -311,13 +336,12 @@ public partial class AuditLogForwarding
         bool userStillAccessible = false;
         try
         {
-            var user = await client.GetUserAsync(targetUser.Id, true);
+            var user = await args.Guild.GetMemberAsync(targetUser.Id, true);
             userStillAccessible = true;
         }
         catch
         {
-            Logger.Put(
-                $"Ignore the above D#+ log, just seeing if a {actioned} user ({targetUser}) is still accessible (they're not)");
+            Logger.Put($"Ignore the above D#+ log, just seeing if a {actioned} user ({targetUser}) is still accessible (they're not)");
         }
 
         logExtraField ??= ("Moderation info", ModerationTracker.GetObservationStringFor(args.Guild.Id, targetUser.Id));

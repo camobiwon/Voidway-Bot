@@ -25,6 +25,8 @@ public class ModerationLogOptions
 
     public DiscordColor Color { get; init; } = DiscordColor.Grayple;
     
+    public bool DoneByAutoMod { get; init; } = false;
+    
     public Action<DiscordEmbedBuilder>? EmbedPostProcessor { get; init; }
     public Action<DiscordMessageBuilder>? BuilderPostProcessor { get; init; }
     public Action<DiscordMessage>? MessageSentHook { get; init; } 
@@ -84,7 +86,12 @@ public partial class AuditLogForwarding(Bot bot) : ModuleBase(bot)
             deb.AddField("User", Formatter.Mention(options.Target), true);
             deb.WithFooter($"User: {options.Target.Username} ({options.Target.Id})");
         }
-        deb.AddField("Moderator", options.UserResponsible is null ? "*Unknown*" : Formatter.Mention(options.UserResponsible), true);
+
+        string moderatorMention = options.UserResponsible is null
+            ? (options.DoneByAutoMod ? "AutoMod" : "*Unknown*")
+            : Formatter.Mention(options.UserResponsible);
+        
+        deb.AddField("Moderator", moderatorMention, true);
         if (!string.IsNullOrWhiteSpace(options.Reason))
         {
             deb.AddField("Reason", options.Reason, true);

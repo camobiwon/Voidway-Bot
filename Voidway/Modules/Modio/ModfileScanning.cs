@@ -23,7 +23,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
     
     private static int MaxFilesizeBytes => Config.values.modioMaxFilesize * 1024 * 1024;
     private static HttpClient client;
-    private static readonly List<DiscordChannel> Channels = [];
+    private static readonly HashSet<DiscordChannel> Channels = [];
 
     private static List<Regex> AutoflagRegexes
     {
@@ -76,7 +76,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
     {
         switch (arg.Event.EventType)
         {
-            case ModEventType.MOD_AVAILABLE:
+            // case ModEventType.MOD_AVAILABLE: mod posting already fires a modfile_changed event
             case ModEventType.MODFILE_CHANGED:
                 await ScanFiles(arg);
                 break;
