@@ -165,7 +165,6 @@ public class Bot
         new ThreadOwner(this);
         new BotManagement(this);
         new Honeypot(this);
-        new HoneypotActions(this);
 
         // modio modules
         new ModAnnouncements(this);
