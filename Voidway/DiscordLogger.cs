@@ -24,6 +24,13 @@ namespace Voidway
 
             public ILogger CreateLogger(string categoryName)
             {
+                if (Config.values.ignoreDiscordLogsFrom.Any(str =>
+                        categoryName.Contains(str, StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    Logger.Warn($"Giving Discord a null logger for the category {categoryName}");
+                    return NullLogger.Instance;
+                }
+                
                 return new DiscordLogger(categoryName);
             }
         }

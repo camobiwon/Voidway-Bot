@@ -22,6 +22,7 @@ internal class Config
     public bool logDiscordDebug = false;
     
     public string[] ignoreDiscordLogsWith = [ "unknown event" ];
+    public string[] ignoreDiscordLogsFrom = [ "HttpClient" ];
     
     #endregion
 
