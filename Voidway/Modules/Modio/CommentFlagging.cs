@@ -105,10 +105,10 @@ internal class CommentFlagging(Bot bot) : ModuleBase(bot)
         string commentContent = Formatter.Sanitize(commentData!.Content).ReplaceLineEndings();
 
         string maxCategoryStr = Stringify(flaggedCategories.OrderByDescending(tuple => tuple.confidence).First());
-        string allCategoriesStr = string.Join(", ", flaggedCategories.Select(Stringify));
+        string allCategoriesStr = string.Join(" | ", flaggedCategories.Select(Stringify));
 
-        string messageStr = $"# Comment by {authorName} on {modName} flagged!\n" +
-                            $"\"{Logger.EnsureShorterThan(commentContent, 500, "... *(truncated)*")}\"\n" +
+        string messageStr = $"**Comment by {authorName} on {modName} flagged!**\n\n" +
+                            $"\"{Logger.EnsureShorterThan(commentContent, 500, "... *(truncated)*")}\"\n\n" +
                             $"Highest flagged category: {maxCategoryStr}\n" +
                             $"-# All categories {allCategoriesStr}";
         var dmb = new DiscordMessageBuilder()
@@ -135,7 +135,7 @@ internal class CommentFlagging(Bot bot) : ModuleBase(bot)
 
     private static string Stringify((string, float) tuple)
     {
-        return $"**{tuple.Item1}** *({Math.Round(tuple.Item2 * 100, 2)}%)*";
+        return $"**{tuple.Item1}** (*{Math.Round(tuple.Item2 * 100, 2)}%*)";
     }
     
     private static List<(string name, float confidence)> GetFlaggedCategories(ModerationResult moderationResult)
