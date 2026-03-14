@@ -78,7 +78,8 @@ namespace Voidway
             {
                 case LogLevel.None:
                 case LogLevel.Trace:
-                case LogLevel.Debug when !Config.values.logDiscordDebug:
+                    // "long term" my ass, I don't need to know that I got a 200 response, that's log spam from the HTTP client. 
+                case LogLevel.Debug or LogLevel.Information when !Config.values.logDiscordDebug:
                     return false;
                 default:
                     return true;
