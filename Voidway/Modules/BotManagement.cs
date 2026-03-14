@@ -182,12 +182,21 @@ public class BotManagement(Bot bot) : ModuleBase(bot)
         var currExecLocation = entryPoint.Location;
         if (OperatingSystem.IsWindows()) currExecLocation = Path.ChangeExtension(currExecLocation, "exe");
         else currExecLocation = Path.ChangeExtension(currExecLocation, null).TrimEnd('.');
-
+        
+#if RELEASE
+        string? buildConfig = "Release";
+#elif DEBUG
+        string? buildConfig = "Debug";
+#else
+        string? buildConfig = null;
+#endif
+        
         RelaunchParameters parms = new()
         {
             buildProject = Path.Combine(rootFolder, "Voidway", "Voidway.csproj"),
             launchWorkingDir = Environment.CurrentDirectory,
             launchExecutable = currExecLocation,
+            buildConfiguration = buildConfig,
             initiatorId = ctx.User.Id
         };
 

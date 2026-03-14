@@ -17,13 +17,14 @@ class Program
         string projFolder = Path.GetDirectoryName(parms.buildProject) ?? Environment.CurrentDirectory;
         string projFile = Path.GetFileName(parms.buildProject)!;
         
+        string configuration = string.IsNullOrWhiteSpace(parms.buildConfiguration) ? "" : $" --configuration \"{parms.buildConfiguration}\"";
         string dotnetBuildOutput;
         Process proc = new()
         {
             StartInfo = new()
             {
                 FileName = "dotnet",
-                Arguments = $"build \"{projFile}\"",
+                Arguments = $"build \"{projFile}\"{configuration}",
                 WorkingDirectory = projFolder,
                 RedirectStandardOutput = true,
             }
