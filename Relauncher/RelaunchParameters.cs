@@ -8,7 +8,6 @@ public record class RelaunchParameters
     public string? buildProject;
     public string? launchExecutable;
     public string? launchWorkingDir;
-    public string? buildConfiguration;
     public ulong? initiatorId = null;
 
     public List<string> BuildLaunchParameters()
@@ -18,11 +17,8 @@ public record class RelaunchParameters
         [
             "BUILD=" + buildProject,
             "CONT=" + launchExecutable,
-            "PWD=" + launchWorkingDir
+            "PWD=" + launchWorkingDir,
         ];
-        
-        if (string.IsNullOrWhiteSpace(buildConfiguration))
-            ret.Add("CFG=" + buildConfiguration);
         if (initiatorId.HasValue)
             ret.Add("USERID=" + initiatorId.Value);
         
@@ -35,7 +31,6 @@ public record class RelaunchParameters
         string continueWith = args.First(arg => arg.StartsWith("CONT=")).Replace("CONT=", ""); // full path
         string continueRootFolder = args.First(arg => arg.StartsWith("PWD=")).Replace("PWD=", "");
         string? initiatorId = args.FirstOrDefault(arg => arg.StartsWith("USERID="))?.Replace("USERID=", ""); // optional
-        string? buildConfiguration = args.FirstOrDefault(arg => arg.StartsWith("CFG="))?.Replace("CFG=", "");
 
         ulong.TryParse(initiatorId ?? "", out var id);
         Console.WriteLine($"Initiator ID: {initiatorId}");
@@ -45,7 +40,6 @@ public record class RelaunchParameters
             buildProject = buildProject,
             launchExecutable = continueWith,
             launchWorkingDir = continueRootFolder,
-            buildConfiguration = buildConfiguration,
             initiatorId = id == default ? null : id,
         };
 
