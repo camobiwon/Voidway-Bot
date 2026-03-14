@@ -14,7 +14,7 @@ public partial class Honeypot : ModuleBase
 {
     [Command("set")]
     [RequireGuild]
-    [RequirePermissions(DiscordPermission.ManageGuild)]
+    [RequirePermissions([], [DiscordPermission.ManageGuild])]
     public async Task SetChannelCommand(
         SlashCommandContext ctx,
         [Description("The channel to use as a honeypot.")]
@@ -52,7 +52,7 @@ public partial class Honeypot : ModuleBase
 
     [Command("unset")]
     [RequireGuild]
-    [RequirePermissions(DiscordPermission.ManageGuild)]
+    [RequirePermissions([], [DiscordPermission.ManageGuild])]
     public async Task UnsetChannelCommand(
         SlashCommandContext ctx)
     {
@@ -129,7 +129,7 @@ public partial class Honeypot : ModuleBase
 
     [Command("remove")]
     [RequireGuild]
-    [RequirePermissions(DiscordPermission.ManageGuild)]
+    [RequirePermissions([], [DiscordPermission.ManageGuild])]
     public async Task RemoveRoleFromWhitelistCommand(
         SlashCommandContext ctx,
         [Description("Role to remove from the honeypot whitelist.")]
