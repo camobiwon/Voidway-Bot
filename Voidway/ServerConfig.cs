@@ -20,6 +20,8 @@ public class ServerConfig
     public ulong moderationLogChannel = 0;
     public ulong msgLogChannel = 0;
     public ulong memberModNotesChannel = 0;
+    public ulong honeypotChannel = 0;
+    public ulong[] honeypotRoleWhitelist = [];
 
     [TomlPrecedingComment("Mod.IO mod announcements")]
     public ulong allModsChannel = 0;
