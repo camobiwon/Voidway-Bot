@@ -180,7 +180,7 @@ public class Bot
     public async Task ConnectAsync()
     {
         if (ModIO.Value is not null)
-            await ModioEvents.Init(ModIO.Value);
+            await ModioHelper.Init(ModIO.Value);
         
         DiscordClient = discordBuilder.Build();
         Clients[DiscordClient] = this;
