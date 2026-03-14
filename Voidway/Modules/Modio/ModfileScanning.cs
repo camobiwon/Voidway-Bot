@@ -68,7 +68,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
     
     protected override Task InitOneShot(GuildDownloadCompletedEventArgs args)
     {
-        ModioEvents.OnEvent += OnModEvent;
+        ModioHelper.OnEvent += OnModEvent;
         return Task.CompletedTask;
     }
 
@@ -130,37 +130,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         
         await ScanZipForFlaggedFilenames(zip, modData);
 
-        var heuristics = ClassifyZipContents(zip);
-        
-        if (heuristics.HasFlag(ModContentHeuristic.MarrowMod) || heuristics.HasFlag(ModContentHeuristic.MarrowReplacer))
-        {
-            return;
-        }
-        
-        DontAnnounceThese.Add(modData.Id);
-        await AnnounceHeuristicResult(modData, heuristics);
-    }
-
-
-    private static async Task AnnounceHeuristicResult(Mod modData, ModContentHeuristic filenameHeuristic)
-    {
-        DiscordEmbedBuilder deb = new()
-        {
-            Author = new()
-            {
-                Url = modData.SubmittedBy?.ProfileUrl?.ToString(),
-                Name = modData.SubmittedBy is not null ? $"{modData.SubmittedBy.Username} (ID: {modData.SubmittedBy.NameId})" : "??? (Mod.io API is fantastic and reliable)",
-            },
-            Description = "Mod files has/have: " + filenameHeuristic.ToString(),
-            Title = $"{modData.Name} (ID: {modData.NameId})",
-            Url = modData.ProfileUrl?.ToString()
-        };
-        
-        foreach (var channel in Channels)
-        {
-            await channel.SendMessageAsync(deb.Build());
-        }
-        Logger.Put($"Announced in {Channels.Count} channel(s) that mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) contains: {filenameHeuristic}");
+        await ScanZipForHeuristics(zip, modData);
     }
 
     private static async Task<ZipArchive?> GetZip(Download download)
@@ -171,6 +141,4 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         ZipArchive zip = new(stream);
         return zip;
     }
-
-
 }

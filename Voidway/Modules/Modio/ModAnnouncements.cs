@@ -55,7 +55,7 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
 
     protected override async Task InitOneShot(GuildDownloadCompletedEventArgs args)
     {
-        ModioEvents.OnEvent += OnModioEvent;
+        ModioHelper.OnEvent += OnModioEvent;
     }
 
     private async Task OnModioEvent(ModioEventArgs args)
@@ -81,7 +81,7 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
         }
         catch (Exception ex)
         {
-            Logger.Warn($"Exception while dispatching a '{args.Event.EventType}' event for a mod with the number id {args.Event.ModId}");
+            Logger.Warn($"Exception while dispatching a '{args.Event.EventType}' event for a mod with the number id {args.Event.ModId}", ex);
         }
     }
 
@@ -386,7 +386,7 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
         }
         
         uint modId = unchecked((uint)modNumberId);
-        var clint = ModioEvents.BonelabClient; 
+        var clint = ModioHelper.BonelabClient; 
 
         if (clint is null)
         {

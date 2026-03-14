@@ -39,7 +39,7 @@ internal class CommentFlagging(Bot bot) : ModuleBase(bot)
 
     protected override Task InitOneShot(GuildDownloadCompletedEventArgs args)
     {
-        ModioEvents.OnEvent += OnModioEvent;
+        ModioHelper.OnEvent += OnModioEvent;
 
         return Task.CompletedTask;
     }
