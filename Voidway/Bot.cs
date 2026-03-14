@@ -200,6 +200,7 @@ public class Bot
             : (checkEx.Errors.Count == 1
                 ? "Failed check: "
                 : "Failed checks:\n") + string.Join("\n", checkEx.Errors.Select(d => d.ErrorMessage));
+
         
         int randomNumber = Random.Shared.Next();
         Logger.Error($" [{randomNumber}] Exception while executing command on command object {args.CommandObject}", args.Exception);
@@ -212,6 +213,13 @@ public class Bot
 
         if (args.Context is SlashCommandContext sctx)
         {
+            
+            if (checkEx is not null)
+            {
+                await sctx.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().AsEphemeral().WithContent(checksFailedMsg!));
+                return;
+            }
+            
             switch (sctx.Interaction.ResponseState)
             {
                 case DiscordInteractionResponseState.Unacknowledged:
