@@ -58,14 +58,10 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
         };
 
         await AuditLogForwarding.LogModerationAction(args.Guild, options);
-#if DEBUG
-        Logger.Put($"This is the part where {args.Author} would be banned if this weren't a Debug build");
-        return;
-#else
+        
         // WARNING:
         // The code below will ban people when ran in production.
-        // Use with caution in a test environment first.
-
+        // Use with caution in a test environment/server first.
         try
         {
             await args.Guild.BanMemberAsync(args.Author, TimeSpan.FromMinutes(15), options.Reason);
@@ -75,6 +71,5 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
             Logger.Error($"Failed to ban {args.Author} (initiated by {client.CurrentUser} for '{options.Reason}')! Details below", ex);
             return;
         }
-#endif
     }
 }
