@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Text;
 using DSharpPlus.Commands;
+using DSharpPlus.Commands.Exceptions;
 using DSharpPlus.Commands.Processors.MessageCommands;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Commands.Processors.UserCommands;
@@ -192,10 +194,21 @@ public class Bot
     
     private async Task CommandErrorHandler(CommandsExtension sender, DSharpPlus.Commands.EventArgs.CommandErroredEventArgs args)
     {
+        ChecksFailedException? checkEx = args.Exception as ChecksFailedException;
+        string? checksFailedMsg = checkEx is null
+            ? null
+            : (checkEx.Errors.Count == 1
+                ? "Failed check: "
+                : "Failed checks:\n") + string.Join("\n", checkEx.Errors.Select(d => d.ErrorMessage));
+        
         int randomNumber = Random.Shared.Next();
         Logger.Error($" [{randomNumber}] Exception while executing command on command object {args.CommandObject}", args.Exception);
         string userResponse = $"Exception while running your command! Tell the host/developer to look for {randomNumber} in the log!```\n{Logger.EnsureShorterThan(args.Exception.ToString(), 1750, "\n[cut off for Discord]")}```";
 
+        if (checksFailedMsg is not null)
+        {
+            userResponse = checksFailedMsg;
+        }
 
         if (args.Context is SlashCommandContext sctx)
         {
