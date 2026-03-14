@@ -164,6 +164,7 @@ public class Bot
         new VoidwayActions(this);
         new ThreadOwner(this);
         new BotManagement(this);
+        new Honeypot(this);
 
         // modio modules
         new ModAnnouncements(this);
