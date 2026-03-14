@@ -31,7 +31,6 @@ public partial class AuditLogForwarding
         }
 
         ModerationLogOptions options;
-        (string, string) moderationInfoField;
 
         switch (logEntry.ActionType)
         {

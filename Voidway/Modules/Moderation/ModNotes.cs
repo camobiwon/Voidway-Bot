@@ -26,7 +26,7 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
             var channel = await member.Guild.GetChannelAsync(cfg.memberModNotesChannel);
             return channel;
         }
-        catch (Exception ex)
+        catch
         {
             Logger.Warn($"Configured mod note channel {cfg.memberModNotesChannel} not found in {member.Guild}");
             return null;
@@ -53,6 +53,7 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
         }
         catch (Exception ex)
         {
+            Logger.Warn($"Failed to get mod notes message (for {member}) from {channel} w/ msg ID {msgId}, see below for more details", ex);
             inGuildDict[member.Guild.Id] = msgId;
             return null;
         }
