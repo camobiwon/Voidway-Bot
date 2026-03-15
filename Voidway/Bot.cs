@@ -194,32 +194,27 @@ public class Bot
     
     private async Task CommandErrorHandler(CommandsExtension sender, DSharpPlus.Commands.EventArgs.CommandErroredEventArgs args)
     {
-        ChecksFailedException? checkEx = args.Exception as ChecksFailedException;
-        string? checksFailedMsg = checkEx is null
-            ? null
-            : (checkEx.Errors.Count == 1
-                ? "Failed check: "
-                : "Failed checks:\n") + string.Join("\n", checkEx.Errors.Select(d => d.ErrorMessage));
 
+
+
+        string userResponse;
         
         int randomNumber = Random.Shared.Next();
-        Logger.Error($" [{randomNumber}] Exception while executing command on command object {args.CommandObject}", args.Exception);
-        string userResponse = $"Exception while running your command! Tell the host/developer to look for {randomNumber} in the log!```\n{Logger.EnsureShorterThan(args.Exception.ToString(), 1750, "\n[cut off for Discord]")}```";
 
-        if (checksFailedMsg is not null)
+        if (args.Exception is ChecksFailedException checkEx)
         {
-            userResponse = checksFailedMsg;
+            var errorStrings = checkEx.Errors.Select(d => d.ErrorMessage);
+            userResponse = $"One or more checks failed:\n{string.Join("\n", errorStrings)}";
+        }
+        else
+        {
+            Logger.Error($" [{randomNumber}] Exception while executing command on command object {args.CommandObject}", args.Exception);
+            userResponse = $"Exception while running your command! Tell the host/developer to look for {randomNumber} in the log!" +
+                           $"```\n{Logger.EnsureShorterThan(args.Exception.ToString(), 1750, "\n[cut off for Discord]")}```";
         }
 
         if (args.Context is SlashCommandContext sctx)
         {
-            
-            if (checkEx is not null)
-            {
-                await sctx.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().AsEphemeral().WithContent(checksFailedMsg!));
-                return;
-            }
-            
             switch (sctx.Interaction.ResponseState)
             {
                 case DiscordInteractionResponseState.Unacknowledged:
