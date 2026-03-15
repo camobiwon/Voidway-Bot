@@ -201,6 +201,8 @@ public class Bot
         
         int randomNumber = Random.Shared.Next();
 
+        
+        // if (args.Exception is AggregateException agEx && agEx.InnerExceptions.Count == 1 &&  agEx.InnerExceptions[0] is )
         if (args.Exception is ChecksFailedException checkEx)
         {
             var errorStrings = checkEx.Errors.Select(d => d.ErrorMessage);
@@ -209,7 +211,7 @@ public class Bot
         else
         {
             Logger.Error($" [{randomNumber}] Exception while executing command on command object {args.CommandObject}", args.Exception);
-            userResponse = $"Exception while running your command! Tell the host/developer to look for {randomNumber} in the log!" +
+            userResponse = $"Exception while running your command! Tell the host/developer to look for {randomNumber} in the log! (Exception type: {args.Exception.GetType().FullName})" +
                            $"```\n{Logger.EnsureShorterThan(args.Exception.ToString(), 1750, "\n[cut off for Discord]")}```";
         }
 
