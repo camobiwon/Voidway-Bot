@@ -22,6 +22,7 @@ public class ServerConfig
     public ulong memberModNotesChannel = 0;
     public ulong honeypotChannel = 0;
     public ulong[] honeypotRoleWhitelist = [];
+    public bool kickInsteadOfBan = true;
 
     [TomlPrecedingComment("Mod.IO mod announcements")]
     public ulong allModsChannel = 0;
