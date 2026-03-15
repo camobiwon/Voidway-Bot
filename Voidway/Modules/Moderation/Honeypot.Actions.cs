@@ -87,7 +87,7 @@ public partial class Honeypot : ModuleBase
 
     [Command("whitelist")]
     [RequireGuild]
-    [RequirePermissions(DiscordPermission.ManageGuild)]
+    [RequirePermissions([], [DiscordPermission.ManageGuild])]
     public async Task AddRoleToWhitelistCommand(
         SlashCommandContext ctx,
         [Description("Role to add to the honeypot whitelist.")]
