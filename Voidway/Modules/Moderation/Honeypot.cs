@@ -56,7 +56,7 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
             UserResponsible = client.CurrentUser,
             Target = args.Author,
             Reason = "Talked in the Honeypot channel.",
-            Color = DiscordColor.Red
+            Color = cfg.kickInsteadOfBan ? DiscordColor.Yellow : DiscordColor.Red
         };
 
         await AuditLogForwarding.LogModerationAction(args.Guild, options);

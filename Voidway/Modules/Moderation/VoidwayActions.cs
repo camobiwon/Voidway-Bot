@@ -52,17 +52,6 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         Logger.Put($"Banning {member} at the request of {ctx.Member}...");
 
         await AuditLogForwarding.MessageUserWithReason(ctx.Interaction, member, "banned", sendReason);
-        string? content = null;
-        try
-        {
-            var msg = await ctx.Interaction.GetOriginalResponseAsync();
-            content = msg.Content;
-        }
-        catch
-        {
-            // Whatever, it just rewrites the content instead of appending.
-        }
-        DiscordWebhookBuilder dwb = new(); // will need to use after 
         
         AuditLogForwarding.IgnoreThese.PushBack(new AuditLogInfo(
             ctx.Client.CurrentUser,
@@ -73,7 +62,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
         try
         {
             await member.BanAsync(deleteMessages ?? default, $"By {ctx.User.Username}: {logReason}");
-            await ctx.Interaction.RespondOrAppend($"{content}\nMessaged & banned {member.Username}!");
+            await ctx.Interaction.RespondOrAppend($"Messaged & banned {member.Username}!");
         }
         catch (Exception ex)
         {
