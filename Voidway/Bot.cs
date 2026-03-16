@@ -199,7 +199,7 @@ public class Bot
         // if (args.Exception is AggregateException agEx && agEx.InnerExceptions.Count == 1 &&  agEx.InnerExceptions[0] is )
         if (args.Exception is ChecksFailedException checkEx)
         {
-            var errorStrings = checkEx.Errors.Select(d => d.ErrorMessage);
+            var errorStrings = checkEx.Errors.Select(d => d.ErrorMessage).Distinct();
             userResponse = $"One or more checks failed:\n{string.Join("\n", errorStrings)}";
         }
         else
