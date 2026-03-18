@@ -41,7 +41,7 @@ public partial class AuditLogForwarding
                 string messageCount = msgLog.MessageCount?.ToString() ?? "Unknown amount (Thanks Discord!) of";
                 string channelMention = (msgLog.Channel?.Id ?? default) != default
                                         ? Formatter.Mention(msgLog.Channel!)
-                                        : "unknown channel (Thanks Discord!)";
+                                        : $"unknown channel (Thanks Discord!) {msgLog.Channel?.Name}";
                 options = new()
                 {
                     Title = "Messages Purged",
