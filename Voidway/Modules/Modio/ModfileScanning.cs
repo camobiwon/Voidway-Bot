@@ -24,6 +24,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
     private static int MaxFilesizeBytes => Config.values.modioMaxFilesize * 1024 * 1024;
     private static readonly HttpClient DownloadClient = new HttpClient();
     private static readonly HashSet<DiscordChannel> Channels = [];
+    private static readonly Dictionary<uint, DateTime> LastScanTimes = [];
 
     private static List<Regex> AutoflagRegexes
     {
@@ -76,7 +77,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
     {
         switch (arg.Event.EventType)
         {
-            // case ModEventType.MOD_AVAILABLE: mod posting already fires a modfile_changed event
+            case ModEventType.MOD_AVAILABLE: // mod posting is SUPPOSED to modfile_changed event, but doesn't always
             case ModEventType.MODFILE_CHANGED:
                 await ScanFiles(arg);
                 break;
@@ -105,6 +106,14 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
             Logger.Warn($"Failed to get zip file to scan! The download link for first file on {modData.NameId} was null");
             return;
         }
+
+        if (LastScanTimes.TryGetValue(modData.Id, out var lastScanTime) && lastScanTime + TimeSpan.FromMinutes(1) > DateTime.Now)
+        {
+            Logger.Warn($"Not scanning from {modioEventArgs.Event.EventType} event on {modData.NameId} (#ID {modData.Id}) --" +
+                        $"there was already an event within the last 1 minute that's been(/being) responded to.");
+            return;
+        }
+        LastScanTimes[modData.Id] = DateTime.Now;
 
         // early-out on easy checks before downloading
         if (file.VirusStatus == 1 && file.VirusPositive == 1)
