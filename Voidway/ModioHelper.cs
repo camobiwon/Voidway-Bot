@@ -103,11 +103,11 @@ public static partial class ModioHelper
     }
 
     /// <summary>
-    /// 
+    /// Retrieves a Mod.IO mod from its URL.
     /// </summary>
-    /// <param name="mods">Any ModsClient that can be used</param>
-    /// <param name="url"></param>
-    /// <returns>The mod data that was found, or <see langword="null"/> if none.</returns>
+    /// <param name="mods">Any ModsClient that can be used lol it just checks bonelab</param>
+    /// <param name="url">Any mod URL. Doesn't have to start with https or end with a slash.</param>
+    /// <returns>The mod data that was found, or <see langword="null"/> if none or not a mod.</returns>
     public static async Task<Mod?> GetFromUrl(this ModsClient mods, string url)
     {
         if (!TryParseUrl(url, out var clientType, out var nameId))
