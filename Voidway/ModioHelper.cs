@@ -77,21 +77,22 @@ public static partial class ModioHelper
 
     private static bool TryParseUrl(string url, [MaybeNullWhen(false)] out string clientType, [MaybeNullWhen(false)] out string nameId)
     {
+        url = url.Split('?')[0].Split('#')[0];
         clientType = null;
         nameId = null;
         
         var match = NameIdExtractor.Match(url);
         if (!match.Success)
             return false;
-        if (match.Groups.Count != 3)
+        if (match.Groups.Count != 4)
         {
             var groups = match.Groups.Cast<Group>().Select(g => g.Value);
-            Logger.Warn($"Expected 3 groups, got {match.Groups.Count} from {url} -- {string.Join(", ", groups)}");
+            Logger.Warn($"Expected 4 groups, got {match.Groups.Count} from {url} -- {string.Join(", ", groups)}");
             return false;
         }
-        string gameNameId = match.Groups[0].Value;
-        clientType = match.Groups[1].Value;
-        nameId = match.Groups[2].Value;
+        string gameNameId = match.Groups[1].Value;
+        clientType = match.Groups[2].Value;
+        nameId = match.Groups[3].Value;
 
         if (gameNameId != GAME_NAME_ID)
         {
@@ -131,7 +132,7 @@ public static partial class ModioHelper
             return null;
         }
     }
-
+    
     [GeneratedRegex(@"mod\.io\/g\/(\S+)\/(\S)\/(\S+)", RegexOptions.Compiled)]
     private static partial Regex NameIdExtractionRegex();
 }

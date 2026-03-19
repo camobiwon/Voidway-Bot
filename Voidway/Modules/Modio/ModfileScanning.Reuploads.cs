@@ -264,7 +264,7 @@ internal partial class ModfileScanning
         var modData = await ModioHelper.BonelabClient.GetFromUrl(modUrl);
         if (modData is null)
         {
-            await ctx.RespondAsync("Nothing found. Mod might not exist or the URL might a mod's?", true);
+            await ctx.RespondAsync("Nothing found. Mod might not exist or the URL might not be a mod's?", true);
             return;
         }
 
