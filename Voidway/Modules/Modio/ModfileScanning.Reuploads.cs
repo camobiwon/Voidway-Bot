@@ -153,7 +153,7 @@ internal partial class ModfileScanning
                 
                 if (modFile.Download is null)
                 {
-                    Put($"Null download on {fileLogTag}");
+                    Put($"-# Null download on {fileLogTag}");
                     continue;
                 }
 
@@ -173,7 +173,7 @@ internal partial class ModfileScanning
             }
 
             PersistentData.WritePersistentData();
-            Put($"Completed scanning all mod files and found {newBarcodes} new barcodes & {newHashes} new hashes for {logTag}");
+            Put($"Completed scanning all mod files and found **{newBarcodes} new barcode(s)** & **{newHashes} new hashe(s)** for {logTag}");
             return (accumulator.ToString(), newBarcodes, newHashes);
         }
         catch (Exception ex)
@@ -181,12 +181,12 @@ internal partial class ModfileScanning
             Logger.Warn($"Exception while scanning {logTag} for hashes and barcodes.", ex);
             Logger.Warn("Accumulator contents before error: " + accumulator);
             PersistentData.WritePersistentData();
-            return ($"Exception on {logTag}: {ex}\nBut before that, completed info: {accumulator}", newBarcodes, newHashes);
+            return ($"**Exception** on {logTag}: {ex}\nBut before that, completed info: {accumulator}", newBarcodes, newHashes);
         }
         
         void Put(string str)
         {
-            Logger.Put(str);
+            Logger.Put(Formatter.Strip(str.Replace("-# ", "")));
             accumulator.AppendLine(str);
             updateStrCallback?.Invoke(accumulator.ToString());
         }
@@ -198,7 +198,7 @@ internal partial class ModfileScanning
         int newBarcodes = 0;
         string? submitterNameId = modData.SubmittedBy?.NameId;
         var hashes = GetHashEntries(zip);
-        Put($"Found {hashes.Length} hash(es) in {fileLogTag}");
+        Put($"**Found {hashes.Length} hash(es)** in {fileLogTag}");
         
         foreach (var entry in hashes)
         {
@@ -210,41 +210,47 @@ internal partial class ModfileScanning
             
             var hashStr = TextEncoding.GetString(hashStream.ToArray());
 
-            Put($"Found pallet barcode: {palletBarcode}, and its hash: {hashStr}");
+            Put($"Found pallet barcode: **{palletBarcode}**, and its hash: **{hashStr}**");
 
             if (PersistentData.values.hashesToOriginalBarcodes.TryAdd(hashStr, palletBarcode))
             {
-                Put($"Associated hash {hashStr} with barcode {palletBarcode}");
+                Put($"Associated hash **{hashStr}** with barcode **{palletBarcode}**");
                 newHashes++;
             }
             else
             {
                 string currBarcodeAssoc = PersistentData.values.hashesToOriginalBarcodes[hashStr];
-                Put($"!!! Hash {hashStr} is associated w/ {currBarcodeAssoc} -- not {palletBarcode}");
+                if (currBarcodeAssoc != palletBarcode)
+                    Put($"!!! Hash **{hashStr}** is associated w/ **{currBarcodeAssoc}** -- not **{palletBarcode}**");
+                else
+                    Put($"-# {hashStr} *is already associated with* {palletBarcode}");
             }
 
             if (submitterNameId is null)
             {
-                Put($"Can't check creator association, the submitter's NameID was null.");
+                Put("**Can't check creator association, the submitter's NameID was null.**");
             }
             else if (PersistentData.values.barcodesToOriginalUploaders.TryAdd(palletBarcode, submitterNameId))
             {
-                Put($"Associated barcode {palletBarcode} with uploader {submitterNameId}");
+                Put($"Associated barcode **{palletBarcode}** with uploader **{submitterNameId}**");
                 newBarcodes++;
             }
             else
             {
                 string currUploaderAssoc = PersistentData.values.barcodesToOriginalUploaders[palletBarcode];
-                Put($"!!! Barcode {palletBarcode} is associated with uploader {currUploaderAssoc} -- not {submitterNameId}");
+                if (currUploaderAssoc != submitterNameId)
+                    Put($"!!! Barcode **{palletBarcode}** is associated with uploader **{currUploaderAssoc}** -- not **{submitterNameId}**");
+                else
+                    Put($"-# {palletBarcode} *is already associated with* {submitterNameId}");
             }
         }
         
-        Put($"Found {newBarcodes} new barcodes and {newHashes} new hashes in {fileLogTag}");
+        Put($"Found **{newBarcodes} new barcode(s)** and **{newHashes} new hash(es)** in {fileLogTag}");
         return (newBarcodes, newHashes);
 
         void Put(string str)
         {
-            Logger.Put(str);
+            Logger.Put(Formatter.Strip(str.Replace("-# ", "")));
             accumulator.AppendLine(str);
         }
     }
