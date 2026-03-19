@@ -137,13 +137,16 @@ internal partial class ModfileScanning
             var modClient = ModioHelper.BonelabClient[modId];
             var modData = await modClient.Get();
             logTag = $"Mod '{modData.NameId}' (#ID {modData.Id})";
-            
+
+            int scanned = 0;
+            int total = 0;
             await foreach (var modFile in modClient.Files.Search().ToEnumerable())
             {
+                accumulator.AppendLine(); // separation between mod files
+                total++;
                 var platformStrings = modFile.Platforms.Select(p => $"{p.Platform?.Value ?? "NoPlatform"} ({p.Status})");
                 string fileLogTag = $"File {modFile.Id} (for {string.Join(", ", platformStrings)}) {modFile.Filename ?? "<No Filename>"}";
-
-
+                
                 if (modFile.FileSize > Config.values.modioMaxFilesize * MB_BYTES)
                 {
                     double fileSizeMb = modFile.FileSize / (double)MB_BYTES;
@@ -164,16 +167,18 @@ internal partial class ModfileScanning
                     Put($"Null download on {fileLogTag}");
                     continue;
                 }
-                
+
                 
                 var fileResults = await CatalogBarcodeAndHashesInFile(zip, accumulator, fileLogTag, modData);
                 newBarcodes += fileResults.newBarcodes;
                 newHashes += fileResults.newHashes;
                 updateStrCallback?.Invoke(accumulator.ToString());
+                scanned++;
             }
 
             PersistentData.WritePersistentData();
-            Put($"Completed scanning all mod files and found **{newBarcodes} new barcode(s)** & **{newHashes} new hashe(s)** for {logTag}");
+            accumulator.AppendLine(); // increase separation
+            Put($"Done! Scanned {scanned} of {total} total mod file(s) and found **{newBarcodes} new barcode(s)** & **{newHashes} new hashe(s)** for {logTag}");
             return (accumulator.ToString(), newBarcodes, newHashes);
         }
         catch (Exception ex)
@@ -198,7 +203,7 @@ internal partial class ModfileScanning
         int newBarcodes = 0;
         string? submitterNameId = modData.SubmittedBy?.NameId;
         var hashes = GetHashEntries(zip);
-        Put($"**Found {hashes.Length} hash(es)** in {fileLogTag}");
+        Put($"Found {hashes.Length} hash(es) in {fileLogTag}");
         
         foreach (var entry in hashes)
         {
@@ -276,17 +281,18 @@ internal partial class ModfileScanning
 
         await ctx.RespondAsync($"Found {modData.Name}, starting cataloging now...");
 
+        const int UPDATE_RATE_SEC = 5;
         var dwb = new DiscordWebhookBuilder();
         DateTime lastUpdate = DateTime.Now;
         var catalogResults = await CatalogBarcodeAndHashesFromMod(modData.Id, (updateStr) =>
         {
-            // update only once every 1s max
-            if (lastUpdate.AddSeconds(1) > DateTime.Now)
+            // update only once every 3s max, because scans can take a really long time
+            if (lastUpdate.AddSeconds(UPDATE_RATE_SEC) > DateTime.Now)
                 return;
             lastUpdate = DateTime.Now;
             try
             {
-                dwb.WithContent(Logger.ShowLastLinesOf(updateStr, 2000));
+                dwb.WithContent(Logger.ShowLastLinesOf(updateStr, 1950) + "\n*Scan ongoing...*");
                 ctx.Interaction.EditOriginalResponseAsync(dwb);
             }
             catch
@@ -296,8 +302,8 @@ internal partial class ModfileScanning
         });
 
 
-        if (lastUpdate.AddSeconds(1) > DateTime.Now)
-            await Task.Delay(1000);
+        if (lastUpdate.AddSeconds(UPDATE_RATE_SEC) > DateTime.Now)
+            await Task.Delay(UPDATE_RATE_SEC * 1000);
         
         
         dwb.WithContent(Logger.ShowLastLinesOf(catalogResults.displayString, 2000));

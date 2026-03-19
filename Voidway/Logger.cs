@@ -102,7 +102,7 @@ internal static class Logger
         StringBuilder sb = new(maxLen);
         for (int i = lines.Length - 1; i >= 0; i--)
         {
-            if (sb.Length + lines[i].Length > maxLen - cutoffSignifier.Length)
+            if (sb.Length + lines[i].Length + 1 > maxLen - cutoffSignifier.Length)
             {
                 sb.Insert(0, '\n');
                 sb.Insert(0, cutoffSignifier);
