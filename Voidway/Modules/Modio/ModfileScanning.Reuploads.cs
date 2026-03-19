@@ -142,7 +142,8 @@ internal partial class ModfileScanning
             int total = 0;
             await foreach (var modFile in modClient.Files.Search().ToEnumerable())
             {
-                accumulator.AppendLine(); // separation between mod files
+                accumulator.AppendLine();
+                accumulator.AppendLine($"### File {total+1} scan"); // separation between mod files
                 total++;
                 var platformStrings = modFile.Platforms.Select(p => $"{p.Platform?.Value ?? "NoPlatform"} ({p.Status})");
                 string fileLogTag = $"File {modFile.Id} (for {string.Join(", ", platformStrings)}) {modFile.Filename ?? "<No Filename>"}";
@@ -178,7 +179,7 @@ internal partial class ModfileScanning
 
             PersistentData.WritePersistentData();
             accumulator.AppendLine(); // increase separation
-            Put($"Done! Scanned {scanned} of {total} total mod file(s) and found **{newBarcodes} new barcode(s)** & **{newHashes} new hashe(s)** for {logTag}");
+            Put($"Done! Scanned {scanned} of {total} total mod file(s) and found **{newBarcodes} new barcode(s)** & **{newHashes} new hash(es)** for {logTag}");
             return (accumulator.ToString(), newBarcodes, newHashes);
         }
         catch (Exception ex)
