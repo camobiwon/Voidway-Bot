@@ -280,7 +280,7 @@ internal partial class ModfileScanning
             lastUpdate = DateTime.Now;
             try
             {
-                dwb.WithContent(updateStr);
+                dwb.WithContent(Logger.ShowLastLinesOf(updateStr, 2000));
                 ctx.Interaction.EditOriginalResponseAsync(dwb);
             }
             catch
@@ -294,7 +294,7 @@ internal partial class ModfileScanning
             await Task.Delay(1000);
         
         
-        dwb.WithContent(catalogResults.displayString);
+        dwb.WithContent(Logger.ShowLastLinesOf(catalogResults.displayString, 2000));
         await ctx.Interaction.EditOriginalResponseAsync(dwb);
     }
 }

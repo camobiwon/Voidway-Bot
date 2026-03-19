@@ -84,10 +84,36 @@ internal static class Logger
     public static string EnsureShorterThan(string? str, int maxLen, string cutoffSignifier = "...")
     {
         str ??= "<N/A>";
-        if (str.Length < maxLen) return str;
+        if (str.Length < maxLen)
+            return str;
 
         return str[..(maxLen - cutoffSignifier.Length)] + cutoffSignifier;
     }
+
+    public static string ShowLastLinesOf(string? str, int maxLen, string cutoffSignifier = "...")
+    {
+        if (str is null)
+            return "<N/A>";
+        
+        if (str.Length < maxLen)
+            return str;
+
+        string[] lines = str.Split('\n');
+        StringBuilder sb = new(maxLen);
+        for (int i = lines.Length - 1; i >= 0; i--)
+        {
+            if (lines[i].Length < maxLen - cutoffSignifier.Length)
+            {
+                sb.Insert(0, '\n');
+                sb.Insert(0, cutoffSignifier);
+                break;
+            }
+            sb.Insert(0, '\n');
+            sb.Insert(0, lines[i]);
+        }
+        
+        return sb.ToString();
+    } 
 
     static string GetPutTime() => DateTime.Now.ToString(PUT_DATE_FORMAT).PadLeft(maxPutDateLength);
 
