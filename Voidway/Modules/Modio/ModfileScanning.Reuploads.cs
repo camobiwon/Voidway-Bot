@@ -268,6 +268,8 @@ internal partial class ModfileScanning
             return;
         }
 
+        await ctx.RespondAsync($"Found {modData.Name}, starting cataloging now...");
+
         var dwb = new DiscordWebhookBuilder();
         DateTime lastUpdate = DateTime.Now;
         var catalogResults = await CatalogBarcodeAndHashesFromMod(modData.Id, (updateStr) =>
