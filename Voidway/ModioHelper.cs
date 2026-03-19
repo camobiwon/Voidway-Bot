@@ -94,6 +94,7 @@ public static partial class ModioHelper
         clientType = match.Groups[2].Value;
         nameId = match.Groups[3].Value;
 
+        Logger.Put($"Parsed game name-id {gameNameId}, object type {clientType}, and object name-id {nameId} from URL {url}", LogType.Debug);
         if (gameNameId != GAME_NAME_ID)
         {
             Logger.Warn($"Expected Game NameId {GAME_NAME_ID}, got {gameNameId} instead in URL {url}");
