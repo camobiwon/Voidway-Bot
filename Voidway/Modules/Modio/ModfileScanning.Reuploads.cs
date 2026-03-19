@@ -228,7 +228,7 @@ internal partial class ModfileScanning
                 if (currBarcodeAssoc != palletBarcode)
                     Put($"!!! Hash **{hashStr}** is associated w/ **{currBarcodeAssoc}** -- not **{palletBarcode}**");
                 else
-                    Put($"-# {hashStr} *is already associated with* {palletBarcode}");
+                    Put($"-# {hashStr} *is already associated with barcode* {palletBarcode}");
             }
 
             if (submitterNameId is null)
@@ -246,7 +246,7 @@ internal partial class ModfileScanning
                 if (currUploaderAssoc != submitterNameId)
                     Put($"!!! Barcode **{palletBarcode}** is associated with uploader **{currUploaderAssoc}** -- not **{submitterNameId}**");
                 else
-                    Put($"-# {palletBarcode} *is already associated with* {submitterNameId}");
+                    Put($"-# {palletBarcode} *is already associated with mod.io uploader* {submitterNameId}");
             }
         }
         
