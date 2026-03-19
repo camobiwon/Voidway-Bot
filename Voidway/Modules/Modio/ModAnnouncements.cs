@@ -186,7 +186,7 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
             if (!uploadType.HasFlag(flag))
                 continue;
 
-            foreach (var channel in announcementChannels[uploadType])
+            foreach (var channel in announcementChannels[flag])
             {
                 var censorUploadsInThisServer = !channel.GuildId.HasValue || !ServerConfig.GetConfig(channel.GuildId.Value).dontCensorModUploads;
                 if (hasCensoredContent || isSpamProbably)
