@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -6,6 +7,8 @@ using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Extensions;
 using Modio.Models;
 using Newtonsoft.Json;
 
@@ -456,5 +459,53 @@ internal partial class ModfileScanning
         PersistentData.values.hashesToOriginalBarcodes[hash] = palletBarcode;
         
         PersistentData.WritePersistentData();
+    }
+
+
+    [RequireApplicationOwner]
+    [Command("gethashes")]
+    [Description("(Ephemeral) Shows you the hash-to-barcode associations.")]
+    public async Task GetHashes(SlashCommandContext ctx,
+        [Description("Show hashes tied to this barcode")]
+        string? palletBarcode = null,
+        [Description("Show what barcode this hash is tied to")]
+        string? hash = null)
+    {
+        bool hashNull = string.IsNullOrWhiteSpace(hash);
+        bool palletNull = string.IsNullOrWhiteSpace(palletBarcode);
+
+        if (!hashNull && !palletNull)
+        {
+            await ctx.RespondAsync("Hey man you can't search for *both* things at the same time, lol", true);
+            return;
+        }
+
+        if (palletNull)
+        {
+            if (PersistentData.values.hashesToOriginalBarcodes.TryGetValue(hash!, out var currBarcodeAssoc))
+                await ctx.RespondAsync($"{hash} points to the pallet barcode '{currBarcodeAssoc}'", true);
+            else
+                await ctx.RespondAsync($"{hash} isn't associated with anything", true);
+            return;
+        }
+        
+        // if (hashNull)
+        // {
+        //     if (PersistentData.values.barcodesToOriginalUploaders.TryGetValue(palletBarcode!, out var currUploaderAssoc))
+        //         await ctx.RespondAsync($"{palletBarcode} points to the mod.io user with the NameID '{currUploaderAssoc}'", true);
+        //     else
+        //         await ctx.RespondAsync($"{palletBarcode} isn't associated with any mod.io uploader", true);
+        //     return;
+        // }
+        // Page currPage = new();
+
+        await ctx.RespondAsync($"Looking up every hash association isn't done yet. It'll be done soon, hopefully!", true);
+        // foreach (var VARIABLE in PersistentData.values.hashesToOriginalBarcodes.OrderBy(kvp => kvp.Value))
+        // {
+        //     
+        // }
+        //
+        //
+        // await ctx.Interaction.SendPaginatedResponseAsync(true, ctx.User, )
     }
 }
