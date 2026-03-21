@@ -79,7 +79,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
             UserResponsible = ctx.Member,
             Target = member,
             Reason = logReason,
-            Color = DiscordColor.Yellow,
+            Color = DiscordColor.Red,
             ExtraField = extraField,
         };
 
