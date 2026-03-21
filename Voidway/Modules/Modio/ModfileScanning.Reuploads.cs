@@ -1,14 +1,23 @@
 using System.ComponentModel;
 using System.IO.Compression;
 using System.Text;
+using System.Text.Json.Serialization;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using Modio.Models;
+using Newtonsoft.Json;
 
 namespace Voidway.Modules.Modio;
 
+file class ReuploadCatalogOverride
+{
+    // mod barcode (from .hash filename) -> nameid
+    public Dictionary<string, string> barcodesToOriginalUploaders = [];
+    // In case someone tries obscuring where their mod is originally from by renaming the .hash file
+    public Dictionary<string, string> hashesToOriginalBarcodes = [];
+}
 
 internal partial class ModfileScanning
 {
@@ -179,7 +188,7 @@ internal partial class ModfileScanning
 
             PersistentData.WritePersistentData();
             accumulator.AppendLine(); // increase separation
-            Put($"Done! Scanned {scanned} of {total} total mod file(s) and found **{newBarcodes} new barcode(s)** & **{newHashes} new hash(es)** for {logTag}");
+            Put($"Done! Scanned {scanned} of {total} total mod file(s), finding **{newBarcodes} new barcode(s)** & **{newHashes} new hash(es)** for {logTag}");
             return (accumulator.ToString(), newBarcodes, newHashes);
         }
         catch (Exception ex)
@@ -192,7 +201,7 @@ internal partial class ModfileScanning
         
         void Put(string str)
         {
-            Logger.Put(Formatter.Strip(str.Replace("-# ", "")));
+            Logger.Put(Formatter.Strip(str.Replace("-# ", "")), LogType.Debug);
             accumulator.AppendLine(str);
             updateStrCallback?.Invoke(accumulator.ToString());
         }
@@ -204,7 +213,7 @@ internal partial class ModfileScanning
         int newBarcodes = 0;
         string? submitterNameId = modData.SubmittedBy?.NameId;
         var hashes = GetHashEntries(zip);
-        Put($"Found {hashes.Length} hash(es) in {fileLogTag}");
+        Put($"*Found {hashes.Length} hash(es) in {fileLogTag}*");
         
         foreach (var entry in hashes)
         {
@@ -256,13 +265,13 @@ internal partial class ModfileScanning
 
         void Put(string str)
         {
-            Logger.Put(Formatter.Strip(str.Replace("-# ", "")));
+            Logger.Put(Formatter.Strip(str.Replace("-# ", "")), LogType.Debug);
             accumulator.AppendLine(str);
         }
     }
 
     [RequireApplicationOwner]
-    [Command("catalogmod"), Description("Scans a mod's files for new barcodes & hashes")]
+    [Command("catalogmod"), Description("(NOT EPHEMERAL) Scans a mod's files for new barcodes & hashes")]
     public async Task CatalogFromModCmd(SlashCommandContext ctx, string modUrl)
     {
         if (ModioHelper.BonelabClient is null)
@@ -309,5 +318,143 @@ internal partial class ModfileScanning
         
         dwb.WithContent(Logger.ShowLastLinesOf(catalogResults.displayString, 2000));
         await ctx.Interaction.EditOriginalResponseAsync(dwb);
+    }
+
+    [RequireApplicationOwner]
+    [Command("overridecatalog"), Description("(Ephemeral) Takes a JSON file with reupload detection overrides to set.")]
+    public async Task SetHashAndBarcodes(
+        SlashCommandContext ctx,
+        [Description("Run with nothing to see the format/example")] DiscordAttachment? file = null
+        )
+    {
+        ReuploadCatalogOverride? catalogOverride = null;
+        
+        bool lacksFile = (file?.FileName ?? "").EndsWith(".json", StringComparison.InvariantCultureIgnoreCase)
+                            || string.IsNullOrWhiteSpace(file?.Url);
+        if (!lacksFile)
+        {
+            try
+            {
+                var str = await DownloadClient.GetStringAsync(file!.Url);
+                catalogOverride = JsonConvert.DeserializeObject<ReuploadCatalogOverride>(str);
+            }
+            catch
+            {
+                // dnc
+            }
+        }
+        
+        if (lacksFile || catalogOverride is null)
+        {
+            // ReSharper disable once UseObjectOrCollectionInitializer
+            var overrideExample = new ReuploadCatalogOverride();
+            overrideExample.barcodesToOriginalUploaders["a.mod.barcode"] = "a-modio-uploader";
+            overrideExample.hashesToOriginalBarcodes["deadbeefbac0de"] = "a.mod.barcode";
+            string exampleJson = JsonConvert.SerializeObject(overrideExample, Formatting.Indented);
+            await ctx.RespondAsync($"Input a JSON file like the following: ```json\n{exampleJson}\n```", true);
+            return;
+        }
+        
+        int noChangeBarcodes = 0;
+        int overwrittenBarcodes = 0;
+        int noChangeHashes = 0;
+        int overwrittenHashes = 0;
+        foreach (var barcodeOverrides in catalogOverride.barcodesToOriginalUploaders)
+        {
+            if (PersistentData.values.barcodesToOriginalUploaders.TryGetValue(barcodeOverrides.Key,
+                    out var currUploaderAssoc))
+            {
+                if (currUploaderAssoc != barcodeOverrides.Value)
+                    overwrittenBarcodes++;
+                else
+                    noChangeBarcodes++;
+            }
+            PersistentData.values.barcodesToOriginalUploaders[barcodeOverrides.Key] = barcodeOverrides.Value;
+        }
+        
+        foreach (var hashOverrides in catalogOverride.hashesToOriginalBarcodes)
+        {
+            if (PersistentData.values.hashesToOriginalBarcodes.TryGetValue(hashOverrides.Key,
+                    out var currBarcodeAssoc))
+            {
+                if (currBarcodeAssoc != hashOverrides.Value)
+                    overwrittenHashes++;
+                else
+                    noChangeHashes++;
+            }
+            PersistentData.values.hashesToOriginalBarcodes[hashOverrides.Key] = hashOverrides.Value;
+        }
+        
+        PersistentData.WritePersistentData();
+
+        await ctx.RespondAsync($"Done setting {catalogOverride.hashesToOriginalBarcodes.Count} hash -> barcode relationships\n" +
+                               $"-# ({overwrittenBarcodes} overwrite(s), {noChangeBarcodes} didn't change).\n" +
+                               $"and {catalogOverride.barcodesToOriginalUploaders.Count} barcode -> mod.io uploader relationships\n" +
+                               $"-# ({overwrittenHashes} overwrite(s), {noChangeHashes} didn't change).", true);
+    }
+
+    [RequireApplicationOwner]
+    [Command("overridebarcode")]
+    [Description("(Ephemeral) Marks a barcode as owned by a modio name ID, overriding if needed.")]
+    public async Task SetBarcode(
+        SlashCommandContext ctx,
+        [Description("As shown in catalog_>>a.mod.barcode<<.hash")]
+        string palletBarcode,
+        [Description("As shown in the modder's profile URL")]
+        string nameId)
+    {
+
+        if (PersistentData.values.barcodesToOriginalUploaders.TryGetValue(palletBarcode, out var currUploaderAssoc))
+        {
+            if (currUploaderAssoc != nameId)
+            {
+                await ctx.RespondAsync($"Changed {palletBarcode} from being associated with {currUploaderAssoc} to being associated with {nameId}.", true);
+            }
+            else
+            {
+                await ctx.RespondAsync($"No change. {palletBarcode} is already associated with {currUploaderAssoc}", true);
+            }
+        }
+        else
+        {
+            await ctx.RespondAsync($"Added association from {palletBarcode} to {nameId}, where none existed before.", true);
+        }
+        
+        PersistentData.values.barcodesToOriginalUploaders[palletBarcode] = nameId;
+        
+        PersistentData.WritePersistentData();
+    }
+    
+    
+    [RequireApplicationOwner]
+    [Command("overridehash")]
+    [Description("(Ephemeral) Marks a hash as being built by a  by a modio name ID, overriding if needed.")]
+    public async Task SetHash(
+        SlashCommandContext ctx,
+        [Description("The 32-character contents of catalog_a.mod.barcode.hash")]
+        string hash,
+        [Description("As shown in catalog_>>a.mod.barcode<<.hash")]
+        string palletBarcode)
+    {
+
+        if (PersistentData.values.hashesToOriginalBarcodes.TryGetValue(hash, out var currBarcodeAssoc))
+        {
+            if (currBarcodeAssoc != palletBarcode)
+            {
+                await ctx.RespondAsync($"Changed {hash} from being associated with {currBarcodeAssoc} to being associated with {palletBarcode}.", true);
+            }
+            else
+            {
+                await ctx.RespondAsync($"No change. {currBarcodeAssoc} is already associated with {palletBarcode}", true);
+            }
+        }
+        else
+        {
+            await ctx.RespondAsync($"Added association from {hash} to {palletBarcode}, where none existed before.", true);
+        }
+        
+        PersistentData.values.hashesToOriginalBarcodes[hash] = palletBarcode;
+        
+        PersistentData.WritePersistentData();
     }
 }
