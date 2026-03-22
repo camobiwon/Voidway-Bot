@@ -341,9 +341,11 @@ internal partial class ModfileScanning
                 var str = await DownloadClient.GetStringAsync(file!.Url);
                 catalogOverride = JsonConvert.DeserializeObject<ReuploadCatalogOverride>(str);
             }
-            catch
+            catch (Exception ex)
             {
-                // dnc
+                Logger.Warn($"Exception while downloading/desrializing reupload overrides from {ctx.User}", ex);
+                await ctx.RespondAsync($"Looks like there was an error downloading/deserializing the file you gave me:```cs\n{ex}\n```");
+                return;
             }
         }
         
