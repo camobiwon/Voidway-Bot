@@ -332,6 +332,14 @@ internal partial class ModfileScanning
     {
         ReuploadCatalogOverride? catalogOverride = null;
         
+        Logger.Put($"Recieved file:\n" +
+                   $"filename: {file?.FileName}\n" +
+                   $"filesize: {file?.FileSize ?? -1}\n" +
+                   $"url: {file?.Url}\n" +
+                   $"proxyurl: {file?.ProxyUrl}\n" +
+                   $"ephemeral: {file?.Ephemeral ?? null}"
+            , LogType.Debug
+            , false);
         bool lacksFile = (file?.FileName ?? "").EndsWith(".json", StringComparison.InvariantCultureIgnoreCase)
                             || string.IsNullOrWhiteSpace(file?.Url);
         if (!lacksFile)
