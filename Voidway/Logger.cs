@@ -144,13 +144,13 @@ internal static class Logger
     static bool IsTypeLoggable(Type t)
     {
         // all this to avoid seeing "<MainAsync>d__1.MoveNext"
-        return t.GetCustomAttribute(typeof(CompilerGeneratedAttribute)) is null && t.Assembly == typeof(Logger).Assembly;
+        return !t.GetCustomAttributes<CompilerGeneratedAttribute>().Any() && t.Assembly == typeof(Logger).Assembly;
     }
 
 
     static bool IsMoveNext(Type t)
     {
-        return t.GetCustomAttribute(typeof(CompilerGeneratedAttribute)) is not null && t.GetInterfaces().Any(i => i == typeof(IAsyncStateMachine));
+        return t.GetCustomAttributes<CompilerGeneratedAttribute>().Any() && t.GetInterfaces().Any(i => i == typeof(IAsyncStateMachine));
     }
     
     
