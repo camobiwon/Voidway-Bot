@@ -44,18 +44,18 @@ internal static class Logger
     }
 
 
-    public static void Error(string str) => PutInternal(str, LogType.Fatal, false);
-    public static void Error(string str, Exception ex) => PutInternal(str + "\n\t" + ex.ToString(), LogType.Fatal, false);
+    public static void Error(string? str) => PutInternal(str, LogType.Fatal, false);
+    public static void Error(string? str, Exception ex) => PutInternal(str + "\n\t" + ex.ToString(), LogType.Fatal, false);
 
-    public static void Warn(string str) => PutInternal(str, LogType.Warn, false);
-    public static void Warn(string str, Exception ex) => PutInternal(str + "\n\t" + ex.ToString(), LogType.Warn, false);
+    public static void Warn(string? str) => PutInternal(str, LogType.Warn, false);
+    public static void Warn(string? str, Exception ex) => PutInternal(str + "\n\t" + ex.ToString(), LogType.Warn, false);
 
-    public static void Put(string str) => PutInternal(str, LogType.Normal);
+    public static void Put(string? str) => PutInternal(str, LogType.Normal);
 
-    public static void Put(string str, LogType reason, bool cleanMultiline = true) => PutInternal(str, reason, cleanMultiline);
+    public static void Put(string? str, LogType reason, bool cleanMultiline = true) => PutInternal(str, reason, cleanMultiline);
 
     // private method so that GetCaller always has a consistent count of frames to ignore
-    private static void PutInternal(string str, LogType reason, bool cleanMultiline = true)
+    private static void PutInternal(string? str, LogType reason, bool cleanMultiline = true)
     {
         if (string.IsNullOrWhiteSpace(str)) str = "<N/A>";
         else if (cleanMultiline) str = str.ReplaceLineEndings(" // ");
