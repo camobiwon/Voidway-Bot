@@ -156,6 +156,6 @@ internal static class Logger
     
     static bool IsStepThrough(MethodBase m)
     {
-        return m.GetCustomAttribute(typeof(DebuggerStepThroughAttribute)) is not null;
+        return m.GetCustomAttributes<DebuggerStepThroughAttribute>().Any();
     }
 }
