@@ -28,6 +28,7 @@ public enum ModContentHeuristic : ulong
     Executable = 1 << 17,
     MacExecutableOrInstaller = 1 << 18,
     Video = 1 << 19,
+    FailedBuild = 1 << 20,
 }
 
 partial class ModfileScanning
@@ -86,6 +87,7 @@ partial class ModfileScanning
         bool hasHash = fileExtensions.Contains(".hash"); // isCalifornian? (haha get it? weed joke)
         bool isLikelyValidMod = hasBundle && hasJson && hasHash;
         bool isLikelyReplacerMod = !hasBundle && hasJson && hasHash;
+        bool isFailedBuild = hasJson && !isLikelyReplacerMod && !isLikelyValidMod && filePaths.Any(p => p.Contains(".pallet."));
         bool hasTxt = textExts.Any(fileExtensions.Contains);
         bool hasImg = imageExts.Any(fileExtensions.Contains);
         bool hasBlend = fileExtensions.Contains(".blend");
@@ -133,6 +135,10 @@ partial class ModfileScanning
             ret |= ModContentHeuristic.MacExecutableOrInstaller;
         if (hasVideo)
             ret |= ModContentHeuristic.Video;
+        if (isFailedBuild)
+            ret |= ModContentHeuristic.FailedBuild;
+            
+        
         
         Logger.Put($"Detected {ret} from file extensions: {string.Join(", ", fileExtensions)}", LogType.Trace);
 
