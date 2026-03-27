@@ -173,6 +173,8 @@ internal partial class ModfileScanning
             
             foreach (var mod in modList)
             {
+                // mass scraping mods like this will inevitably result in a ratelimit or cloudfare ban
+                await Task.Delay(5000);
                 var res = await CatalogBarcodeAndHashesFromMod(mod.Id, recallback);
                 totalNewBarcodes += res.newBarcodes;
                 totalNewHashes += res.newHashes;
@@ -213,6 +215,8 @@ internal partial class ModfileScanning
             int total = 0;
             await foreach (var modFile in modClient.Files.Search().ToEnumerable())
             {
+                // mass scraping mods like this will inevitably result in a ratelimit or cloudfare ban
+                await Task.Delay(500);
                 total++;
                 
                 if (PersistentData.values.modFilesInCatalog.Contains(modFile.Id))
@@ -241,7 +245,8 @@ internal partial class ModfileScanning
                     Put($"-# Null download on {fileLogTag}");
                     continue;
                 }
-
+                
+                await Task.Delay(1500);
                 await using var zip = await GetZip(modFile.Download);
 
                 if (zip is null)
