@@ -7,6 +7,7 @@ using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
+using Modio.Filters;
 using Newtonsoft.Json;
 
 namespace Voidway.Modules.Modio;
@@ -24,7 +25,7 @@ file class ReuploadCatalogOverride
 internal partial class ModfileScanning
 {
     [RequireApplicationOwner]
-    [Command("cataloguser"), Description("(NOT EPHEMERAL) Scans a mod's files for new barcodes & hashes")]
+    [Command("cataloguser"), Description("(NOT EPHEMERAL) Scans a user's mods' files for new barcodes & hashes")]
     public async Task CatalogFromUserCmd(SlashCommandContext ctx, string modUrl)
     {
         if (ModioHelper.BonelabClient is null)
@@ -35,19 +36,39 @@ internal partial class ModfileScanning
             return;
         }
 
-        var modData = await ModioHelper.BonelabClient.GetFromUrl(modUrl);
-        if (modData is null)
+        if (!ModioHelper.TryParseUrl(modUrl, out var clientType, out var nameId))
         {
-            await ctx.RespondAsync("Nothing found. Mod might not exist or the URL might not be a mod's?", true);
+            await ctx.RespondAsync($"That's not a valid URL, at least not one that I would know.");
             return;
         }
+        
+        if (clientType == "u")
+        {
+            // can you tell im getting sick of this API?
+            await ctx.RespondAsync(
+                $"Hey I know you want to scan all mods from {nameId}, who is *cough* **a user** *cough*," +
+                $" to get their hashes and barcodes added to the reupload detection database," +
+                $"but because **mod.io's API is infernal dogshit**," +
+                $"I'm gonna need you to give me a link to **a mod that they've uploaded instead**\n" +
+                $"Make sense? No? Blame mod.io!");
+            return;
+        }
+        
+        var modData = await ModioHelper.BonelabClient.GetFromUrl(modUrl);
 
-        await ctx.RespondAsync($"Found {modData.Name}, starting cataloging now...");
+        if ((modData?.SubmittedBy?.Id ?? 0) == 0)
+        {
+            await ctx.RespondAsync("Looks like mod.io's API didn't give me anything to work with.\n" +
+                                   "Are you sure that's a real mod?");
+            return;
+        }
+        
+        await ctx.RespondAsync($"Found {modData!.Name}, starting cataloging now...");
 
         const int UPDATE_RATE_SEC = 5;
         var dwb = new DiscordWebhookBuilder();
         DateTime lastUpdate = DateTime.Now;
-        var catalogResults = await CatalogBarcodeAndHashesFromMod(modData.Id, (updateStr) =>
+        var catalogResults = await CatalogBarcodeAndHashesFromUser(modData.Id, (updateStr) =>
         {
             // update only once every 3s max, because scans can take a really long time
             if (lastUpdate.AddSeconds(UPDATE_RATE_SEC) > DateTime.Now)
@@ -69,7 +90,7 @@ internal partial class ModfileScanning
             await Task.Delay(UPDATE_RATE_SEC * 1000);
         
         
-        dwb.WithContent(Logger.ShowLastLinesOf(catalogResults.displayString, 2000));
+        dwb.WithContent(Logger.ShowLastLinesOf(catalogResults, 2000));
         await ctx.Interaction.EditOriginalResponseAsync(dwb);
     }
     

@@ -75,7 +75,7 @@ public static partial class ModioHelper
         }
     }
 
-    private static bool TryParseUrl(string url, [MaybeNullWhen(false)] out string clientType, [MaybeNullWhen(false)] out string nameId)
+    public static bool TryParseUrl(string url, [MaybeNullWhen(false)] out string clientType, [MaybeNullWhen(false)] out string nameId)
     {
         url = url.Split('?')[0].Split('#')[0];
         clientType = null;
@@ -95,13 +95,11 @@ public static partial class ModioHelper
         nameId = match.Groups[3].Value;
 
         Logger.Put($"Parsed game name-id {gameNameId}, object type {clientType}, and object name-id {nameId} from URL {url}", LogType.Debug);
-        if (gameNameId != GAME_NAME_ID)
-        {
-            Logger.Warn($"Expected Game NameId {GAME_NAME_ID}, got {gameNameId} instead in URL {url}");
-            return false;
-        }
+        if (gameNameId == GAME_NAME_ID)
+            return true;
         
-        return true;
+        Logger.Warn($"Expected Game NameId {GAME_NAME_ID}, got {gameNameId} instead in URL {url}");
+        return false;
     }
 
     /// <summary>
