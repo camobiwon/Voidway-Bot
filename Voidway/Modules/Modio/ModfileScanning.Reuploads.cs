@@ -132,7 +132,6 @@ internal partial class ModfileScanning
             return "The Mod.IO API client isn't initialized.";
 
         string logTag = $"User #ID {userId}";
-        User? userObj = null;
         var modSearch = ModioHelper.BonelabClient.Search(ModFilter.SubmitterId.Eq(userId));
         
         int totalNewBarcodes = 0;
@@ -147,7 +146,7 @@ internal partial class ModfileScanning
             {
                 return "That user hasn't uploaded any mods.";
             }
-            userObj = modList.Select(mod => mod.SubmittedBy).FirstOrDefault(u => u is not null);
+            var userObj = modList.Select(mod => mod.SubmittedBy).FirstOrDefault(u => u is not null);
             if (userObj is not null)
             {
                 logTag = $"{userObj.Username} ({userObj.NameId} #ID {userObj.Id})";

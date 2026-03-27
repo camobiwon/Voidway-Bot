@@ -38,7 +38,7 @@ internal partial class ModfileScanning
 
         if (!ModioHelper.TryParseUrl(modUrl, out var clientType, out var nameId))
         {
-            await ctx.RespondAsync($"That's not a valid URL, at least not one that I would know.");
+            await ctx.RespondAsync($"That's not a valid URL, at least not one that I would know.", true);
             return;
         }
         
@@ -50,7 +50,7 @@ internal partial class ModfileScanning
                 $" to get their hashes and barcodes added to the reupload detection database," +
                 $"but because **mod.io's API is infernal dogshit**," +
                 $"I'm gonna need you to give me a link to **a mod that they've uploaded instead**\n" +
-                $"Make sense? No? Blame mod.io!");
+                $"Make sense? No? Blame mod.io!", true);
             return;
         }
         
@@ -59,16 +59,16 @@ internal partial class ModfileScanning
         if ((modData?.SubmittedBy?.Id ?? 0) == 0)
         {
             await ctx.RespondAsync("Looks like mod.io's API didn't give me anything to work with.\n" +
-                                   "Are you sure that's a real mod?");
+                                   "Are you sure that's a real mod?", true);
             return;
         }
         
-        await ctx.RespondAsync($"Found {modData!.Name}, starting cataloging now...");
+        await ctx.RespondAsync($"Found {modData!.SubmittedBy!.Username}, starting cataloging now...");
 
         const int UPDATE_RATE_SEC = 5;
         var dwb = new DiscordWebhookBuilder();
         DateTime lastUpdate = DateTime.Now;
-        var catalogResults = await CatalogBarcodeAndHashesFromUser(modData.Id, (updateStr) =>
+        var catalogResults = await CatalogBarcodeAndHashesFromUser(modData.SubmittedBy.Id, (updateStr) =>
         {
             // update only once every 3s max, because scans can take a really long time
             if (lastUpdate.AddSeconds(UPDATE_RATE_SEC) > DateTime.Now)
