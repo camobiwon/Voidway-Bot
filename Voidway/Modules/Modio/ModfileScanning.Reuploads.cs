@@ -219,7 +219,7 @@ internal partial class ModfileScanning
                 if (PersistentData.values.modFilesInCatalog.Contains(modFile.Id))
                 {
                     accumulator.AppendLine();
-                    accumulator.AppendLine($"#### File {total} ignored");
+                    accumulator.AppendLine($"### File {total} ignored");
                     accumulator.AppendLine($"*Modfile ID {modFile.Id} already seen.*");
                     // don't proc callback, odds are there are a ton of already-seen files in a row. 
                     continue;
