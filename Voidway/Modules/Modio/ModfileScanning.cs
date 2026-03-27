@@ -136,10 +136,25 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
             Logger.Put($"Didn't get a file, bailing on scanning mod {modData.Name} ({modData.NameId}, #ID {modData.Id}).");
             return;
         }
-        
-        await ScanZipForFlaggedFilenames(zip, modData);
 
-        await ScanZipForHeuristics(zip, modData);
+        try
+        {
+            await ScanZipForFlaggedFilenames(zip, modData);
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"Caught exception while scanning/announcing flagged filenames on {modData.Name} ({modData.NameId}, #ID {modData.Id})", ex);
+        }
+
+        
+        try
+        {
+            await ScanZipForHeuristics(zip, modData);
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"Caught exception while scanning/announcing heuristics on {modData.Name} ({modData.NameId}, #ID {modData.Id})", ex);
+        }
     }
 
     private static async Task<ZipArchive?> GetZip(Download download)
