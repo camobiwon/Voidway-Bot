@@ -6,6 +6,7 @@ using Tomlet.Models;
 
 namespace Voidway;
 
+[SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Global")]
 internal class PersistentData
 {
     public static event Action? PersistentDataChanged;
@@ -24,6 +25,8 @@ internal class PersistentData
     public Dictionary<string, string> barcodesToOriginalUploaders = [];
     // In case someone tries obscuring where their mod is originally from by renaming the .hash file
     public Dictionary<string, string> hashesToOriginalBarcodes = [];
+    // modFILE uint id, NOT mod id
+    public List<uint> modFilesInCatalog = [];
     
     // plumbing
     static PersistentData()
