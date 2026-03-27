@@ -52,8 +52,9 @@ public class BotManagement(Bot bot) : ModuleBase(bot)
         var dotnetBuildOutput = "";
         Exception? exception = null;
 
+        PersistentData.WritePersistentData(); // in case any changes aren't committed to disk yet
         Logger.Put($"Pulling from git and then relaunching at the request of {ctx.User.Username}#{ctx.User.Discriminator} (ID={ctx.User.Id})");
-
+        
         await Task.Run(() =>
         {
             try

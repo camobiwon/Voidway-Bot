@@ -59,8 +59,6 @@ public class MessageRecorder(Bot bot) : ModuleBase(bot)
             .AddField("New Content", string.IsNullOrEmpty(msgAfter.Content) ? "`[No Content]`" : msgAfter.Content)
             .WithColor(DiscordColor.Gray);
         
-        
-        
         if (msgBefore is not null)
         {
             mainEmbed.AddField("Old content",  msgBefore.Content);
@@ -100,6 +98,13 @@ public class MessageRecorder(Bot bot) : ModuleBase(bot)
     {
         if (!logChannels.TryGetValue(args.Guild, out var channel))
             return;
+        
+        // don't log msg deletions from bots, they're usually automated by the bots themselves
+        // (although this event doesn't say *who* deleted it)
+        // ... or in my case, a moderator cleaning up a malfunction lol
+        if (args.Message.Author?.IsBot ?? false)
+            return;
+        
         DiscordMessage msg = args.Message;
         
         DiscordMessageBuilder msgBuilder = new DiscordMessageBuilder();

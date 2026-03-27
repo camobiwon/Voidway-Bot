@@ -61,7 +61,7 @@ public partial class AuditLogForwarding
             case DiscordAuditLogActionType.Kick:
                 DiscordAuditLogKickEntry kickLog =  (DiscordAuditLogKickEntry)logEntry;
                 
-                await LogActionAndProvideMessageOptions(client, args, kickLog.Target, "kicked");
+                await LogActionAndProvideMessageOptions(client, args, kickLog.Target, "kicked", color: DiscordColor.Yellow);
                 break;
             
             // this kind of has to be handled or have a handlER from the member update event to keep track of whether they're timed out beforehand  
@@ -112,7 +112,7 @@ public partial class AuditLogForwarding
                 string? desc = timeoutEnd.HasValue ? $"Ends in {Formatter.Timestamp(timeoutEnd.Value)}" : null;
                 if (newlyTimedOut)
                 {
-                    await LogActionAndProvideMessageOptions(client, args, memberUpdateLog.Target, "muted", color: DiscordColor.Yellow, desc: desc);
+                    await LogActionAndProvideMessageOptions(client, args, memberUpdateLog.Target, "muted", color: DiscordColor.Orange, desc: desc);
                     return;
                 }
 
@@ -152,7 +152,7 @@ public partial class AuditLogForwarding
                             UserResponsible = logEntry.UserResponsible,
                             Reason = logEntry.Reason,
                             ExtraField =  extraField,
-                            Color = timeoutLengthened.Value ? DiscordColor.Orange : DiscordColor.Aquamarine,
+                            Color = timeoutLengthened.Value ? DiscordColor.Yellow : DiscordColor.Aquamarine,
                         };
                     }
                 

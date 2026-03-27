@@ -7,7 +7,7 @@ namespace Voidway.Modules.Moderation;
 public class ModerationTracker(Bot bot) : ModuleBase(bot)
 {
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.Now);
-    private const int SAVE_PERIOD = 128; // Just felt like it
+    private const int SAVE_PERIOD = 64; // Just felt like it
     private int periodicSaveCounter;
     
     protected override async Task MessageCreated(DiscordClient client, MessageCreatedEventArgs args)
