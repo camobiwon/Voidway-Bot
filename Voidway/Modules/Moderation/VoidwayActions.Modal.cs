@@ -158,7 +158,7 @@ public partial class VoidwayActions
                 ? null
                 : $"Sent reason: {sendReason}";
             
-            var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, ctx.Member.Id));
+            var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, targetMember.Id));
 
             var options = new ModerationLogOptions()
             {
@@ -265,7 +265,7 @@ public partial class VoidwayActions
                 ? null
                 : $"Sent reason: {sendReason}";
             
-            var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, ctx.Member.Id));
+            var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, targetMember.Id));
 
             var options = new ModerationLogOptions()
             {
@@ -383,7 +383,7 @@ public partial class VoidwayActions
                 ? $"Ends in {Formatter.Timestamp(muteDuration, TimestampFormat.RelativeTime)}"
                 : $"Ends in {Formatter.Timestamp(muteDuration, TimestampFormat.RelativeTime)}\nSent reason: {sendReason}";
             
-            var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, ctx.Member.Id));
+            var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, targetMember.Id));
 
             var options = new ModerationLogOptions()
             {

@@ -71,7 +71,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
             return;
         }
         
-        var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, ctx.Member.Id));
+        var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, member.Id));
         
         var options = new ModerationLogOptions()
         {
@@ -151,7 +151,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
             return;
         }
         
-        var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, ctx.Member.Id));
+        var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, member.Id));
         
         var options = new ModerationLogOptions()
         {
@@ -227,7 +227,7 @@ public partial class VoidwayActions(Bot bot) : ModuleBase(bot)
             ? $"Ends in {Formatter.Timestamp(duration, TimestampFormat.RelativeTime)}"
             : $"Ends in {Formatter.Timestamp(duration, TimestampFormat.RelativeTime)}\nSent reason: {sendReason}";
         
-        var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, ctx.Member.Id));
+        var extraField = ("Moderation info", ModerationTracker.GetObservationStringFor(ctx.Guild.Id, member.Id));
         
         var options = new ModerationLogOptions()
         {
