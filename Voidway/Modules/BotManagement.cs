@@ -233,7 +233,7 @@ public class BotManagement(Bot bot) : ModuleBase(bot)
         bool newestFirst = true)
     {
         StringBuilder sb = new();
-        var collection = newestFirst ? Logger.logStatements.Reverse() : Logger.logStatements;
+        var collection = newestFirst ? Logger.LogStatements.Reverse() : Logger.LogStatements;
         foreach (var nextStr in collection)
         {
             if (filterFor is not null && !nextStr.Contains(filterFor, StringComparison.InvariantCultureIgnoreCase))

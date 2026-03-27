@@ -78,6 +78,8 @@ partial class ModfileScanning
         string[] winInstallerExts = [".msi", ".msix", ".appx", ".appxbundle"];
         string[] macAppAndInstallerExts = [".dmg", ".pkg", ".app", ".sh", ".command"];
         string[] videoExts = [".mp4", ".webm", ".avi", ".mov"];
+
+        string[] unityProjRoots = ["assets", "projectsettings", "packages",]; // only the explicitly required ones
             
         string[] filePaths = zip.Entries.Select(ze => ze.FullName.ToLower()).ToArray();
         HashSet<string> fileExtensions = filePaths.Select(Path.GetExtension).ToHashSet()!;
@@ -94,7 +96,7 @@ partial class ModfileScanning
         bool hasFbx = fileExtensions.Contains(".fbx");
         bool hasOther3d = filePaths.Any(p => misc3dExts.Contains(Path.GetExtension(p)));
         bool hasUnityPkg = fileExtensions.Contains(".unitypackage");
-        bool hasUnityProj = fileExtensions.Contains(".meta");
+        bool hasUnityProj = fileExtensions.Contains(".meta") || unityProjRoots.All(root => filePaths.Any(p => p.StartsWith(root)));
         bool hasDll = fileExtensions.Contains(".dll");
         bool hasZip = fileExtensions.Contains(".zip");
         bool hasTiktokData = filePaths.Any(p => p.Replace(' ', '_').Contains("tiktok_data")); // this has somehow happened **twice**.
