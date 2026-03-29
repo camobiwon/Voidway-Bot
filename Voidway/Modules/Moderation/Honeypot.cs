@@ -43,7 +43,7 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
 
         AuditLogForwarding.IgnoreThese.PushBack(new AuditLogInfo(
                 client.CurrentUser,
-                cfg.kickInsteadOfBan ? DiscordAuditLogActionType.Kick : DiscordAuditLogActionType.Ban,
+                DiscordAuditLogActionType.Ban,
                 DateTime.Now
             ));
 
@@ -66,14 +66,17 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
         // Use with caution in a test environment/server first.
         try
         {
+            await args.Guild.BanMemberAsync(args.Author, TimeSpan.FromMinutes(15), options.Reason);
+            
             if (cfg.kickInsteadOfBan)
             {
-                TryDeleteDontCare(args.Message, "Clearing the honeypot channel");
-                await args.Guild.RemoveMemberAsync(args.Author, options.Reason);
-            }
-            else
-            {
-                await args.Guild.BanMemberAsync(args.Author, TimeSpan.FromMinutes(15), options.Reason);
+                AuditLogForwarding.IgnoreThese.PushBack(new AuditLogInfo(
+                    client.CurrentUser,
+                    DiscordAuditLogActionType.Unban,
+                    DateTime.Now
+                ));
+                
+                await args.Guild.UnbanMemberAsync(args.Author, "Kicked, not banned: " + options.Reason);
             }
         }
         catch (Exception ex)
