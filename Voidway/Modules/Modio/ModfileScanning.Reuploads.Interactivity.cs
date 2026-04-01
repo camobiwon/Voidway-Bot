@@ -28,7 +28,7 @@ internal partial class ModfileScanning
     [Command("cataloguser"), Description("(NOT EPHEMERAL) Scans a user's mods' files for new barcodes & hashes")]
     public async Task CatalogFromUserCmd(SlashCommandContext ctx, string modUrl)
     {
-        if (ModioHelper.BonelabClient is null)
+        if (ModioHelper.ModsClient is null)
         {
             await ctx.RespondAsync("The Mod.IO API clien't isn't initialized.\n" +
                                    "The operator of the bot needs to set an API key and/or OAuth2 token, and restart the bot."
@@ -54,7 +54,7 @@ internal partial class ModfileScanning
             return;
         }
         
-        var modData = await ModioHelper.BonelabClient.GetFromUrl(modUrl);
+        var modData = await ModioHelper.ModsClient.GetFromUrl(modUrl);
 
         if ((modData?.SubmittedBy?.Id ?? 0) == 0)
         {
@@ -98,7 +98,7 @@ internal partial class ModfileScanning
     [Command("catalogmod"), Description("(NOT EPHEMERAL) Scans a mod's files for new barcodes & hashes")]
     public async Task CatalogFromModCmd(SlashCommandContext ctx, string modUrl)
     {
-        if (ModioHelper.BonelabClient is null)
+        if (ModioHelper.ModsClient is null)
         {
             await ctx.RespondAsync("The Mod.IO API clien't isn't initialized.\n" +
                                    "The operator of the bot needs to set an API key and/or OAuth2 token, and restart the bot."
@@ -106,7 +106,7 @@ internal partial class ModfileScanning
             return;
         }
 
-        var modData = await ModioHelper.BonelabClient.GetFromUrl(modUrl);
+        var modData = await ModioHelper.ModsClient.GetFromUrl(modUrl);
         if (modData is null)
         {
             await ctx.RespondAsync("Nothing found. Mod might not exist or the URL might not be a mod's?", true);

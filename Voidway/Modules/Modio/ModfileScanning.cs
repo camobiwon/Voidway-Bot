@@ -145,7 +145,6 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         {
             Logger.Warn($"Caught exception while scanning/announcing flagged filenames on {modData.Name} ({modData.NameId}, #ID {modData.Id})", ex);
         }
-
         
         try
         {
@@ -154,6 +153,15 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         catch (Exception ex)
         {
             Logger.Warn($"Caught exception while scanning/announcing heuristics on {modData.Name} ({modData.NameId}, #ID {modData.Id})", ex);
+        }
+
+        try
+        {
+            await ScanZipForReuploadedMods(zip, modData);
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"Caught exception while scanning/announcing reuploads(?) on {modData.Name} ({modData.NameId}, #ID {modData.Id})", ex);
         }
     }
 

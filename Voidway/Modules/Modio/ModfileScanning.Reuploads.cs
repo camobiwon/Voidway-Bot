@@ -19,7 +19,7 @@ internal partial class ModfileScanning
 {
     private static readonly Encoding TextEncoding = Encoding.UTF8;
     
-    private static async Task<(int foundExistingBarcodes, int foundExistingHashes)> ScanZipForReuploadedMods(ZipArchive zip, Mod modData)
+    private static async Task<(int foundExistingBarcodes, int foundExistingHashes)> ScanZipForReuploadedMods(ZipArchive zip, Mod modData, bool announce = true)
     {
         if (modData.SubmittedBy?.NameId is null)
         {
@@ -85,6 +85,12 @@ internal partial class ModfileScanning
             return (0, 0);
         }
 
+        if (!announce)
+        {
+            Logger.Put($"Found {foundExistingBarcodes.Count} barcodes and {foundExistingHashes} hashes, but not announcing due to parameter.", LogType.Debug);
+            return (foundExistingBarcodes.Count, foundExistingHashes.Count);
+        }
+
         string desc = $"**Potential reupload detected**" +
                       $"\n- {string.Join("\n- ", foundExistingBarcodes.Select(tup => $"`{tup.barcode}` from `{tup.originalUploader}` on Mod.IO"))}";
         
@@ -128,11 +134,11 @@ internal partial class ModfileScanning
 
     async Task<string> CatalogBarcodeAndHashesFromUser(uint userId, Action<string>? updateStrCallback = null)
     {
-        if (ModioHelper.BonelabClient is null || bot.ModIO.Value is null)
+        if (ModioHelper.ModsClient is null || bot.ModIO.Value is null)
             return "The Mod.IO API client isn't initialized.";
 
         string logTag = $"User #ID {userId}";
-        var modSearch = ModioHelper.BonelabClient.Search(ModFilter.SubmitterId.Eq(userId));
+        var modSearch = ModioHelper.ModsClient.Search(ModFilter.SubmitterId.Eq(userId));
         
         int totalNewBarcodes = 0;
         int totalNewHashes = 0;
@@ -198,7 +204,7 @@ internal partial class ModfileScanning
     {
         // ReSharper disable once InconsistentNaming
         const int MB_BYTES = 1024 * 1024;
-        if (ModioHelper.BonelabClient is null)
+        if (ModioHelper.ModsClient is null)
             return ("The Mod.IO API client isn't initialized.", 0, 0);
 
         string logTag = $"Mod {modId}";
@@ -207,7 +213,7 @@ internal partial class ModfileScanning
         int newHashes = 0;
         try
         {
-            var modClient = ModioHelper.BonelabClient[modId];
+            var modClient = ModioHelper.ModsClient[modId];
             var modData = await modClient.Get();
             logTag = $"Mod '{modData.NameId}' (#ID {modData.Id})";
 

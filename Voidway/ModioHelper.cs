@@ -10,8 +10,11 @@ public record ModioEventArgs(ModsClient ModsClient, ModEvent Event);
 
 public static partial class ModioHelper
 {
-    private static Regex NameIdExtractor = NameIdExtractionRegex();
-    public static ModsClient? BonelabClient { get; private set; }
+    private static readonly Regex NameIdExtractor = NameIdExtractionRegex();
+    public static GameClient? BonelabClient { get; private set; }
+    
+    public static ModsClient? ModsClient => BonelabClient?.Mods;
+    
     private const string GAME_NAME_ID = "bonelab";
     public static event Func<ModioEventArgs, Task>? OnEvent;
     
@@ -21,16 +24,16 @@ public static partial class ModioHelper
         {
             var games = await clint.Games.Search().ToList();
             var bonelabGame = games.First(g => g.NameId == GAME_NAME_ID);
-            var bonelab = clint.Games[bonelabGame.Id];
-            var bonelabMods = bonelab.Mods;
-            BonelabClient = bonelabMods;
+            BonelabClient = clint.Games[bonelabGame.Id];
+            var user = await BonelabClient.GetUserFromUrl("https://mod.io/g/bonelab/u/camobiwon");
+            
         }
         catch (Exception ex)
         {
             Logger.Error("Exception while initializing Mod.IO API clients! Mod.IO API access won't work during this session!", ex);
             return;
         }
-        FetchLoop(BonelabClient);
+        FetchLoop(ModsClient!);
     }
     
     // RESHARPER I FUCKING KNOW, I'M ALREADY CATCHING EVERYTHING
@@ -66,7 +69,7 @@ public static partial class ModioHelper
             return;
         
         // this code path doesn't get hit if BonelabClient is null
-        var args = new ModioEventArgs(BonelabClient!, modEvent);
+        var args = new ModioEventArgs(ModsClient!, modEvent);
         
         foreach (var subscriber in OnEvent.GetInvocationList())
         {
@@ -84,22 +87,38 @@ public static partial class ModioHelper
         var match = NameIdExtractor.Match(url);
         if (!match.Success)
             return false;
-        if (match.Groups.Count != 4)
+        if (match.Groups.Count != 5)
         {
             var groups = match.Groups.Cast<Group>().Select(g => g.Value);
-            Logger.Warn($"Expected 4 groups, got {match.Groups.Count} from {url} -- {string.Join(", ", groups)}");
+            Logger.Warn($"Expected 5 groups, got {match.Groups.Count} from {url} -- {string.Join(", ", groups)}");
             return false;
         }
-        string gameNameId = match.Groups[1].Value;
-        clientType = match.Groups[2].Value;
-        nameId = match.Groups[3].Value;
 
-        Logger.Put($"Parsed game name-id {gameNameId}, object type {clientType}, and object name-id {nameId} from URL {url}", LogType.Debug);
-        if (gameNameId == GAME_NAME_ID)
+        if (string.IsNullOrEmpty(match.Groups[^1].Value))
+        {
+            clientType = match.Groups[1].Value;
+            nameId = match.Groups[2].Value;
+            
+            Logger.Put($"Parsed object type {clientType}, and object name-id {nameId} from URL {url} " +
+                       $"(not enough fields for a game-specific object)", LogType.Debug);
             return true;
-        
-        Logger.Warn($"Expected Game NameId {GAME_NAME_ID}, got {gameNameId} instead in URL {url}");
-        return false;
+        }
+        else
+        {
+            string gameNameId = match.Groups[2].Value;
+            
+            clientType = match.Groups[3].Value;
+            nameId = match.Groups[4].Value;
+            
+            Logger.Put($"Parsed game name-id {gameNameId}, object type {clientType}, and object name-id {nameId} from URL {url}", LogType.Debug);
+            
+            
+            if (gameNameId == GAME_NAME_ID)
+                return true;
+            
+            Logger.Warn($"Expected Game NameId {GAME_NAME_ID}, got {gameNameId} instead in URL {url}");
+            return false;
+        }
     }
 
     /// <summary>

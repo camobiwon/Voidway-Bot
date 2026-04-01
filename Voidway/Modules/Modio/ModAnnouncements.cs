@@ -386,7 +386,7 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
         }
         
         uint modId = unchecked((uint)modNumberId);
-        var clint = ModioHelper.BonelabClient; 
+        var clint = ModioHelper.ModsClient; 
 
         if (clint is null)
         {
