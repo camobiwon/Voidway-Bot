@@ -25,8 +25,6 @@ public static partial class ModioHelper
             var games = await clint.Games.Search().ToList();
             var bonelabGame = games.First(g => g.NameId == GAME_NAME_ID);
             BonelabClient = clint.Games[bonelabGame.Id];
-            var user = await BonelabClient.GetUserFromUrl("https://mod.io/g/bonelab/u/camobiwon");
-            
         }
         catch (Exception ex)
         {
