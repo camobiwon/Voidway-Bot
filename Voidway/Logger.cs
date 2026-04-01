@@ -2,6 +2,7 @@ using CircularBuffer;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Voidway;
@@ -12,23 +13,24 @@ internal static class Logger
     private const string FILE_DATE_FORMAT = "yyyy-MM-dd h_m_stt"; // example: "2022-10-23 12_01_47AM"
     private static readonly int maxPutDateLength = PUT_DATE_FORMAT.Length;
     internal static readonly CircularBuffer<string> LogStatements = new(4096);
-    private static readonly StreamWriter LogFile;
+    private static readonly string LogFilePath; 
+    private static StreamWriter LogFile;
 
     static Logger()
     {
         int maxFiles = Config.values.maxLogFiles;
         if (!Directory.Exists(Config.values.logPath)) Directory.CreateDirectory(Config.values.logPath);
-        string filePath = Path.Combine(Config.values.logPath, DateTime.Now.ToString(FILE_DATE_FORMAT) + ".log");
+        LogFilePath = Path.Combine(Config.values.logPath, DateTime.Now.ToString(FILE_DATE_FORMAT) + ".log");
         string latestPath = Path.Combine(Config.values.logPath, "latest.log");
 
         Console.WriteLine("Initializing logger");
-        LogFile = File.AppendText(filePath);
+        LogFile = File.AppendText(LogFilePath);
         
         if (File.Exists(latestPath))
             File.Delete(latestPath);
-        File.CreateSymbolicLink(latestPath, Path.GetFullPath(filePath));
+        File.CreateSymbolicLink(latestPath, Path.GetFullPath(LogFilePath));
         
-        Put("Created stream writer - logger now active, writing to " + filePath);
+        Put("Created stream writer - logger now active, writing to " + LogFilePath);
 
         // delete oldest log files over max log file count
         // https://stackoverflow.com/questions/20486559/get-a-list-of-files-in-a-directory-in-descending-order-by-creation-date-using-c#20486570
@@ -74,8 +76,36 @@ internal static class Logger
         Console.ResetColor();
         if (reason.writeToFile)
         {
-            LogFile.WriteLine(fileString);
-            LogFile.Flush();
+            try
+            {
+                LogFile.WriteLine(fileString);
+                LogFile.Flush();
+            }
+            catch (Exception ex)
+            {
+                string exceptionLog = $"!!! Nearly-fatal exception caught! Creating new textwriter now! " +
+                                      $"The current in-transit string will be written as Base64 to avoid a crash!\n" +
+                                      $"Find more information below:\n\t{ex}";
+
+                try
+                {
+                    LogFile.Close(); // close stream, if it does anything
+                }
+                catch
+                {
+                    // dnc
+                }
+
+                var stringSpan = fileString.AsSpan();
+                var byteSpan = MemoryMarshal.AsBytes(stringSpan);
+                var b64 = Convert.ToBase64String(byteSpan);
+
+                LogFile = new StreamWriter(LogFilePath);
+                LogFile.WriteLine(exceptionLog);
+                LogFile.WriteLine($"This almost made the program crash: (B64 decode first) {b64}");
+                fileString = $"(this almost made the entire program crash ->) {fileString}";
+            }
+            
         }
         LogStatements.PushBack(fileString);
     }
