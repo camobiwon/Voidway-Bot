@@ -8,6 +8,7 @@ using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 using Modio.Filters;
+using Modio.Models;
 using Newtonsoft.Json;
 
 namespace Voidway.Modules.Modio;
@@ -303,7 +304,7 @@ internal partial class ModfileScanning
             return;
         }
 
-        if (palletNull)
+        if (!hashNull)
         {
             if (PersistentData.values.hashesToOriginalBarcodes.TryGetValue(hash!, out var currBarcodeAssoc))
                 await ctx.RespondAsync($"{hash} points to the pallet barcode '{currBarcodeAssoc}'", true);
@@ -312,7 +313,7 @@ internal partial class ModfileScanning
             return;
         }
         
-        if (hashNull)
+        if (!palletNull)
         {
             if (PersistentData.values.barcodesToOriginalUploaders.TryGetValue(palletBarcode!, out var currUploaderAssoc))
                 await ctx.RespondAsync($"{palletBarcode} points to the mod.io user with the NameID '{currUploaderAssoc}'", true);
@@ -353,5 +354,75 @@ internal partial class ModfileScanning
         pages.Add(lastPage);
 
         await ctx.Interaction.SendPaginatedResponseAsync(true, ctx.User, pages);
+    }
+
+
+
+    [RequireApplicationOwner]
+    [Command("checkreuploads")]
+    [Description("(Ephemeral) Shows if a mod has reuploaded content in its files.")]
+    public async Task GetHashes(SlashCommandContext ctx,
+        [Description("The web URL for the mod")]
+        string modUrl)
+    {
+        if (ModioHelper.ModsClient is null)
+        {
+            await ctx.RespondAsync("The Mod.IO API clien't isn't initialized.\n" +
+                                   "The operator of the bot needs to set an API key and/or OAuth2 token, and restart the bot."
+                , true);
+            return;
+        }
+
+        var modData = await ModioHelper.ModsClient.GetFromUrl(modUrl);
+        if (modData is null)
+        {
+            await ctx.RespondAsync("Nothing found. Mod might not exist or the URL might not be a mod's?", true);
+            return;
+        }
+
+        await ctx.RespondAsync($"Got it! Found {modData.Name}, now let me search for its files...", true);
+
+
+        try
+        {
+            int counter = 0;
+            await foreach (var fileDownload in ModioHelper.ModsClient[modData.Id].Files.Search().ToEnumerable())
+            {
+                counter++;
+                await Task.Delay(1000);
+
+                string platforms = string.Join(", ", fileDownload.Platforms.Select(p => p.Platform?.Value));
+                string logTag = $"File {counter} ({fileDownload.Filename} for {platforms})";
+                
+                if (fileDownload?.Download is null)
+                {
+                    await ctx.Interaction.RespondOrAppend($"Mod.IO's API sent null for {logTag}");
+                    continue;
+                }
+                
+                var zip = await GetZip(fileDownload.Download);
+                if (zip is null)
+                {
+                    
+                    await ctx.Interaction.RespondOrAppend($"Failed to download {logTag}");
+                    continue;
+                }
+                
+                var (foundBarcodes, foundHashes) = await ScanZipForReuploadedMods(zip, modData, false);
+
+                if (foundBarcodes == 0 && foundHashes == 0)
+                    await ctx.Interaction.RespondOrAppend($"Nothing found, looks like {logTag} is an **original** upload.");
+                else 
+                    await ctx.Interaction.RespondOrAppend($"Found {foundBarcodes} barcode(s) and {foundHashes} hash(es) in {logTag}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"Logger while checking {modData.Name} ({modData.NameId} #ID {modData.Id}) for reuploads", ex);
+            await ctx.Interaction.RespondOrAppend($"Exception while checking files: {ex}");
+        }
+
+        await Task.Delay(1000);
+        await ctx.Interaction.RespondOrAppend("Done!");
     }
 }
