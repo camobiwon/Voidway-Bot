@@ -132,7 +132,8 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
         var desc = modData.DescriptionPlaintext ?? modData.Description ?? "";
         var title = modData.Name ?? modData.NameId ?? "";
         string[] tags = modData.Tags.Select(tag => tag.Name ?? "").ToArray();
-        bool hasCensoredContent = false;
+        bool hasCensoredContent = modData.MaturityOption.HasFlag(MaturityOption.Explicit);
+
         foreach (string censorItem in Config.values.dontAnnounceModsWith)
         {
             if (tags.Any(t => t.Contains(censorItem, StringComparison.InvariantCultureIgnoreCase)))
