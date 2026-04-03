@@ -132,7 +132,7 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
         var desc = modData.DescriptionPlaintext ?? modData.Description ?? "";
         var title = modData.Name ?? modData.NameId ?? "";
         string[] tags = modData.Tags.Select(tag => tag.Name ?? "").ToArray();
-        bool hasCensoredContent = modData.MaturityOption.HasFlag(MaturityOption.Explicit);
+        bool hasCensoredContent = false;
 
         foreach (string censorItem in Config.values.dontAnnounceModsWith)
         {
@@ -166,6 +166,13 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
                 hasCensoredContent = true;
                 break;
             }
+        }
+
+        if (modData.MaturityOption.HasFlag(MaturityOption.Explicit))
+        {
+            Logger.Put($"Mature flags ({modData.MaturityOption}) for mod {modData.Name} " +
+                       $"({modData.NameId}, #ID {modData.Id}) show explicit content -- censoring!");
+            hasCensoredContent = true;
         }
         
         string modName = (modData.Name ?? modData.NameId ?? "").Replace("&amp;", "&");
