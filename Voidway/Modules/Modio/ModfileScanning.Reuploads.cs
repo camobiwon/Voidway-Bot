@@ -105,7 +105,8 @@ internal partial class ModfileScanning
             Title = $"{modData.Name} (ID: {modData.NameId})",
             Url = modData.ProfileUrl?.ToString()
         };
-        
+
+        DontAnnounceThese.Add(modData.Id);
         int successCount = 0;
         int failureCount = 0;
         foreach (var channel in Channels)
