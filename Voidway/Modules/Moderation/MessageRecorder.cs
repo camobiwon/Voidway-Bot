@@ -6,8 +6,9 @@ namespace Voidway.Modules.Moderation;
 public class MessageRecorder(Bot bot) : ModuleBase(bot)
 {
     private static readonly Dictionary<DiscordGuild, DiscordChannel> logChannels = [];
-    private static HttpClient downloadClient = new(); 
-
+    private static HttpClient downloadClient = new();
+    private static readonly DateTime DiscordEpoch = new(2015, 1, 1);
+    
     protected override async Task FetchGuildResources()
     {
         if (bot.DiscordClient is null)
@@ -48,8 +49,15 @@ public class MessageRecorder(Bot bot) : ModuleBase(bot)
         
         if (msgBefore is not null && msgAfter.Content == msgBefore.Content)
             return; // no text content changed, so probably nothing we can log
-        if (!msgAfter.IsEdited)
-            return; // probably discord firing off an event for an attachment refresh 
+        if (!msgAfter.IsEdited || !msgAfter.EditedTimestamp.HasValue)
+            return; // probably discord firing off an event for an attachment refresh
+        if (Math.Abs((DateTime.Now - msgAfter.EditedTimestamp.Value).TotalMinutes) > 1)
+            return; // edited over a minute ago, likely an attachment refresh on a previously-edited message
+        
+        // Discord's API has been sending a lot of random ass timestamped messages like this lately.
+        // I think it's best if I just ignore them.
+        if (args.Message.Timestamp < DiscordEpoch)
+            return;
 
         DiscordMessageBuilder msgBuilder = new DiscordMessageBuilder()
             .WithAllowedMentions([]);
@@ -97,6 +105,11 @@ public class MessageRecorder(Bot bot) : ModuleBase(bot)
     protected override async Task MessageDeleted(DiscordClient client, MessageDeletedEventArgs args)
     {
         if (!logChannels.TryGetValue(args.Guild, out var channel))
+            return;
+
+        // Discord's API has been sending a lot of random ass timestamped messages like this lately.
+        // I think it's best if I just ignore them.
+        if (args.Message.Timestamp < DiscordEpoch)
             return;
         
         // don't log msg deletions from bots, they're usually automated by the bots themselves
