@@ -7,8 +7,6 @@ using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
-using Modio.Filters;
-using Modio.Models;
 using Newtonsoft.Json;
 
 namespace Voidway.Modules.Modio;
@@ -361,7 +359,7 @@ internal partial class ModfileScanning
     [RequireApplicationOwner]
     [Command("checkreuploads")]
     [Description("(Ephemeral) Shows if a mod has reuploaded content in its files.")]
-    public async Task GetHashes(SlashCommandContext ctx,
+    public async Task CheckModForReuploads(SlashCommandContext ctx,
         [Description("The web URL for the mod")]
         string modUrl)
     {
@@ -424,5 +422,139 @@ internal partial class ModfileScanning
 
         await Task.Delay(1000);
         await ctx.Interaction.RespondOrAppend("Done!");
+    }
+
+    [Command("Controls what mod.io users are trusted to only post original mods.")]
+    [RequireApplicationOwner]
+    public async Task AutoCatalogModsFrom(SlashCommandContext ctx,
+        [Description("True to add, false to remove.")] bool addOrRemove,
+        params string[] nameIds)
+    {
+        int changes = 0;
+        int noChanges = 0;
+        
+        // there's a better way to do this, but I don't really care. This works.
+
+        // Returns: whether any change was made to the collection
+        Func<string, bool> operation = addOrRemove
+            ? static (modderId) =>
+            {
+                if (PersistentData.values.trustedModders.Contains(modderId))
+                    return false;
+
+                PersistentData.values.trustedModders.Add(modderId);
+                return true;
+            }
+            : PersistentData.values.trustedModders.Remove;
+        foreach (var nameId in nameIds)
+        {
+            if (operation(nameId))
+                changes++;
+            else
+                noChanges++;
+        }
+
+        await ctx.RespondAsync(
+            $"Done! {noChanges} no-change(s) and {changes} {(addOrRemove ? "addition(s)" : "removal(s)")}.\n" +
+            $"There are now {PersistentData.values.trustedModders.Count} trusted modder(s).", true);
+    }
+
+
+    [RequireApplicationOwner]
+    [Command("memoryhole")]
+    [Description("(Ephemeral) Forgets connections between given data and its associates.")]
+    public async Task MemoryHole(SlashCommandContext ctx,
+        [Description("Shows explainer on how this works")]
+        bool seeExplainer = false,
+        string? forgetBarcode = null,
+        string? forgetAuthorNameId = null,
+        params string[] forgetHashes)
+    {
+        if (seeExplainer)
+        {
+            await ctx.RespondAsync("This command fully removes mentions of any given piece of data.\n" +
+                                   "For example, if you want `com.BaBaCorp.FliggolGiggul` removed, that barcode will " +
+                                    "obviously be forgotten from the 'what barcodes were uploaded by who' list, but it " +
+                                    "will also remove every hash that points to that barcode.\n" +
+                                   "-# *(I'm not certain what the exact barcode is, I'm writing this on a 5 hour Alaska " +
+                                    "Airlines flight and they charge $8 for WiFi per device)*\n" +
+                                   "Similarly, if you want to memory-hole a mod author's entire catalog as Voidway has " +
+                                    "cataloged it, just pass in their name id and Voidway will forget ever having seen " +
+                                    "any mods from that user, and will also forget the hashes of mods they've posted.",
+                true);
+            return;
+        }
+        
+        bool barcodeNull = string.IsNullOrWhiteSpace(forgetBarcode);
+        bool authorNull = string.IsNullOrWhiteSpace(forgetAuthorNameId);
+        bool anyHashes = forgetHashes.Length > 0;
+
+        if (barcodeNull && authorNull && anyHashes)
+        {
+            await ctx.RespondAsync("Did you mean to check the explainer? You didn't send any barcode or author's " +
+                                   "Name ID you wanted me to forget.", true);
+            return;
+        }
+        if (barcodeNull ^ authorNull ^ anyHashes)
+        {
+            await ctx.RespondAsync("I'm only going to operate on one type of data at a time. " +
+                                   "Please try again with one parameter type only.", true);
+            return;
+        }
+
+        // Have to collect everything for removal first to avoid 
+        List<string> hashesToRemove = [];
+        HashSet<string> barcodesToRemove = [];
+
+        if (!barcodeNull)
+        {
+            barcodesToRemove.Add(forgetBarcode!);
+            await ctx.RespondAsync($"Gotcha, I'll round up every hash associated with {forgetBarcode}.", true);
+        }
+        else if (!authorNull)
+        {
+            
+            await ctx.RespondAsync($"Gotcha, I'll round up every barcode associated with {forgetAuthorNameId}.", true);
+            
+            foreach (var kvp in PersistentData.values.barcodesToOriginalUploaders)
+            {
+                if (kvp.Key == forgetAuthorNameId)
+                    barcodesToRemove.Add(kvp.Value);
+            }
+
+            await ctx.Interaction.RespondOrAppend($"Found {barcodesToRemove.Count} barcode(s) to remove.\n" +
+                                                  $"Now rounding up hashes...");
+        }
+        else if (!anyHashes)
+        {
+            hashesToRemove.AddRange(forgetHashes);
+        }
+
+        foreach (var kvp in PersistentData.values.hashesToOriginalBarcodes)
+        {
+            if (barcodesToRemove.Contains(kvp.Key))
+                hashesToRemove.Add(kvp.Value);
+        }
+
+        await ctx.Interaction.RespondOrAppend($"Found {hashesToRemove.Count} hash(es) to remove.\n" +
+                                              $"Moving on to removing associations...");
+        
+        foreach (var removeHash in hashesToRemove)
+        {
+            PersistentData.values.hashesToOriginalBarcodes.Remove(removeHash);
+        }
+
+        foreach (var removeBarcode in barcodesToRemove)
+        {
+            PersistentData.values.barcodesToOriginalUploaders.Remove(removeBarcode);
+        }
+        
+        PersistentData.WritePersistentData();
+
+        if (!barcodeNull)
+            await ctx.Interaction.RespondOrAppend($"Done! It's like {forgetBarcode} was never cataloged!");
+        else if (!authorNull)
+            await ctx.Interaction.RespondOrAppend($"Done! It's like {forgetAuthorNameId} was never cataloged!");
+        
     }
 }

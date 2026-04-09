@@ -11,6 +11,7 @@ using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.EventHandling;
 using DSharpPlus.Interactivity.Extensions;
 using Modio;
+using Modio.Filters;
 using Modio.Models;
 using File = Modio.Models.File;
 
@@ -79,20 +80,20 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         {
             case ModEventType.MOD_AVAILABLE: // mod posting is SUPPOSED to modfile_changed event, but doesn't always
             case ModEventType.MODFILE_CHANGED:
-                await ScanFiles(arg);
+                await ScanFile(arg);
                 break;
             default:
                 return;
         }
     }
 
-    private async Task ScanFiles(ModioEventArgs modioEventArgs)
+    private async Task ScanFile(ModioEventArgs modioEventArgs)
     {
         const long MB_BYTES = 1024 * 1024;
         
         var modClient = modioEventArgs.ModsClient[modioEventArgs.Event.ModId];
         var modData = await modClient.Get();
-        var file = await modClient.Files.Search().First();
+        var file = await modClient.Files.Search(Filter.WithLimit(1)).First();
         var download = file?.Download;
         
         // just make sure i dont NRE early
