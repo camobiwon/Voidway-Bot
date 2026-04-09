@@ -21,6 +21,8 @@ public class ServerConfig
     public ulong msgLogChannel = 0;
     public ulong memberModNotesChannel = 0;
     public ulong honeypotChannel = 0;
+    public ulong honeypotTallyMessageID = 0;
+    public uint honeypotKicks = 0;
     public ulong[] honeypotRoleWhitelist = [];
     public bool kickInsteadOfBan = true;
 

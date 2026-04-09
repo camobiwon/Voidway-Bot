@@ -36,8 +36,6 @@ public partial class Honeypot : ModuleBase
 
         cfg.honeypotChannel = channel.Id;
 
-        ServerConfig.WriteConfigToFile(cfg);
-
         ModerationLogOptions options = new()
         {
             Title = "Set Honeypot Channel",
@@ -48,6 +46,25 @@ public partial class Honeypot : ModuleBase
 
         await ctx.RespondAsync("Set honeypot channel.", true);
         await AuditLogForwarding.LogModerationAction(ctx.Guild, options);
+
+        // Create the message if it doesn't already exist.
+        if (cfg.honeypotTallyMessageID == 0)
+        {
+            DiscordMessage message = await channel.SendMessageAsync(GenerateKickUpdateMessage(cfg.honeypotKicks));
+            cfg.honeypotTallyMessageID = message.Id;
+        }
+        else
+        {
+            DiscordMessage message = await channel.GetMessageAsync(cfg.honeypotTallyMessageID);
+            // The message was deleted somehow. Resend the message.
+            if (message.Id == 0)
+            {
+                message = await channel.SendMessageAsync(GenerateKickUpdateMessage(cfg.honeypotKicks));
+                cfg.honeypotTallyMessageID = message.Id;
+            }
+        }
+        
+        ServerConfig.WriteConfigToFile(cfg);
     }
 
     [Command("unset")]
@@ -70,8 +87,15 @@ public partial class Honeypot : ModuleBase
             return;
         }
 
+        if (cfg.honeypotTallyMessageID != 0)
+        {
+            DiscordChannel channel = await ctx.Guild.GetChannelAsync(cfg.honeypotChannel);
+            DiscordMessage message = await channel.GetMessageAsync(cfg.honeypotTallyMessageID);
+            await message.DeleteAsync();
+        }
+
         cfg.honeypotChannel = 0;
-        ServerConfig.WriteConfigToFile(cfg);
+        cfg.honeypotTallyMessageID = 0;
 
         ModerationLogOptions options = new()
         {
@@ -83,6 +107,8 @@ public partial class Honeypot : ModuleBase
 
         await ctx.RespondAsync("Unset honeypot channel.", true);
         await AuditLogForwarding.LogModerationAction(ctx.Guild, options);
+
+        ServerConfig.WriteConfigToFile(cfg);
     }
 
     [Command("whitelist")]
@@ -157,8 +183,6 @@ public partial class Honeypot : ModuleBase
 
         ServerConfig.WriteConfigToFile(cfg);
 
-
-
         ModerationLogOptions options = new()
         {
             Title = "Removed Role From Honeypot Whitelist",
@@ -169,5 +193,35 @@ public partial class Honeypot : ModuleBase
 
         await ctx.RespondAsync("Removed role from honeypot whitelist.", true);
         await AuditLogForwarding.LogModerationAction(ctx.Guild, options);
+    }
+
+    [Command("setnumkicks")]
+    [RequireGuild]
+    [RequirePermissions([], [DiscordPermission.ManageGuild])]
+    public async Task SetNumKicksCommand(
+        SlashCommandContext ctx,
+        [Description("The number of kicks to set.")]
+        uint numKicks)
+    {
+        if (ctx.Member is null || ctx.Guild is null)
+        {
+            await ctx.RespondAsync("Huh... I seem to be missing important information for this interaction... Try again later?", true);
+            return;
+        }
+
+        var cfg = ServerConfig.GetConfig(ctx.Guild.Id);
+
+        cfg.honeypotKicks = numKicks;
+
+        ServerConfig.WriteConfigToFile(cfg);
+
+        await ctx.RespondAsync($"Set number of kicks to {numKicks}", true);
+
+        if (cfg.honeypotChannel != 0 && cfg.honeypotTallyMessageID != 0)
+        {
+            DiscordChannel channel = await ctx.Guild.GetChannelAsync(cfg.honeypotChannel);
+            DiscordMessage message = await channel.GetMessageAsync(cfg.honeypotTallyMessageID);
+            await message.ModifyAsync(GenerateKickUpdateMessage(numKicks));
+        }
     }
 }
