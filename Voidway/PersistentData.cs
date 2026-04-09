@@ -21,12 +21,14 @@ internal class PersistentData
     public Dictionary<ulong, Dictionary<DateOnly, Dictionary<ulong, int>>> observedMessages = [];
     public Dictionary<ulong, Dictionary<DateOnly, Dictionary<ulong, List<string>>>> moderationActions = [];
     
-    // mod barcode (from .hash filename) -> nameid
+    // mod barcode (from .hash filename) -> name id
     public Dictionary<string, string> barcodesToOriginalUploaders = [];
     // In case someone tries obscuring where their mod is originally from by renaming the .hash file
     public Dictionary<string, string> hashesToOriginalBarcodes = [];
     // modFILE uint id, NOT mod id
     public List<uint> modFilesInCatalog = [];
+    // via Name ID
+    public List<string> trustedModders = [];
     
     // plumbing
     static PersistentData()

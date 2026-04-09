@@ -1,8 +1,6 @@
 using System.IO.Compression;
 using DSharpPlus.Entities;
-using Modio;
 using Modio.Models;
-using File = Modio.Models.File;
 
 namespace Voidway.Modules.Modio;
 
@@ -17,7 +15,7 @@ public enum ModContentHeuristic : ulong
     Fbx = 1 << 4,
     Misc3dFile = 1 << 5,
     UnityPkg = 1 << 6,
-    UnityProj = 1 << 7, // i swear to god this has happened at least once. a full fucking unity project.
+    UnityProj = 1 << 7, // I swear to god this has happened a few times. a full fucking unity project.
     VirusFlagged = 1 << 10,
     Dll = 1 << 11,
     Zip = 1 << 12,
@@ -29,6 +27,7 @@ public enum ModContentHeuristic : ulong
     MacExecutableOrInstaller = 1 << 18,
     Video = 1 << 19,
     FailedBuild = 1 << 20,
+    RobloxFile = 1 << 21, // This has happened at least once.
 }
 
 partial class ModfileScanning
@@ -78,6 +77,7 @@ partial class ModfileScanning
         string[] winInstallerExts = [".msi", ".msix", ".appx", ".appxbundle"];
         string[] macAppAndInstallerExts = [".dmg", ".pkg", ".app", ".sh", ".command"];
         string[] videoExts = [".mp4", ".webm", ".avi", ".mov"];
+        string[] robloxExts = [".rbxl", ".rbxlx", ".rbxm", ".rbxmx"];
 
         string[] unityProjRoots = ["assets", "projectsettings", "packages",]; // only the explicitly required ones
             
@@ -104,6 +104,7 @@ partial class ModfileScanning
         bool hasExecutable = winExecExts.Any(fileExtensions.Contains);
         bool hasMacExecOrInstaller = macAppAndInstallerExts.Any(fileExtensions.Contains);
         bool hasVideo = videoExts.Any(fileExtensions.Contains);
+        bool hasRobloxFile = robloxExts.Any(fileExtensions.Contains); // a kid uploaded his Roblox "place" file. really.
 
         if (isLikelyValidMod)
             ret |= ModContentHeuristic.MarrowMod;
@@ -139,8 +140,8 @@ partial class ModfileScanning
             ret |= ModContentHeuristic.Video;
         if (isFailedBuild)
             ret |= ModContentHeuristic.FailedBuild;
-            
-        
+        if (hasRobloxFile)
+            ret |= ModContentHeuristic.RobloxFile;
         
         Logger.Put($"Detected {ret} from file extensions: {string.Join(", ", fileExtensions)}", LogType.Trace);
 
