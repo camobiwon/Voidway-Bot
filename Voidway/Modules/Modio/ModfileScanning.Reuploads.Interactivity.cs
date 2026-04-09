@@ -25,7 +25,7 @@ internal partial class ModfileScanning
 {
     [RequireApplicationOwner]
     [Command("cataloguser"), Description("(NOT EPHEMERAL) Scans a user's mods' files for new barcodes & hashes")]
-    public async Task CatalogFromUserCmd(SlashCommandContext ctx, string modUrl)
+    public async Task CatalogFromUserCmd(SlashCommandContext ctx, string modUrlOrNameId)
     {
         if (ModioHelper.ModsClient is null)
         {
@@ -35,7 +35,7 @@ internal partial class ModfileScanning
             return;
         }
 
-        if (!ModioHelper.TryParseUrl(modUrl, out var clientType, out var nameId))
+        if (!ModioHelper.TryParseUrl(modUrlOrNameId, out var clientType, out var nameId))
         {
             await ctx.RespondAsync($"That's not a valid URL, at least not one that I would know.", true);
             return;
@@ -53,7 +53,7 @@ internal partial class ModfileScanning
             return;
         }
         
-        var modData = await ModioHelper.ModsClient.GetFromUrl(modUrl);
+        var modData = await ModioHelper.ModsClient.GetFromUrlOrNameId(modUrlOrNameId);
 
         if ((modData?.SubmittedBy?.Id ?? 0) == 0)
         {
@@ -95,7 +95,7 @@ internal partial class ModfileScanning
     
     [RequireApplicationOwner]
     [Command("catalogmod"), Description("(NOT EPHEMERAL) Scans a mod's files for new barcodes & hashes")]
-    public async Task CatalogFromModCmd(SlashCommandContext ctx, string modUrl)
+    public async Task CatalogFromModCmd(SlashCommandContext ctx, string modUrlOrNameId)
     {
         if (ModioHelper.ModsClient is null)
         {
@@ -105,7 +105,7 @@ internal partial class ModfileScanning
             return;
         }
 
-        var modData = await ModioHelper.ModsClient.GetFromUrl(modUrl);
+        var modData = await ModioHelper.ModsClient.GetFromUrlOrNameId(modUrlOrNameId);
         if (modData is null)
         {
             await ctx.RespondAsync("Nothing found. Mod might not exist or the URL might not be a mod's?", true);
@@ -360,8 +360,8 @@ internal partial class ModfileScanning
     [Command("checkreuploads")]
     [Description("(Ephemeral) Shows if a mod has reuploaded content in its files.")]
     public async Task CheckModForReuploads(SlashCommandContext ctx,
-        [Description("The web URL for the mod")]
-        string modUrl)
+        [Description("The web URL or Name ID for the mod")]
+        string modUrlOrNameId)
     {
         if (ModioHelper.ModsClient is null)
         {
@@ -371,7 +371,7 @@ internal partial class ModfileScanning
             return;
         }
 
-        var modData = await ModioHelper.ModsClient.GetFromUrl(modUrl);
+        var modData = await ModioHelper.ModsClient.GetFromUrlOrNameId(modUrlOrNameId);
         if (modData is null)
         {
             await ctx.RespondAsync("Nothing found. Mod might not exist or the URL might not be a mod's?", true);
@@ -384,21 +384,21 @@ internal partial class ModfileScanning
         try
         {
             int counter = 0;
-            await foreach (var fileDownload in ModioHelper.ModsClient[modData.Id].Files.Search().ToEnumerable())
+            await foreach (var modFile in ModioHelper.ModsClient[modData.Id].Files.Search().ToEnumerable())
             {
                 counter++;
                 await Task.Delay(1000);
 
-                string platforms = string.Join(", ", fileDownload.Platforms.Select(p => p.Platform?.Value));
-                string logTag = $"File {counter} ({fileDownload.Filename} for {platforms})";
+                string platforms = string.Join(", ", modFile.Platforms.Select(p => p.Platform?.Value));
+                string logTag = $"File {counter} ({modFile.Filename} for {platforms})";
                 
-                if (fileDownload?.Download is null)
+                if (modFile.Download is null)
                 {
                     await ctx.Interaction.RespondOrAppend($"Mod.IO's API sent null for {logTag}");
                     continue;
                 }
                 
-                var zip = await GetZip(fileDownload.Download);
+                var zip = await GetZip(modFile.Download);
                 if (zip is null)
                 {
                     

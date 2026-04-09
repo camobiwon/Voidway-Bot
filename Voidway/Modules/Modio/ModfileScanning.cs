@@ -164,6 +164,22 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         {
             Logger.Warn($"Caught exception while scanning/announcing reuploads(?) on {modData.LogTag()}", ex);
         }
+
+        try
+        {
+            if (modData.SubmittedBy?.NameId is not null
+                && PersistentData.values.trustedModders.Contains(modData.SubmittedBy.NameId))
+            {
+                var catalogResults = await CatalogBarcodeAndHashesFromMod(modData.Id);
+                Logger.Put(
+                    $"Found {catalogResults.newBarcodes} new barcode(s) and {catalogResults.newHashes} new hash(es)" +
+                    $"from scan of {modData.LogTag()} by trusted modder {modData.SubmittedBy.LogTag()}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn("Caught exception while cataloging modfiles' barcode(s) & hash(es)", ex);
+        }
     }
 
     private static async Task<ZipArchive?> GetZip(Download download)

@@ -123,19 +123,23 @@ public static partial class ModioHelper
     /// Retrieves a Mod.IO mod from its URL.
     /// </summary>
     /// <param name="mods">Any ModsClient that can be used lol it just checks bonelab</param>
-    /// <param name="url">Any mod URL. Doesn't have to start with https or end with a slash.</param>
+    /// <param name="urlOrNameId">If it contains a slash it'll be treated as a URL. Doesn't have to start with https or end with a slash.</param>
     /// <returns>The mod data that was found, or <see langword="null"/> if none or not a mod.</returns>
-    public static async Task<Mod?> GetFromUrl(this ModsClient mods, string url)
+    public static async Task<Mod?> GetFromUrlOrNameId(this ModsClient mods, string urlOrNameId)
     {
-        if (!TryParseUrl(url, out var clientType, out var nameId))
-            return null;
-
-        if (clientType != "m")
+        string? nameId = urlOrNameId;
+        if (!urlOrNameId.Contains('/'))
         {
-            Logger.Warn($"Expected client type 'm', got '{clientType}' instead in URL {url}");
-            return null;
-        }
+            if (!TryParseUrl(urlOrNameId, out var clientType, out nameId))
+                return null;
 
+            if (clientType != "m")
+            {
+                Logger.Warn($"Expected client type 'm', got '{clientType}' instead in URL {urlOrNameId}");
+                return null;
+            }
+        }
+        
         try
         {
             var searchClient = mods.Search(ModFilter.NameId.Eq(nameId));
