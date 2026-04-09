@@ -1,0 +1,198 @@
+﻿using System.Reflection;
+using System.Runtime.CompilerServices;
+using CircularBuffer;
+using DSharpPlus;
+using DSharpPlus.EventArgs;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Voidway.Modules;
+
+public abstract partial class ModuleBase
+{
+
+    #region Statics
+
+    protected const bool STOP_EVENT_PROPAGATION = true;
+    protected const bool DONT_STOP_EVENT_PROPAGATION = true;
+
+    // private static List<ModuleBase> allBlockers = [];
+
+    static ModuleBase()
+    {
+        Config.ConfigChanged += () => Task.Run(ConfigChanged);
+    }
+
+    static async Task ConfigChanged()
+    {
+        foreach (ModuleBase module in AllModules)
+        {
+            // refresh cached config values
+            await module.FetchGuildResources();
+        }
+    }
+
+    internal static readonly List<ModuleBase> AllModules = new();
+    static readonly CircularBuffer<DiscordEventArgs> DontPropagate = new(4096);
+    
+
+    public static void DontPropagateEvent(DiscordEventArgs args)
+    {
+        DontPropagate.PushBack(args);
+    }
+    #endregion
+    
+    
+
+    protected Bot bot { get; private set; }
+    bool inited;
+
+    public ModuleBase(Bot bot) : this()
+    {
+        this.bot = bot;
+        AllModules.Add(this);
+        if (bot.DiscordClient is null)
+            bot.DiscordBuilder.ConfigureServices(x => x.AddSingleton(this.GetType(), this));
+        
+
+        //if (GetType().GetCustomAttribute<CommandAttribute>() is not null)
+        //    bot.clientBuilder.UseCommands(ce => ce.AddCommands(GetType()));
+    }
+
+    private async Task CheckAndInit(DiscordClient client, GuildDownloadCompletedEventArgs args)
+    {
+        await FetchGuildResources();
+        if (inited)
+            return;
+
+        await InitOneShot(args);
+        inited = true;
+    }
+
+    private Task AllEventsHandler(DiscordClient client, DiscordEventArgs args)
+    {
+        // if a previous handler already stopped propagation, don't bother
+        if (DontPropagate.Contains(args))
+            return Task.CompletedTask;
+
+        bool needStop = false;
+
+        // quick filtering for blocked users
+        if (args is MessageCreatedEventArgs msgCreatedArgs)
+            needStop = needStop || Config.values.blockedUsers.Contains(msgCreatedArgs.Author.Id);
+        else if (args is MessageUpdatedEventArgs msgUpdatedArgs)
+            needStop = needStop || Config.values.blockedUsers.Contains(msgUpdatedArgs.Author.Id);
+        else if (args is MessageReactionAddedEventArgs rxnArgs)
+            needStop = needStop || Config.values.blockedUsers.Contains(rxnArgs.User.Id);
+
+        needStop = needStop || GlobalStopEventPropagation(args);
+
+        if (needStop)
+        {
+            // Logger.Put($"Event type {args.GetType().Name} was blocked from propagation by {GetType().Name}");
+            DontPropagate.PushBack(args);
+        }
+        
+        return Task.CompletedTask;
+    }
+
+    private MethodInfo InstanceMethod(Delegate target, [CallerArgumentExpression(nameof(target))] string methodName = "") => GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic)
+                                                                                                                                ?? throw new MissingMethodException(methodName);
+
+    public void ConfigureEventHandlers()
+    {
+        bot.DiscordBuilder.ConfigureEventHandlers(x => x.HandleGuildDownloadCompleted(CheckAndInit));
+
+        bot.DiscordBuilder.ConfigureEventHandlers(x => x
+            .HandleGuildDownloadCompleted(AllEventsHandler)
+            .HandleMessageCreated(AllEventsHandler)
+            .HandleMessageUpdated(AllEventsHandler)
+            .HandleMessageReactionAdded(AllEventsHandler)
+            .HandleChannelCreated(AllEventsHandler)
+            .HandleThreadCreated(AllEventsHandler)
+            .HandleSessionCreated(AllEventsHandler)
+            .HandleUnknownEvent(AllEventsHandler)
+            .HandleGuildAuditLogCreated(AllEventsHandler));
+        
+        bool hasBlocker = InstanceMethod(GlobalStopEventPropagation).DeclaringType == GetType();
+        var handlersThatNeedRegistering = new List<(bool needsRegister, Action<EventHandlingBuilder> builder, string eventName)>
+        {
+            (InstanceMethod(GuildDownloadCompleted).DeclaringType == GetType(), 
+                builder => builder.HandleGuildDownloadCompleted(GuildDownloadCompletedEvent),
+                "GuildDownloadCompleted"),
+            (InstanceMethod(MessageCreated).DeclaringType == GetType(), 
+                builder => builder.HandleMessageCreated(MessageCreatedEvent),
+                "MessageCreated"),
+            (InstanceMethod(MessageUpdated).DeclaringType == GetType(), 
+                builder => builder.HandleMessageUpdated(MessageUpdatedEvent),
+                "MessageUpdated"),
+            (InstanceMethod(MessageDeleted).DeclaringType == GetType(), 
+                builder => builder.HandleMessageDeleted(MessageDeletedEvent),
+                "MessageDeleted"),
+            (InstanceMethod(MessagesBulkDeleted).DeclaringType == GetType(), 
+                builder => builder.HandleMessagesBulkDeleted(MessagesBulkDeletedEvent),
+                "MessagesBulkDeleted"),
+            (InstanceMethod(ReactionAdded).DeclaringType == GetType(), 
+                builder => builder.HandleMessageReactionAdded(ReactionAddedEvent),
+                "ReactionAdded"),
+            (InstanceMethod(ReactionRemoved).DeclaringType == GetType(), 
+                builder => builder.HandleMessageReactionRemoved(ReactionRemovedEvent),
+                "ReactionRemoved"),
+            (InstanceMethod(GuildMemberUpdated).DeclaringType == GetType(), 
+                builder => builder.HandleGuildMemberUpdated(GuildMemberUpdatedEvent),
+                "GuildMemberUpdated"),
+            (InstanceMethod(ChannelCreated).DeclaringType == GetType(), 
+                builder => builder.HandleChannelCreated(ChannelCreatedEvent),
+                "ChannelCreated"),
+            (InstanceMethod(ThreadCreated).DeclaringType == GetType(), 
+                builder => builder.HandleThreadCreated(ThreadCreatedEvent),
+                "ThreadCreated"),
+            (InstanceMethod(SessionCreated).DeclaringType == GetType(), 
+                builder => builder.HandleSessionCreated(SessionCreatedEvent),
+                "SessionCreated"),
+            (InstanceMethod(GuildAuditLogCreated).DeclaringType == GetType(), 
+                builder => builder.HandleGuildAuditLogCreated(GuildAuditLogCreatedEvent),
+                "GuildAuditLogCreated"),
+            (InstanceMethod(InteractionCreated).DeclaringType == GetType(), 
+                builder => builder.HandleInteractionCreated(InteractionCreatedEvent),
+                "InteractionCreated"),
+            (InstanceMethod(ComponentInteractionCreated).DeclaringType == GetType(), 
+                builder => builder.HandleComponentInteractionCreated(ComponentInteractionCreatedEvent),
+                "ComponentInteractionCreated"),
+            (InstanceMethod(ModalSubmitted).DeclaringType == GetType(), 
+                builder => builder.HandleModalSubmitted(ModalSubmittedEvent),
+                "ModalSubmitted"),
+            (InstanceMethod(UnknownEvent).DeclaringType == GetType(), 
+                builder => builder.HandleUnknownEvent(UnknownEventEvent),
+                "UnknownEvent"),
+        };
+
+        Logger.Put($"Now registering event handlers for {GetType().Name}", LogType.Debug);
+        foreach (var (needsRegister, builder, name) in handlersThatNeedRegistering)
+        {
+            if (needsRegister)
+            {
+                bot.DiscordBuilder.ConfigureEventHandlers(builder);
+                Logger.Put($" * Registering event {name}...", LogType.Debug);
+            }
+        }
+
+        Logger.Put($"Configured event handlers for {GetType().Name}, adding {handlersThatNeedRegistering.Count(x => x.needsRegister)} events{(hasBlocker ? " in addition to its blocker" : "")}.");
+        
+    }
+
+    // actual API shit that children are gonna use
+    protected virtual bool GlobalStopEventPropagation(DiscordEventArgs eventArgs)
+    {
+        return false;
+    }
+
+    protected virtual Task InitOneShot(GuildDownloadCompletedEventArgs args)
+    {
+        return Task.CompletedTask;
+    }
+
+    protected virtual Task FetchGuildResources()
+    {
+        return Task.CompletedTask;
+    }
+}

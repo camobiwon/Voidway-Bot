@@ -1,48 +1,63 @@
 ﻿using System.Diagnostics;
 
-namespace Voidway_Bot
+namespace Relauncher;
+
+class Program
 {
-    internal class Program
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
+        Thread.Sleep(1000); // make sure parent process is dead
+        
+        var parms = RelaunchParameters.Parse(args)!;
+        // string buildProject = args.First(arg => arg.StartsWith("BUILD=")).Replace("BUILD=", ""); // full path
+        // string continueWith = args.First(arg => arg.StartsWith("CONT=")).Replace("CONT=", ""); // full path
+        // string continueRootFolder = args.First(arg => arg.StartsWith("PWD=")).Replace("PWD=", "");
+        // string? initiatorId = args.FirstOrDefault(arg => arg.StartsWith("USERID=")); // optional
+
+        string projFolder = Path.GetDirectoryName(parms.buildProject) ?? Environment.CurrentDirectory;
+        string projFile = Path.GetFileName(parms.buildProject)!;
+        
+        string dotnetBuildOutput;
+        Process proc = new()
         {
-            if (args.Contains("DEBUGGING")) Debugger.Launch();
-
-            // wait for main proc to finish closing to release locks
-            Thread.Sleep(1000); // ideally id await but apparently main cant be async.
-
-            // dont even bother try-catching. if this fails we're basically fucked (and shouldn'tve gotten this far in the first place)
-            string rootFolder = args.First(arg => arg.StartsWith("RF=")).Replace("RF=", "");
-            string voidwayBotEntry = args.First(arg => Path.GetFileNameWithoutExtension(arg).EndsWith("Voidway Bot"));
-            string dotnetBuildOutput;
-
-            Process proc = new()
+            StartInfo = new()
             {
-                StartInfo = new()
-                {
-                    FileName = "dotnet",
-                    Arguments = "build \"Voidway Bot.csproj\"",
-                    WorkingDirectory = rootFolder,
-                    RedirectStandardOutput = true,
-                }
-            };
+                FileName = "dotnet",
+                Arguments = $"build \"{projFile}\"",
+                WorkingDirectory = projFolder,
+                RedirectStandardOutput = true,
+            }
+        };
 
-            proc.Start();
-            proc.WaitForExit();
-            dotnetBuildOutput = proc.StandardOutput.ReadToEnd();
+        string buildInvocation = $"{proc.StartInfo.FileName} {proc.StartInfo.Arguments} [in {projFolder}]";
+        
+        proc.Start();
+        proc.WaitForExit();
+        dotnetBuildOutput = proc.StandardOutput.ReadToEnd().Replace(projFolder, "$PWD");
 
-            proc.StartInfo.FileName = voidwayBotEntry;
-            proc.StartInfo.RedirectStandardOutput = false;
-            proc.StartInfo.WorkingDirectory = Path.GetDirectoryName(voidwayBotEntry);
-            proc.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
-            proc.StartInfo.CreateNoWindow = false;
-            proc.StartInfo.Arguments = "";
-            proc.StartInfo.ArgumentList.Add("UPDATED");
-            proc.StartInfo.ArgumentList.Add(dotnetBuildOutput);
-            proc.StartInfo.ArgumentList.Add(args.First(arg => ulong.TryParse(arg, out _)));
-            if (args.Contains("DEBUGGING")) proc.StartInfo.ArgumentList.Add("DEBUGGING");
-            proc.Start();
-            Environment.Exit(0);
-        }
+        proc = new()
+        {
+            StartInfo = new()
+            {
+                FileName = parms.launchExecutable,
+                WorkingDirectory = parms.launchWorkingDir
+            }
+        };
+
+        string runCommandsParameter = $"### {buildInvocation}\n{dotnetBuildOutput}";
+        proc.StartInfo.ArgumentList.Add(RelaunchParameters.RELAUNCHED_ARG);
+        proc.StartInfo.ArgumentList.Add(runCommandsParameter);
+        if (parms.initiatorId.HasValue)
+            proc.StartInfo.ArgumentList.Add("USERID=" + parms.initiatorId.Value);
+
+        proc.Start();
+        Console.WriteLine("DONE, NOW LAUNCHING BOT!!!");
+        Console.WriteLine("DONE, NOW LAUNCHING BOT!!!");
+        Console.WriteLine("DONE, NOW LAUNCHING BOT!!!");
+        Console.WriteLine("DONE, NOW LAUNCHING BOT!!!");
+        Console.WriteLine("DONE, NOW LAUNCHING BOT!!!");
+        
+        Console.WriteLine($"Executing command: {proc.StartInfo.FileName} \"{string.Join("\" \"", proc.StartInfo.ArgumentList)}\"");
+        Environment.Exit(0);
     }
 }
