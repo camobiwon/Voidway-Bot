@@ -153,6 +153,6 @@ public static partial class ModioHelper
         }
     }
     
-    [GeneratedRegex(@"mod\.io\/g\/(\S+)\/(\S)\/(\S+)", RegexOptions.Compiled)]
+    [GeneratedRegex(@"mod\.io\/(\S)\/([^\/\s]+)\/?(\S)?\/?([^\/\s]+)?", RegexOptions.Compiled)]
     private static partial Regex NameIdExtractionRegex();
 }
