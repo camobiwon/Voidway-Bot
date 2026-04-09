@@ -133,7 +133,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
 
         if (zip is null)
         {
-            Logger.Put($"Didn't get a file, bailing on scanning mod {modData.Name} ({modData.NameId}, #ID {modData.Id}).");
+            Logger.Put($"Didn't get a file, bailing on scanning mod {modData.LogTag()}.");
             return;
         }
 
@@ -143,7 +143,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         }
         catch (Exception ex)
         {
-            Logger.Warn($"Caught exception while scanning/announcing flagged filenames on {modData.Name} ({modData.NameId}, #ID {modData.Id})", ex);
+            Logger.Warn($"Caught exception while scanning/announcing flagged filenames on {modData.LogTag()}", ex);
         }
         
         try
@@ -152,7 +152,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         }
         catch (Exception ex)
         {
-            Logger.Warn($"Caught exception while scanning/announcing heuristics on {modData.Name} ({modData.NameId}, #ID {modData.Id})", ex);
+            Logger.Warn($"Caught exception while scanning/announcing heuristics on {modData.LogTag()}", ex);
         }
 
         try
@@ -161,7 +161,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         }
         catch (Exception ex)
         {
-            Logger.Warn($"Caught exception while scanning/announcing reuploads(?) on {modData.Name} ({modData.NameId}, #ID {modData.Id})", ex);
+            Logger.Warn($"Caught exception while scanning/announcing reuploads(?) on {modData.LogTag()}", ex);
         }
     }
 
