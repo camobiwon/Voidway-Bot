@@ -11,16 +11,15 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
     public static string GenerateKickUpdateMessage(uint kicks)
     {
         string[] adjectives =
-        {
+        [
             "obliterated",
             "destroyed",
             "#boomed",
             "banned",
             "mogged"
-        };
-
-        Random rand = new Random();
-        int index = rand.Next(0, adjectives.Length);
+        ];
+        
+        int index = Random.Shared.Next(0, adjectives.Length);
 
         return $"Number of people ***{adjectives[index]}***: {kicks}";
     }
@@ -36,18 +35,16 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
         if (cfg.honeypotChannel != args.Channel.Id)
             return;
 
-        // Do not ban anybody above you.
+        // Do not ban anybody above the bot
         if (target.Hierarchy >= args.Guild.CurrentMember.Hierarchy)
             return;
 
-        // Do not ban anybody with the "Manage Messages" permission
+        // Don't act on anybody with the "Manage Messages" permission
         if (args.Channel.PermissionsFor(target).HasPermission(DiscordPermission.ManageMessages))
             return;
 
         // Ignore anyone on the role whitelist.
         // Messages will be deleted instead.
-        ulong[] whitelistedRoles = cfg.honeypotRoleWhitelist;
-
         foreach (var role in target.Roles)
         {
             foreach (var whitelistedRole in cfg.honeypotRoleWhitelist)

@@ -4,7 +4,6 @@ using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Commands.Trees.Metadata;
 using DSharpPlus.Entities;
 using System.ComponentModel;
-using System.Threading.Channels;
 
 namespace Voidway.Modules.Moderation;
 
@@ -125,12 +124,6 @@ public partial class Honeypot : ModuleBase
             return;
         }
 
-        if (role is null)
-        {
-            await ctx.RespondAsync("No role set. Did you forget to add one?", true);
-            return;
-        }
-
         var cfg = ServerConfig.GetConfig(ctx.Guild.Id);
 
         List<ulong> list = cfg.honeypotRoleWhitelist.ToList();
@@ -164,12 +157,6 @@ public partial class Honeypot : ModuleBase
         if (ctx.Member is null || ctx.Guild is null)
         {
             await ctx.RespondAsync("Huh... I seem to be missing important information for this interaction... Try again later?", true);
-            return;
-        }
-
-        if (role is null)
-        {
-            await ctx.RespondAsync("No role defined. Did you forget to add one?", true);
             return;
         }
 
