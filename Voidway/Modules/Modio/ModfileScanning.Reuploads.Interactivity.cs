@@ -26,7 +26,7 @@ internal partial class ModfileScanning
 {
     [RequireApplicationOwner]
     [Command("cataloguser"), Description("(NOT EPHEMERAL) Scans a user's mods' files for new barcodes & hashes")]
-    public async Task CatalogFromUserCmd(SlashCommandContext ctx, string modUrlOrNameId)
+    public async Task CatalogFromUserCmd(SlashCommandContext ctx, string modUrlOrModNameId)
     {
         if (ModioHelper.ModsClient is null)
         {
@@ -35,18 +35,18 @@ internal partial class ModfileScanning
                 , true);
             return;
         }
-
-        if (!ModioHelper.TryParseUrl(modUrlOrNameId, out var clientType, out var nameId))
-        {
-            await ctx.RespondAsync($"That's not a valid URL, at least not one that I would know.", true);
-            return;
-        }
         
-        if (clientType == "u")
+        // if (!ModioHelper.TryParseUrl(modUrlOrNameId, out var clientType, out var nameId))
+        // {
+        //     await ctx.RespondAsync($"That's not a valid URL, at least not one that I would know.", true);
+        //     return;
+        // }
+        
+        if (modUrlOrModNameId.Contains("/u/"))
         {
             // can you tell im getting sick of this API?
             await ctx.RespondAsync(
-                $"Hey I know you want to scan all mods from {nameId}, who is *cough* **a user** *cough*," +
+                $"Hey I know you want to scan all mods from a USER, who is, get this **a user on mod.io**," +
                 $" to get their hashes and barcodes added to the reupload detection database," +
                 $"but because **mod.io's API is infernal dogshit**," +
                 $"I'm gonna need you to give me a link to **a mod that they've uploaded instead**\n" +
@@ -54,7 +54,7 @@ internal partial class ModfileScanning
             return;
         }
         
-        var modData = await ModioHelper.ModsClient.GetFromUrlOrNameId(modUrlOrNameId);
+        var modData = await ModioHelper.ModsClient.GetFromUrlOrNameId(modUrlOrModNameId);
 
         if ((modData?.SubmittedBy?.Id ?? 0) == 0)
         {
