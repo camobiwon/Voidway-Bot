@@ -424,7 +424,8 @@ internal partial class ModfileScanning
         await ctx.Interaction.RespondOrAppend("Done!");
     }
 
-    [Command("Controls what mod.io users are trusted to only post original mods.")]
+    [Command("trustuser")]
+    [Description("Controls what mod.io users are trusted to only post original mods.")]
     [RequireApplicationOwner]
     public async Task AutoCatalogModsFrom(SlashCommandContext ctx,
         [Description("True to add, false to remove.")] bool addOrRemove,
