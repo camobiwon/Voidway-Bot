@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using DSharpPlus.Commands;
+using DSharpPlus.Commands.ArgumentModifiers;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
@@ -356,9 +357,9 @@ internal partial class ModfileScanning
 
 
 
-    [RequireApplicationOwner]
     [Command("checkreuploads")]
     [Description("(Ephemeral) Shows if a mod has reuploaded content in its files.")]
+    [RequireApplicationOwner]
     public async Task CheckModForReuploads(SlashCommandContext ctx,
         [Description("The web URL or Name ID for the mod")]
         string modUrlOrNameId)
@@ -429,7 +430,7 @@ internal partial class ModfileScanning
     [RequireApplicationOwner]
     public async Task AutoCatalogModsFrom(SlashCommandContext ctx,
         [Description("True to add, false to remove.")] bool addOrRemove,
-        params string[] nameIds)
+        [VariadicArgument(1)] params string[] nameIds)
     {
         int changes = 0;
         int noChanges = 0;
@@ -461,9 +462,9 @@ internal partial class ModfileScanning
     }
 
 
-    [RequireApplicationOwner]
-    [Command("memoryhole")]
-    [Description("(Ephemeral) Forgets connections between given data and its associates.")]
+    // [RequireApplicationOwner]
+    // [Command("memoryhole")]
+    // [Description("(Ephemeral) Forgets connections between given data and its associates.")]
     public async Task MemoryHole(SlashCommandContext ctx,
         [Description("Shows explainer on how this works")]
         bool seeExplainer = false,
