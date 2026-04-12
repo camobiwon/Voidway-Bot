@@ -25,6 +25,7 @@ public class ServerConfig
     public uint honeypotKicks = 0;
     public ulong[] honeypotRoleWhitelist = [];
     public bool kickInsteadOfBan = true;
+    public uint hoistScanMinutes = 5;
 
     [TomlPrecedingComment("Mod.IO mod announcements")]
     public ulong allModsChannel = 0;
