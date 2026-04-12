@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using DSharpPlus.Entities;
+using Modio.Models;
 
 namespace Voidway;
 
@@ -75,5 +76,44 @@ public static class VoidwayExtensions
             default:
                 throw new ArgumentOutOfRangeException();
         }
+    }
+
+    /// <summary>
+    /// Produces a loggable string that represents the mod.
+    /// Why this isn't a stock feature of Modio.NET is beyond me.
+    /// </summary>
+    /// <param name="mod">Any mod, or null.</param>
+    /// <param name="includeAuthorInfo">Determines whether to include the author's logtag as well.</param>
+    /// <returns>ModName (mod-name-id #ID 123456789)</returns>
+    /// <seealso cref="LogTag(User?)"/>
+    public static string LogTag(this Mod? mod, bool includeAuthorInfo = false)
+    {
+        if (mod is null)
+        {
+            return $"Unknown mod (Null!)";
+        }
+
+        if (includeAuthorInfo)
+            return $"{mod.Name} ({mod.NameId} #ID {mod.Id}) {mod.SubmittedBy.LogTag()}";
+        else 
+            return $"{mod.Name} ({mod.NameId} #ID {mod.Id})";
+    }
+
+    
+    /// <summary>
+    /// Produces a loggable string that represents the mod.
+    /// Why this isn't a stock feature of Modio.NET is beyond me.
+    /// </summary>
+    /// <param name="user">Any user, or null.</param>
+    /// <returns>ModName (mod-name-id #ID 123456789)</returns>
+    /// <seealso cref="LogTag(Mod,bool)"/>
+    public static string LogTag(this User? user)
+    {
+        if (user is null)
+        {
+            return $"Unknown user (Null!)";
+        }
+        
+        return $"{user.Username} ({user.NameId} #ID {user.Id})";
     }
 }

@@ -11,6 +11,7 @@ using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.EventHandling;
 using DSharpPlus.Interactivity.Extensions;
 using Modio;
+using Modio.Filters;
 using Modio.Models;
 using File = Modio.Models.File;
 
@@ -79,20 +80,20 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         {
             case ModEventType.MOD_AVAILABLE: // mod posting is SUPPOSED to modfile_changed event, but doesn't always
             case ModEventType.MODFILE_CHANGED:
-                await ScanFiles(arg);
+                await ScanFile(arg);
                 break;
             default:
                 return;
         }
     }
 
-    private async Task ScanFiles(ModioEventArgs modioEventArgs)
+    private async Task ScanFile(ModioEventArgs modioEventArgs)
     {
         const long MB_BYTES = 1024 * 1024;
         
         var modClient = modioEventArgs.ModsClient[modioEventArgs.Event.ModId];
         var modData = await modClient.Get();
-        var file = await modClient.Files.Search().First();
+        var file = await modClient.Files.Search(Filter.WithLimit(1)).First();
         var download = file?.Download;
         
         // just make sure i dont NRE early
@@ -133,7 +134,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
 
         if (zip is null)
         {
-            Logger.Put($"Didn't get a file, bailing on scanning mod {modData.Name} ({modData.NameId}, #ID {modData.Id}).");
+            Logger.Put($"Didn't get a file, bailing on scanning mod {modData.LogTag()}.");
             return;
         }
 
@@ -143,7 +144,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         }
         catch (Exception ex)
         {
-            Logger.Warn($"Caught exception while scanning/announcing flagged filenames on {modData.Name} ({modData.NameId}, #ID {modData.Id})", ex);
+            Logger.Warn($"Caught exception while scanning/announcing flagged filenames on {modData.LogTag()}", ex);
         }
         
         try
@@ -152,7 +153,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         }
         catch (Exception ex)
         {
-            Logger.Warn($"Caught exception while scanning/announcing heuristics on {modData.Name} ({modData.NameId}, #ID {modData.Id})", ex);
+            Logger.Warn($"Caught exception while scanning/announcing heuristics on {modData.LogTag()}", ex);
         }
 
         try
@@ -161,7 +162,23 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         }
         catch (Exception ex)
         {
-            Logger.Warn($"Caught exception while scanning/announcing reuploads(?) on {modData.Name} ({modData.NameId}, #ID {modData.Id})", ex);
+            Logger.Warn($"Caught exception while scanning/announcing reuploads(?) on {modData.LogTag()}", ex);
+        }
+
+        try
+        {
+            if (modData.SubmittedBy?.NameId is not null
+                && PersistentData.values.trustedModders.Contains(modData.SubmittedBy.NameId))
+            {
+                var catalogResults = await CatalogBarcodeAndHashesFromMod(modData.Id);
+                Logger.Put(
+                    $"Found {catalogResults.newBarcodes} new barcode(s) and {catalogResults.newHashes} new hash(es)" +
+                    $"from scan of {modData.LogTag()} by trusted modder {modData.SubmittedBy.LogTag()}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn("Caught exception while cataloging modfiles' barcode(s) & hash(es)", ex);
         }
     }
 
