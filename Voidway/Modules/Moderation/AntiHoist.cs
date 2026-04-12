@@ -1,52 +1,39 @@
 ﻿using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using Modio;
 
 namespace Voidway.Modules.Moderation
 {
     public partial class AntiHoist(Bot bot) : ModuleBase(bot)
     {
-        private const int ONE_SECOND = 1000;
-        private const int ONE_MINUTE = ONE_SECOND * 60;
-
-        protected override async Task InitOneShot(GuildDownloadCompletedEventArgs args)
+        protected override async Task GuildMemberAdded(DiscordClient client, GuildMemberAddedEventArgs args)
         {
-            await Task.Run(() => AntiHoistRoutine(args));
+            DiscordMember member = args.Member;
+            DiscordMember self = await args.Guild.GetMemberAsync(client.CurrentUser.Id);
+
+            await RenameHoisterAsync(self, member);
         }
 
-        private async void AntiHoistRoutine(GuildDownloadCompletedEventArgs args)
+        protected override async Task GuildMemberUpdated(DiscordClient client, GuildMemberUpdatedEventArgs args)
         {
-            try
-            {
-                while (true)
-                {
-                    foreach (var guildKvp in args.Guilds)
-                    {
-                        DiscordGuild guild = guildKvp.Value;
-                        DiscordMember ourself = await guild.GetMemberAsync(bot.DiscordClient.CurrentUser.Id);
+            DiscordMember member = args.Member;
+            DiscordMember self = await args.Guild.GetMemberAsync(client.CurrentUser.Id);
 
-                        if (!ourself.Permissions.HasPermission(DiscordPermission.ManageNicknames))
-                            continue;
+            await RenameHoisterAsync(self, member);
+        }
 
-                        ServerConfig cfg = ServerConfig.GetConfig(guild.Id);
-                        await Task.Delay(ONE_MINUTE * (int)cfg.hoistScanMinutes);
+        private async Task RenameHoisterAsync(DiscordMember self, DiscordMember member)
+        {
+            if (!self.Permissions.HasPermission(DiscordPermission.ManageNicknames))
+                return;
 
-                        await foreach (var member in guild.GetAllMembersAsync())
-                        {
-                            if (member.Hierarchy >= ourself.Hierarchy)
-                                continue;
+            if (member.Hierarchy >= self.Hierarchy)
+                return;
 
-                            if (string.IsNullOrEmpty(member.Nickname) || member.Nickname[0] != '!')
-                                continue;
+            if (string.IsNullOrEmpty(member.Nickname) || member.Nickname[0] != '!')
+                return;
 
-                            await member.ModifyAsync((model) => model.Nickname = "hoist");
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Error($"Exception inside of the AntiHoist routine! Details below.", e);
-            }
+            await member.ModifyAsync((edit) => edit.Nickname = "hoist");
         }
     }
 }
