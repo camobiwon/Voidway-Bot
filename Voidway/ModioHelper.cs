@@ -145,6 +145,10 @@ public static partial class ModioHelper
         {
             var searchClient = mods.Search(ModFilter.NameId.Eq(nameId));
             var modData = await searchClient.First();
+            if (modData is null)
+                Logger.Warn($"Guess what! Mod.io thinks they're really fucking funny, returning a null object!");
+            else
+                Logger.Put($"Mod.io returned: {modData.Name ?? "NULL NAME"} ({modData.NameId ?? "NULL NAMEID"} #ID {modData.Id})");
             return modData;
         }
         catch (ApiValidationException apiEx)
