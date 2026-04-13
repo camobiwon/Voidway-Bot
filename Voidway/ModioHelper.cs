@@ -140,6 +140,7 @@ public static partial class ModioHelper
             }
         }
 
+        Logger.Put($"Now checking if Mod.IO has a mod with the name id '{nameId}'...", LogType.Debug);
         try
         {
             var searchClient = mods.Search(ModFilter.NameId.Eq(nameId));
