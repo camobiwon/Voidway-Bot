@@ -53,6 +53,16 @@ internal partial class ModfileScanning
                 $"Make sense? No? Blame mod.io!", true);
             return;
         }
+        else if (modUrlOrModNameId.Contains("/m/"))
+        {
+            if (!ModioHelper.TryParseUrl(modUrlOrModNameId, out var clientType, out var nameId))
+            {
+                await ctx.RespondAsync($"That's not a valid URL, at least not one that I would know.", true);
+                return;
+            }
+
+            modUrlOrModNameId = nameId;
+        }
         
         var modData = await ModioHelper.ModsClient.GetFromUrlOrNameId(modUrlOrModNameId);
 
