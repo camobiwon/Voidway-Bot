@@ -139,12 +139,23 @@ public static partial class ModioHelper
                 return null;
             }
         }
-        
+
         try
         {
             var searchClient = mods.Search(ModFilter.NameId.Eq(nameId));
             var modData = await searchClient.First();
             return modData;
+        }
+        catch (ApiValidationException apiEx)
+        {
+            Logger.Warn("modio.NET fucked up again! Check the Api Validation Exception!", apiEx);
+            Logger.Warn(apiEx.ApiError.ToString());
+            foreach (var kvp in apiEx.Errors)
+            {
+                Logger.Warn(kvp.Key + " - "  + kvp.Value);
+            }
+            Logger.Warn("Here's to another gigachad fuckup of Mod.IO proportions!");
+            return null;
         }
         catch (Exception ex)
         {
