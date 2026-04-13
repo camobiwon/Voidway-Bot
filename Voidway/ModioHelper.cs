@@ -128,7 +128,7 @@ public static partial class ModioHelper
     public static async Task<Mod?> GetFromUrlOrNameId(this ModsClient mods, string urlOrNameId)
     {
         string? nameId = urlOrNameId;
-        if (!urlOrNameId.Contains('/'))
+        if (urlOrNameId.Contains('/'))
         {
             if (!TryParseUrl(urlOrNameId, out var clientType, out nameId))
                 return null;
@@ -140,15 +140,17 @@ public static partial class ModioHelper
             }
         }
 
-        Logger.Put($"Now checking if Mod.IO has a mod with the name id '{nameId}'...", LogType.Debug);
+        // Logger.Put($"Now checking if Mod.IO has a mod with the name id '{nameId}'...", LogType.Debug);
         try
         {
             var searchClient = mods.Search(ModFilter.NameId.Eq(nameId));
             var modData = await searchClient.First();
-            if (modData is null)
-                Logger.Warn($"Guess what! Mod.io thinks they're really fucking funny, returning a null object!");
-            else
-                Logger.Put($"Mod.io returned: {modData.Name ?? "NULL NAME"} ({modData.NameId ?? "NULL NAMEID"} #ID {modData.Id})");
+            
+            // if (modData is null)
+            //     Logger.Warn($"Guess what! Mod.io thinks they're really fucking funny, returning a null object!");
+            // else
+            //     Logger.Put($"Mod.io returned: {modData.Name ?? "NULL NAME"} ({modData.NameId ?? "NULL NAMEID"} #ID {modData.Id})");
+            
             return modData;
         }
         catch (ApiValidationException apiEx)
