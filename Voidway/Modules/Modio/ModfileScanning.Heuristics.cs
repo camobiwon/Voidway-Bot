@@ -28,6 +28,7 @@ public enum ModContentHeuristic : ulong
     Video = 1 << 19,
     FailedBuild = 1 << 20,
     RobloxFile = 1 << 21, // This has happened at least once.
+    UnrealProjectFiles  = 1 << 22, // This has also happened at least once.
 }
 
 partial class ModfileScanning
@@ -78,6 +79,7 @@ partial class ModfileScanning
         string[] macAppAndInstallerExts = [".dmg", ".pkg", ".app", ".sh", ".command"];
         string[] videoExts = [".mp4", ".webm", ".avi", ".mov"];
         string[] robloxExts = [".rbxl", ".rbxlx", ".rbxm", ".rbxmx"];
+        string[] unrealExts = [".uasset", ".uproject", ".umap"];
 
         string[] unityProjRoots = ["assets", "projectsettings", "packages",]; // only the explicitly required ones
             
@@ -105,6 +107,7 @@ partial class ModfileScanning
         bool hasMacExecOrInstaller = macAppAndInstallerExts.Any(fileExtensions.Contains);
         bool hasVideo = videoExts.Any(fileExtensions.Contains);
         bool hasRobloxFile = robloxExts.Any(fileExtensions.Contains); // a kid uploaded his Roblox "place" file. really.
+        bool hasUnrealAssets = unrealExts.Any(fileExtensions.Contains); // a kid made a sandbox map or something in UE and uploaded the project
 
         if (isLikelyValidMod)
             ret |= ModContentHeuristic.MarrowMod;
@@ -142,6 +145,8 @@ partial class ModfileScanning
             ret |= ModContentHeuristic.FailedBuild;
         if (hasRobloxFile)
             ret |= ModContentHeuristic.RobloxFile;
+        if (hasUnrealAssets)
+            ret |= ModContentHeuristic.UnrealProjectFiles;
         
         Logger.Put($"Detected {ret} from file extensions: {string.Join(", ", fileExtensions)}", LogType.Trace);
 
