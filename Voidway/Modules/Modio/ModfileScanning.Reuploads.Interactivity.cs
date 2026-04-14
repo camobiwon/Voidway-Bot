@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using DSharpPlus.Commands;
+using DSharpPlus.Commands.ArgumentModifiers;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
@@ -25,7 +26,7 @@ internal partial class ModfileScanning
 {
     [RequireApplicationOwner]
     [Command("cataloguser"), Description("(NOT EPHEMERAL) Scans a user's mods' files for new barcodes & hashes")]
-    public async Task CatalogFromUserCmd(SlashCommandContext ctx, string modUrlOrNameId)
+    public async Task CatalogFromUserCmd(SlashCommandContext ctx, string modUrlOrModNameId)
     {
         if (ModioHelper.ModsClient is null)
         {
@@ -34,26 +35,36 @@ internal partial class ModfileScanning
                 , true);
             return;
         }
-
-        if (!ModioHelper.TryParseUrl(modUrlOrNameId, out var clientType, out var nameId))
-        {
-            await ctx.RespondAsync($"That's not a valid URL, at least not one that I would know.", true);
-            return;
-        }
         
-        if (clientType == "u")
+        // if (!ModioHelper.TryParseUrl(modUrlOrNameId, out var clientType, out var nameId))
+        // {
+        //     await ctx.RespondAsync($"That's not a valid URL, at least not one that I would know.", true);
+        //     return;
+        // }
+        
+        if (modUrlOrModNameId.Contains("/u/"))
         {
             // can you tell im getting sick of this API?
             await ctx.RespondAsync(
-                $"Hey I know you want to scan all mods from {nameId}, who is *cough* **a user** *cough*," +
+                $"Hey I know you want to scan all mods from a USER, who is, get this **a user on mod.io**," +
                 $" to get their hashes and barcodes added to the reupload detection database," +
                 $"but because **mod.io's API is infernal dogshit**," +
                 $"I'm gonna need you to give me a link to **a mod that they've uploaded instead**\n" +
                 $"Make sense? No? Blame mod.io!", true);
             return;
         }
+        else if (modUrlOrModNameId.Contains("/m/"))
+        {
+            if (!ModioHelper.TryParseUrl(modUrlOrModNameId, out var clientType, out var nameId))
+            {
+                await ctx.RespondAsync($"That's not a valid URL, at least not one that I would know.", true);
+                return;
+            }
+
+            modUrlOrModNameId = nameId;
+        }
         
-        var modData = await ModioHelper.ModsClient.GetFromUrlOrNameId(modUrlOrNameId);
+        var modData = await ModioHelper.ModsClient.GetFromUrlOrNameId(modUrlOrModNameId);
 
         if ((modData?.SubmittedBy?.Id ?? 0) == 0)
         {
@@ -356,9 +367,9 @@ internal partial class ModfileScanning
 
 
 
-    [RequireApplicationOwner]
     [Command("checkreuploads")]
     [Description("(Ephemeral) Shows if a mod has reuploaded content in its files.")]
+    [RequireApplicationOwner]
     public async Task CheckModForReuploads(SlashCommandContext ctx,
         [Description("The web URL or Name ID for the mod")]
         string modUrlOrNameId)
@@ -424,11 +435,12 @@ internal partial class ModfileScanning
         await ctx.Interaction.RespondOrAppend("Done!");
     }
 
-    [Command("Controls what mod.io users are trusted to only post original mods.")]
+    [Command("trustuser")]
+    [Description("Controls what mod.io users are trusted to only post original mods.")]
     [RequireApplicationOwner]
     public async Task AutoCatalogModsFrom(SlashCommandContext ctx,
         [Description("True to add, false to remove.")] bool addOrRemove,
-        params string[] nameIds)
+        [VariadicArgument(1)] params string[] nameIds)
     {
         int changes = 0;
         int noChanges = 0;
@@ -460,9 +472,9 @@ internal partial class ModfileScanning
     }
 
 
-    [RequireApplicationOwner]
-    [Command("memoryhole")]
-    [Description("(Ephemeral) Forgets connections between given data and its associates.")]
+    // [RequireApplicationOwner]
+    // [Command("memoryhole")]
+    // [Description("(Ephemeral) Forgets connections between given data and its associates.")]
     public async Task MemoryHole(SlashCommandContext ctx,
         [Description("Shows explainer on how this works")]
         bool seeExplainer = false,
