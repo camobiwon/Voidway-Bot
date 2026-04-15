@@ -44,7 +44,7 @@ public partial class AntiHoist(Bot bot) : ModuleBase(bot)
 
         try
         {
-            if (IsNameHoistable(member.DisplayName))
+            if (!IsNameHoistable(member.DisplayName))
                 return;
 
             await member.ModifyAsync((edit) => edit.Nickname = "hoist");
