@@ -6,7 +6,7 @@ namespace Voidway.Modules.Moderation;
 
 public partial class AntiHoist(Bot bot) : ModuleBase(bot)
 {
-    private readonly string HoistableCharacters = @"()-+=_][\\|;',.<>/?!@#$%^&*";
+    private const string HOIST_CHARS = @"()-+=_][\\|;',.<>/?!@#$%^&*";
 
     protected override async Task GuildMemberAdded(DiscordClient client, GuildMemberAddedEventArgs args)
     {
@@ -16,7 +16,7 @@ public partial class AntiHoist(Bot bot) : ModuleBase(bot)
             return;
 
         DiscordMember member = args.Member;
-        DiscordMember self = await args.Guild.GetMemberAsync(client.CurrentUser.Id);
+        DiscordMember self = args.Guild.CurrentMember;
 
         await RenameHoisterAsync(self, member);
     }
@@ -29,7 +29,7 @@ public partial class AntiHoist(Bot bot) : ModuleBase(bot)
             return;
 
         DiscordMember member = args.Member;
-        DiscordMember self = await args.Guild.GetMemberAsync(client.CurrentUser.Id);
+        DiscordMember self = args.Guild.CurrentMember;
 
         await RenameHoisterAsync(self, member);
     }
@@ -47,7 +47,18 @@ public partial class AntiHoist(Bot bot) : ModuleBase(bot)
             if (!IsNameHoistable(member.DisplayName))
                 return;
 
-            await member.ModifyAsync((edit) => edit.Nickname = "hoist");
+            // slice characters off the start of the name until it's no longer seen as a hoist.
+            string newNickname = member.DisplayName;
+            while (IsNameHoistable(newNickname))
+            {
+                newNickname = newNickname[1..];
+            }
+
+            // failsafe to avoid giving someone a blank nickname. avoids error.
+            if (string.IsNullOrWhiteSpace(newNickname))
+                newNickname = "hoist";
+            
+            await member.ModifyAsync(edit => edit.Nickname = newNickname);
         }
         catch (Exception ex)
         {
@@ -60,12 +71,6 @@ public partial class AntiHoist(Bot bot) : ModuleBase(bot)
         if (string.IsNullOrEmpty(name))
             return false;
 
-        for (int i = 0; i < HoistableCharacters.Length; i++)
-        {
-            if (name[0] == HoistableCharacters[i])
-                return true;
-        }
-
-        return false;
+        return HOIST_CHARS.Contains(name[0], StringComparison.InvariantCultureIgnoreCase);
     }
 }
