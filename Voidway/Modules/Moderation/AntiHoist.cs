@@ -6,7 +6,7 @@ namespace Voidway.Modules.Moderation;
 
 public partial class AntiHoist(Bot bot) : ModuleBase(bot)
 {
-    private const string HOIST_CHARS = @"()-+=_][\\|;',.<>/?!@#$%^&*";
+    private const string HOIST_CHARS = @"()-+=_][\\|;',.<>/?!@$%^&*";
 
     protected override async Task GuildMemberAdded(DiscordClient client, GuildMemberAddedEventArgs args)
     {
