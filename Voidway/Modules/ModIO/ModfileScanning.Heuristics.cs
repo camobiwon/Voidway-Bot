@@ -2,7 +2,7 @@ using System.IO.Compression;
 using DSharpPlus.Entities;
 using Modio.Models;
 
-namespace Voidway.Modules.Modio;
+namespace Voidway.Modules.ModIO;
 
 [Flags]
 public enum ModContentHeuristic : ulong

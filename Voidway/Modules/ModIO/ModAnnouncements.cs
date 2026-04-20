@@ -7,7 +7,7 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Modio.Models;
 
-namespace Voidway.Modules.Modio;
+namespace Voidway.Modules.ModIO;
 
 [Flags]
 public enum ModUploadType // use bitshift operator to act as a bitfield

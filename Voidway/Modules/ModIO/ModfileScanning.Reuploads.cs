@@ -13,7 +13,7 @@ using Modio.Filters;
 using Modio.Models;
 using Newtonsoft.Json;
 
-namespace Voidway.Modules.Modio;
+namespace Voidway.Modules.ModIO;
 
 internal partial class ModfileScanning
 {

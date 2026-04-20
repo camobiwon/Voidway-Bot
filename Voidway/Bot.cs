@@ -19,7 +19,7 @@ using OpenAI;
 using Voidway.ContextChecks;
 using Voidway.Modules;
 using Voidway.Modules.Moderation;
-using Voidway.Modules.Modio;
+using Voidway.Modules.ModIO;
 
 namespace Voidway;
 

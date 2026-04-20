@@ -8,7 +8,7 @@ using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 using Modio.Models;
 
-namespace Voidway.Modules.Modio;
+namespace Voidway.Modules.ModIO;
 
 internal partial class ModfileScanning
 {

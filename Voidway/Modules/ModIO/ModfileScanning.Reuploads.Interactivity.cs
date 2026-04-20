@@ -10,7 +10,7 @@ using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 using Newtonsoft.Json;
 
-namespace Voidway.Modules.Modio;
+namespace Voidway.Modules.ModIO;
 
 [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Local")]
 file class ReuploadCatalogOverride
@@ -35,12 +35,6 @@ internal partial class ModfileScanning
                 , true);
             return;
         }
-        
-        // if (!ModioHelper.TryParseUrl(modUrlOrNameId, out var clientType, out var nameId))
-        // {
-        //     await ctx.RespondAsync($"That's not a valid URL, at least not one that I would know.", true);
-        //     return;
-        // }
         
         if (modUrlOrModNameId.Contains("/u/"))
         {
@@ -335,37 +329,34 @@ internal partial class ModfileScanning
         int pageNum = 1;
         // await ctx.RespondAsync($"Looking up every hash association isn't done yet. It'll be done soon, hopefully!", true);
         StringBuilder pageBuilder = new();
-        pageBuilder.AppendLine($"Page {pageNum}");
+        
         foreach (var kvp in PersistentData.values.hashesToOriginalBarcodes.OrderBy(kvp => kvp.Value))
         {
-            var line = $" - `{kvp.Key}` -> {kvp.Value}`";
+            var line = $" - `{kvp.Key}` -> `{kvp.Value}`";
             if (pageBuilder.Length + line.Length > 1900)
             {
-                var page = new Page()
-                {
-                    Content = pageBuilder.ToString()
-                };
+                var page = new Page(pageBuilder.ToString());
                 pages.Add(page);
 
                 pageBuilder.Clear();
                 pageNum++;
-                pageBuilder.AppendLine($"Page {pageNum}");
             }
 
             pageBuilder.AppendLine(line);
         }
-        
-        
-        var lastPage = new Page()
-        {
-            Content = pageBuilder.ToString()
-        };
+
+
+        var lastPage = new Page(pageBuilder.ToString());
         pages.Add(lastPage);
+
+        for (var i = 0; i < pages.Count; i++)
+        {
+            var page = pages[i];
+            page.Content = $"Page {i + 1} of {pages.Count}\n" + page.Content;
+        }
 
         await ctx.Interaction.SendPaginatedResponseAsync(true, ctx.User, pages);
     }
-
-
 
     [Command("checkreuploads")]
     [Description("(Ephemeral) Shows if a mod has reuploaded content in its files.")]
@@ -471,6 +462,43 @@ internal partial class ModfileScanning
             $"There are now {PersistentData.values.trustedModders.Count} trusted modder(s).", true);
     }
 
+    [Command("trustedusers")]
+    [Description("Shows the list of trusted users.")]
+    [RequireApplicationOwner]
+    public async Task ShowTrustedModders(SlashCommandContext ctx,
+        string? filterFor = null,
+        string? filterOut = null)
+    {
+        StringBuilder sb = new();
+        List<Page> pages = [];
+
+        IEnumerable<string> collection = PersistentData.values.trustedModders;
+        if (filterFor is not null)
+            collection = collection.Where(s => s.Contains(filterFor, StringComparison.InvariantCultureIgnoreCase));
+        if (filterOut is not null)
+            collection = collection.Where(s => !s.Contains(filterOut, StringComparison.InvariantCultureIgnoreCase));
+        foreach (var modderNameId in collection)
+        {
+            string line = $"- `{modderNameId}`";
+            if (sb.Length + line.Length > 1900)
+            {
+                var newPage = new Page(sb.ToString());
+                pages.Add(newPage);
+                sb.Clear();
+            }
+
+            sb.AppendLine(line);
+        }
+
+        for (int i = 0; i < pages.Count; i++)
+        {
+            var page = pages[i];
+            page.Content = $"Page {i + 1} of {pages.Count}\n" + page.Content;
+        }
+
+        await ctx.Interaction.SendPaginatedResponseAsync(true, ctx.User, pages);
+    }
+
 
     // [RequireApplicationOwner]
     // [Command("memoryhole")]
@@ -480,7 +508,7 @@ internal partial class ModfileScanning
         bool seeExplainer = false,
         string? forgetBarcode = null,
         string? forgetAuthorNameId = null,
-        params string[] forgetHashes)
+        [VariadicArgument(0)] params string[] forgetHashes) 
     {
         if (seeExplainer)
         {

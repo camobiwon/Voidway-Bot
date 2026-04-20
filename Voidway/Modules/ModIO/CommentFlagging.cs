@@ -5,7 +5,7 @@ using Modio.Filters;
 using Modio.Models;
 using OpenAI.Moderations;
 
-namespace Voidway.Modules.Modio;
+namespace Voidway.Modules.ModIO;
 
 internal class CommentFlagging(Bot bot) : ModuleBase(bot)
 {

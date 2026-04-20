@@ -15,7 +15,7 @@ using Modio.Filters;
 using Modio.Models;
 using File = Modio.Models.File;
 
-namespace Voidway.Modules.Modio;
+namespace Voidway.Modules.ModIO;
 
 [Command("modscanning")]
 internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
@@ -93,7 +93,7 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         
         var modClient = modioEventArgs.ModsClient[modioEventArgs.Event.ModId];
         var modData = await modClient.Get();
-        var file = await modClient.Files.Search(Filter.WithLimit(1)).First();
+        var file = await modClient.Files.Search( Filter.WithLimit(1)).First();
         var download = file?.Download;
         
         // just make sure i dont NRE early
