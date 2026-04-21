@@ -498,6 +498,10 @@ internal partial class ModfileScanning
             sb.AppendLine(line);
         }
 
+        sb.AppendLine("-# [End of results]");
+        var lastPage = new Page(sb.ToString());
+        pages.Add(lastPage);
+
         for (int i = 0; i < pages.Count; i++)
         {
             var page = pages[i];
