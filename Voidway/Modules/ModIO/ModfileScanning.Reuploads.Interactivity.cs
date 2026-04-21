@@ -477,6 +477,14 @@ internal partial class ModfileScanning
             collection = collection.Where(s => s.Contains(filterFor, StringComparison.InvariantCultureIgnoreCase));
         if (filterOut is not null)
             collection = collection.Where(s => !s.Contains(filterOut, StringComparison.InvariantCultureIgnoreCase));
+
+        collection = collection.ToList();
+        if (!collection.Any())
+        {
+            await ctx.RespondAsync("-# None, lol", true);
+            return;
+        }
+        
         foreach (var modderNameId in collection)
         {
             string line = $"- `{modderNameId}`";
