@@ -63,7 +63,7 @@ public partial class AntiHoist(Bot bot) : ModuleBase(bot)
             AuditLogForwarding.IgnoreThese.PushBack(auditLogInfo);
             await AuditLogForwarding.LogModerationActionSlim(member.Guild,
                 "User De-hoisted",
-                $"{member.DisplayName} -> {newNickname}",
+                $"`{member.DisplayName}` -> `{newNickname}`",
                 $"User: {member.Username} ({member.Id}, {Formatter.Mention(member)})");
             
             await member.ModifyAsync(edit => edit.Nickname = newNickname);
