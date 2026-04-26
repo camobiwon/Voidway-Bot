@@ -1,4 +1,5 @@
 ﻿using DSharpPlus.Entities;
+using DSharpPlus.Entities.AuditLogs;
 using DSharpPlus.EventArgs;
 using Voidway.Modules;
 
@@ -57,6 +58,13 @@ public partial class AntiHoist(Bot bot) : ModuleBase(bot)
             // failsafe to avoid giving someone a blank nickname. avoids error.
             if (string.IsNullOrWhiteSpace(newNickname))
                 newNickname = "hoist";
+
+            AuditLogInfo auditLogInfo = new(self, DiscordAuditLogActionType.MemberUpdate, DateTime.Now);
+            AuditLogForwarding.IgnoreThese.PushBack(auditLogInfo);
+            await AuditLogForwarding.LogModerationActionSlim(member.Guild,
+                "User De-hoisted",
+                $"{member.DisplayName} -> {newNickname}",
+                $"User: {member.Username} ({member.Id}, {Formatter.Mention(member)})");
             
             await member.ModifyAsync(edit => edit.Nickname = newNickname);
         }

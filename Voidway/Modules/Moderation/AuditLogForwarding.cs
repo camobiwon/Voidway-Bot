@@ -111,4 +111,28 @@ public partial class AuditLogForwarding(Bot bot) : ModuleBase(bot)
         var msg = await logChannel.SendMessageAsync(dmb);
         options.MessageSentHook?.Invoke(msg);
     }
+
+    public static async Task LogModerationActionSlim(DiscordGuild guild,
+        string title,
+        string? description = null,
+        string? footer = null)
+    {
+        if (!logChannels.TryGetValue(guild, out var logChannel))
+            return;
+        
+        var deb = new DiscordEmbedBuilder()
+            .WithTitle(title)
+            .WithColor(DiscordColor.Grayple);
+
+        if (description is not null)
+            deb.WithDescription(description);
+        if (footer is not null)
+            deb.WithFooter(footer);
+
+        var dmb = new DiscordMessageBuilder()
+            .AddEmbed(deb)
+            .WithAllowedMentions([]);
+        
+        await logChannel.SendMessageAsync(dmb);
+    }
 }

@@ -65,24 +65,21 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
 
         // User had no whitelisted roles.
         // Get that ass banned (GTAB).
-        var options = new ModerationLogOptions()
-        {
-            Title = $"User {(cfg.kickInsteadOfBan ? "Kicked" : "Banned")} (automatic)",
-            Description = args.Message.ToString(),
-            UserResponsible = client.CurrentUser,
-            Target = args.Author,
-            Reason = "Talked in the Honeypot channel.",
-            Color = cfg.kickInsteadOfBan ? DiscordColor.Yellow : DiscordColor.Red
-        };
-
-        await AuditLogForwarding.LogModerationAction(args.Guild, options);
+        
+        
+        AuditLogInfo auditLogInfo = new(client.CurrentUser, DiscordAuditLogActionType.MemberUpdate, DateTime.Now);
+        AuditLogForwarding.IgnoreThese.PushBack(auditLogInfo);
+        await AuditLogForwarding.LogModerationActionSlim(args.Guild,
+            $"User {(cfg.kickInsteadOfBan ? "Kicked" : "Banned")} for talking in the honeypot channel",
+            args.Message.ToString(),
+            $"User: {args.Author.Username} ({args.Author.Id}, {Formatter.Mention(args.Author)})");
         
         // WARNING:
         // The code below will ban people when ran in production.
         // Use with caution in a test environment/server first.
         try
         {
-            await args.Guild.BanMemberAsync(args.Author, TimeSpan.FromMinutes(15), options.Reason);
+            await args.Guild.BanMemberAsync(args.Author, TimeSpan.FromMinutes(30), "Talked in the honeypot channel");
             
             if (cfg.kickInsteadOfBan)
             {
@@ -91,8 +88,8 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
                     DiscordAuditLogActionType.Unban,
                     DateTime.Now
                 ));
-                
-                await args.Guild.UnbanMemberAsync(args.Author, "Kicked, not banned: " + options.Reason);
+
+                await args.Guild.UnbanMemberAsync(args.Author, "Kicked, not banned for getting honeypotted");
             }
 
             cfg.honeypotKicks++;
@@ -108,7 +105,7 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
         }
         catch (Exception ex)
         {
-            Logger.Error($"Failed to ban {args.Author} (initiated by {client.CurrentUser} for '{options.Reason}')! Details below", ex);
+            Logger.Error($"Failed to ban {args.Author} (done by {client.CurrentUser} for getting honeypotted)! Details below", ex);
             ServerConfig.WriteConfigToFile(cfg);
             return;
         }
