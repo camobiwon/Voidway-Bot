@@ -70,9 +70,9 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
         AuditLogInfo auditLogInfo = new(client.CurrentUser, DiscordAuditLogActionType.MemberUpdate, DateTime.Now);
         AuditLogForwarding.IgnoreThese.PushBack(auditLogInfo);
         await AuditLogForwarding.LogModerationActionSlim(args.Guild,
-            $"User {(cfg.kickInsteadOfBan ? "Kicked" : "Banned")} for talking in the honeypot channel",
+            $"User {(cfg.kickInsteadOfBan ? "Kicked" : "Banned")} (via Honeypot)",
             args.Message.ToString(),
-            $"User: {args.Author.Username} ({args.Author.Id}, {Formatter.Mention(args.Author)})");
+            $"User: {args.Author.Username} ({args.Author.Id})");
         
         // WARNING:
         // The code below will ban people when ran in production.
