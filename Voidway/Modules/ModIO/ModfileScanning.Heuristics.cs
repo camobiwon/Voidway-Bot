@@ -29,6 +29,7 @@ public enum ModContentHeuristic : ulong
     FailedBuild = 1 << 20,
     RobloxFile = 1 << 21, // This has happened at least once.
     UnrealProjectFiles  = 1 << 22, // This has also happened at least once.
+    FilesOlderThan2Weeks = 1 << 23,
 }
 
 partial class ModfileScanning
@@ -85,6 +86,9 @@ partial class ModfileScanning
             
         string[] filePaths = zip.Entries.Select(ze => ze.FullName.ToLower()).ToArray();
         HashSet<string> fileExtensions = filePaths.Select(Path.GetExtension).ToHashSet()!;
+        DateTime oldestFileWriteTime = zip.Entries.Select(e => e.LastWriteTime).Min().DateTime;
+        double oldestTimeDeltaDays = (DateTime.Now - oldestFileWriteTime).TotalDays;
+        Logger.Put($"Mod file's oldest file is {oldestTimeDeltaDays:0.00} days old (from {oldestFileWriteTime})");
         
         bool hasBundle = fileExtensions.Contains(".bundle");
         bool hasJson = fileExtensions.Contains(".json"); // someone let that guy from Heavy Rain know
@@ -108,7 +112,8 @@ partial class ModfileScanning
         bool hasVideo = videoExts.Any(fileExtensions.Contains);
         bool hasRobloxFile = robloxExts.Any(fileExtensions.Contains); // a kid uploaded his Roblox "place" file. really.
         bool hasUnrealAssets = unrealExts.Any(fileExtensions.Contains); // a kid made a sandbox map or something in UE and uploaded the project
-
+        bool hasOldFiles = oldestTimeDeltaDays > 14;
+        
         if (isLikelyValidMod)
             ret |= ModContentHeuristic.MarrowMod;
         if (hasTxt)
@@ -147,6 +152,8 @@ partial class ModfileScanning
             ret |= ModContentHeuristic.RobloxFile;
         if (hasUnrealAssets)
             ret |= ModContentHeuristic.UnrealProjectFiles;
+        if (hasOldFiles)
+            ret |= ModContentHeuristic.FilesOlderThan2Weeks;
         
         Logger.Put($"Detected {ret} from file extensions: {string.Join(", ", fileExtensions)}", LogType.Trace);
 
