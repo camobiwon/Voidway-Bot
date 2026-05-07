@@ -5,43 +5,27 @@ namespace Voidway.Modules.Moderation;
 
 public class MessageRecorder(Bot bot) : ModuleBase(bot)
 {
-    private static readonly Dictionary<DiscordGuild, DiscordChannel> logChannels = [];
+    private readonly PerServer<DiscordChannel> logChannels = new(bot, async cfg =>
+    {
+        if (cfg.msgLogChannel == 0)
+            return null;
+        
+        if (bot.DiscordClient is null)
+            return null;
+        
+        return await bot.DiscordClient.GetChannelAsync(cfg.msgLogChannel); 
+    }, cfg => cfg.msgLogChannel.ToString());
     private static HttpClient downloadClient = new();
     private static readonly DateTime DiscordEpoch = new(2015, 1, 1);
-    
-    protected override async Task FetchGuildResources()
-    {
-        if (bot.DiscordClient is null)
-            return;
-        
-        logChannels.Clear();
-        
-        foreach (var guildKvp in bot.DiscordClient.Guilds)
-        {
-            var cfg = ServerConfig.GetConfig(guildKvp.Key);
-
-            if (cfg.msgLogChannel == 0)
-                continue;
-
-            try
-            {
-                var channel = await guildKvp.Value.GetChannelAsync(cfg.msgLogChannel);
-                logChannels[guildKvp.Value] = channel;
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn($"Failed to fetch channel w/ ID {cfg.msgLogChannel} from {guildKvp.Value}", ex);
-            }
-        }
-    }
 
     protected override async Task MessageUpdated(DiscordClient client, MessageUpdatedEventArgs args)
     {
-        if (!logChannels.TryGetValue(args.Guild, out var channel))
+        var logChannel = logChannels[args.Guild];
+        if (logChannel is null)
             return;
 
         // it would probably be an ouroboros to log things that happen in the log channel
-        if (logChannels.Values.Contains(args.Channel))
+        if (args.Channel == logChannel)
             return;
         
         DiscordMessage msgAfter = args.Message;
@@ -94,7 +78,7 @@ public class MessageRecorder(Bot bot) : ModuleBase(bot)
         
         try
         {
-            await channel.SendMessageAsync(msgBuilder);
+            await logChannel.SendMessageAsync(msgBuilder);
         }
         catch (Exception ex)
         {

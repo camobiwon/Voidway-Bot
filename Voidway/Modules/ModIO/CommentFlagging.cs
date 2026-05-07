@@ -9,33 +9,21 @@ namespace Voidway.Modules.ModIO;
 
 internal class CommentFlagging(Bot bot) : ModuleBase(bot)
 {
-    private static readonly List<DiscordChannel> Channels = [];
+    private readonly PerServer<DiscordChannel> Channels = new(bot, async cfg =>
+    {
+        if (cfg.commentModerationChannel == 0)
+            return null;
+
+        if (bot.DiscordClient is null)
+            return null;
+
+        return await bot.DiscordClient.GetChannelAsync(cfg.commentModerationChannel);
+    }, cfg => cfg.commentModerationChannel.ToString());
     
     private static readonly PropertyInfo[] categoryInfos = typeof(ModerationResult)
         .GetProperties()
         .Where(pi => pi.PropertyType == typeof(ModerationCategory))
         .ToArray();
-    
-    protected override async Task FetchGuildResources()
-    {
-        if (bot.DiscordClient is null)
-            return;
-
-        Channels.Clear();
-        
-        foreach (var guildKvp in bot.DiscordClient.Guilds)
-        {
-            var cfg = ServerConfig.GetConfig(guildKvp.Key);
-
-            if (cfg.malformedUploadChannel == 0)
-                continue;
-
-            var channel = await guildKvp.Value.GetChannelAsync(cfg.commentModerationChannel);
-            Channels.Add(channel);
-        }
-        
-        Logger.Put($"Got {Channels.Count} channels to send Mod.IO comment auto-scan warnings to");
-    }
 
     protected override Task InitOneShot(GuildDownloadCompletedEventArgs args)
     {
@@ -117,7 +105,7 @@ internal class CommentFlagging(Bot bot) : ModuleBase(bot)
             .SuppressEmbeds();
         
         int successCount = 0;
-        foreach (var channel in Channels)
+        foreach (var channel in Channels.Values)
         {
             try
             {
@@ -130,7 +118,7 @@ internal class CommentFlagging(Bot bot) : ModuleBase(bot)
             }
         }
 
-        Logger.Put($"Sent a notification to {successCount}/{Channels.Count} channels about a flagged Mod.IO comment on {modName}");
+        Logger.Put($"Sent a notification to {successCount} channels about a flagged Mod.IO comment on {modName}");
     }
 
     private static string Stringify((string, float) tuple)

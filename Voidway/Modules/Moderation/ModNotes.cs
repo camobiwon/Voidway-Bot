@@ -31,7 +31,6 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
             Logger.Warn($"Configured mod note channel {cfg.memberModNotesChannel} not found in {member.Guild}");
             return null;
         }
-
     }
     
     private static async Task<DiscordMessage?> GetNotesMessage(DiscordMember member)

@@ -22,9 +22,20 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
 {
     public static HashSet<uint> DontAnnounceThese = [];
     
+    private readonly PerServer<DiscordChannel> Channels = new(bot, async cfg =>
+    {
+        if (cfg.malformedUploadChannel == 0)
+            return null;
+
+        if (bot.DiscordClient is null)
+            return null;
+
+        return await bot.DiscordClient.GetChannelAsync(cfg.malformedUploadChannel);
+    }, cfg => cfg.malformedUploadChannel.ToString());
+    
     private static int MaxFilesizeBytes => Config.values.modioMaxFilesize * 1024 * 1024;
     private static readonly HttpClient DownloadClient = new HttpClient();
-    private static readonly HashSet<DiscordChannel> Channels = [];
+    
     private static readonly Dictionary<uint, DateTime> LastScanTimes = [];
 
     private static List<Regex> AutoflagRegexes
@@ -45,28 +56,6 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
             return field;
         }
     } = [];
-
-
-    protected override async Task FetchGuildResources()
-    {
-        if (bot.DiscordClient is null)
-            return;
-
-        Channels.Clear();
-        
-        foreach (var guildKvp in bot.DiscordClient.Guilds)
-        {
-            var cfg = ServerConfig.GetConfig(guildKvp.Key);
-
-            if (cfg.malformedUploadChannel == 0)
-                continue;
-
-            var channel = await guildKvp.Value.GetChannelAsync(cfg.malformedUploadChannel);
-            Channels.Add(channel);
-        }
-        
-        Logger.Put($"Got {Channels.Count} channels to send malformed Mod.IO upload notifications to");
-    }
     
     protected override Task InitOneShot(GuildDownloadCompletedEventArgs args)
     {

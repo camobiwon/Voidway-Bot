@@ -25,7 +25,29 @@ namespace Voidway;
 
 public class Bot
 {
+    // In case anyone was curious, multiple instances of Bot are not allowed.
+    // This could probably just be a static variable. 
     public static readonly Dictionary<DiscordClient, Bot> Clients = new();
+
+    public static Bot? GetInstanceFromCurrentUser(DiscordUser currUser)
+    {
+        foreach (var bot in Clients.Values)
+        {
+            if (bot?.DiscordClient?.CurrentUser is null)
+                continue;
+            
+            if (bot.DiscordClient.CurrentUser.Id == currUser.Id)
+                return bot;
+        }
+
+        return null;
+    }
+
+    public static Bot? GetInstanceFromGuild(DiscordGuild guild)
+        => GetInstanceFromCurrentUser(guild.CurrentMember);
+    
+    public static Bot? GetInstanceFromOtherMember(DiscordMember member)
+        => GetInstanceFromCurrentUser(member.Guild.CurrentMember);
     
     // Mod.IO stuff
     public readonly Configured<Client?> ModIO = new(
@@ -48,11 +70,24 @@ public class Bot
         () => Config.values.openAiToken);
 
     // Discord stuff
-    private DiscordClientBuilder discordBuilder;
+    private readonly DiscordClientBuilder discordBuilder;
     public DiscordClient? DiscordClient { get; private set; }
     public DiscordClientBuilder DiscordBuilder => DiscordClient is not null ? throw new InvalidOperationException() : discordBuilder;
-    private bool guildsDownloaded;
+
+    public static TModule? FindModule<TModule>(DiscordGuild guild) where TModule : ModuleBase
+        => GetInstanceFromGuild(guild)?.GetModule<TModule>();
     
+    public static TModule? FindModule<TModule>(DiscordMember member) where TModule : ModuleBase
+        => GetInstanceFromOtherMember(member)?.GetModule<TModule>();
+    
+    public static TModule? FindModuleFromCurrUser<TModule>(DiscordUser user) where TModule : ModuleBase
+        => GetInstanceFromCurrentUser(user)?.GetModule<TModule>();
+    
+    public TModule? GetModule<TModule>() where TModule : ModuleBase
+    {
+        var moduleObj = DiscordClient?.ServiceProvider.GetService<TModule>();
+        return moduleObj;
+    }
     
     public Bot(string discordToken)
     {
@@ -107,52 +142,55 @@ public class Bot
         });
     }
 
-    private async Task AddCommandsToAllGuilds(DiscordClient clint, GuildDownloadCompletedEventArgs args)
-    {
-        if (guildsDownloaded)
-            return;
-        guildsDownloaded = true;
-
-        var commandsExt = clint.ServiceProvider.GetService<CommandsExtension>();
-        var slashProcessor = commandsExt?.GetProcessor<SlashCommandProcessor>();
-        if (commandsExt is null || slashProcessor is null)
-            throw new NullReferenceException("Commands extension/command processor is null! Was UseCommands ever called?");
-
-        var guildIds = args.Guilds.Keys.ToArray();
-        Logger.Put($"Adding commands to all {guildIds.Length} guild(s) now...");
-        var commands = GetCommandTypes();
-        foreach (Type commandType in commands)
-            commandsExt.AddCommand(commandType, guildIds);
-        await commandsExt.RefreshAsync();
-        await slashProcessor.RegisterSlashCommandsAsync(commandsExt);
-        Logger.Put($"Done registering {commands.Length} commands!");
-    }
-
-    private async Task AddCommandsToNewGuild(DiscordClient clint, GuildCreatedEventArgs args)
-    {
-        if (!guildsDownloaded)
-            return;
-        
-        var commandsExt = clint.ServiceProvider.GetService<CommandsExtension>();
-        var slashProcessor = commandsExt?.GetProcessor<SlashCommandProcessor>();
-        if (commandsExt is null || slashProcessor is null)
-            throw new NullReferenceException("Commands extension/command processor is null! Was UseCommands ever called?");
-        
-        Logger.Put($"Adding commands to guild {args.Guild.Name}...");
-        var commands = GetCommandTypes();
-        commandsExt.AddCommands(commands, args.Guild.Id);
-        await commandsExt.RefreshAsync();
-        await commandsExt.RefreshAsync();
-        await slashProcessor.RegisterSlashCommandsAsync(commandsExt);
-        Logger.Put($"Done adding {commands.Length} commands to guild {args.Guild.Name}!");
-    }
+    // private async Task AddCommandsToAllGuilds(DiscordClient clint, GuildDownloadCompletedEventArgs args)
+    // {
+    //     if (guildsDownloaded)
+    //         return;
+    //     guildsDownloaded = true;
+    //
+    //     var commandsExt = clint.ServiceProvider.GetService<CommandsExtension>();
+    //     var slashProcessor = commandsExt?.GetProcessor<SlashCommandProcessor>();
+    //     if (commandsExt is null || slashProcessor is null)
+    //         throw new NullReferenceException("Commands extension/command processor is null! Was UseCommands ever called?");
+    //
+    //     var guildIds = args.Guilds.Keys.ToArray();
+    //     Logger.Put($"Adding commands to all {guildIds.Length} guild(s) now...");
+    //     var commands = GetCommandTypes();
+    //     foreach (Type commandType in commands)
+    //         commandsExt.AddCommand(commandType, guildIds);
+    //     await commandsExt.RefreshAsync();
+    //     await slashProcessor.RegisterSlashCommandsAsync(commandsExt);
+    //     Logger.Put($"Done registering {commands.Length} commands!");
+    // }
+    //
+    // private async Task AddCommandsToNewGuild(DiscordClient clint, GuildCreatedEventArgs args)
+    // {
+    //     if (!guildsDownloaded)
+    //         return;
+    //     
+    //     var commandsExt = clint.ServiceProvider.GetService<CommandsExtension>();
+    //     var slashProcessor = commandsExt?.GetProcessor<SlashCommandProcessor>();
+    //     if (commandsExt is null || slashProcessor is null)
+    //         throw new NullReferenceException("Commands extension/command processor is null! Was UseCommands ever called?");
+    //     
+    //     Logger.Put($"Adding commands to guild {args.Guild.Name}...");
+    //     var commands = GetCommandTypes();
+    //     commandsExt.AddCommands(commands, args.Guild.Id);
+    //     await commandsExt.RefreshAsync();
+    //     await commandsExt.RefreshAsync();
+    //     await slashProcessor.RegisterSlashCommandsAsync(commandsExt);
+    //     Logger.Put($"Done adding {commands.Length} commands to guild {args.Guild.Name}!");
+    // }
 
     [SuppressMessage("ReSharper", "ObjectCreationAsStatement")]
     [SuppressMessage("Performance", "CA1806:Do not ignore method results")]
     private void InitializeModules()
     {
-        // probably the most jank/worst part of this but this wont have hundreds of modules,
-        // so its fine and doesn't need priority ordering beyond "init blockers first"
+        // probably the most jank/worst part of this but this won't have hundreds of modules,
+        // so its fine and doesn't need priority ordering beyond "init blockers before other things"
+        
+        // support
+        new PerServerSupport(this);
         
         // blockers
         new IgnoreBots(this);

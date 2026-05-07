@@ -19,7 +19,7 @@ internal partial class ModfileScanning
 {
     private static readonly Encoding TextEncoding = Encoding.UTF8;
     
-    private static async Task<(int foundExistingBarcodes, int foundExistingHashes)> ScanZipForReuploadedMods(ZipArchive zip, Mod modData, bool announce = true)
+    private async Task<(int foundExistingBarcodes, int foundExistingHashes)> ScanZipForReuploadedMods(ZipArchive zip, Mod modData, bool announce = true)
     {
         if (modData.SubmittedBy?.NameId is null)
         {
@@ -109,7 +109,7 @@ internal partial class ModfileScanning
         DontAnnounceThese.Add(modData.Id);
         int successCount = 0;
         int failureCount = 0;
-        foreach (var channel in Channels)
+        foreach (var channel in Channels.Values)
         {
             try
             {

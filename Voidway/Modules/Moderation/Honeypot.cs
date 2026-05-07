@@ -57,18 +57,16 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
             }
         }
 
-        AuditLogForwarding.IgnoreThese.PushBack(new AuditLogInfo(
-                client.CurrentUser,
-                DiscordAuditLogActionType.Ban,
-                DateTime.Now
-            ));
+        
 
         // User had no whitelisted roles.
         // Get that ass banned (GTAB).
+        AuditLogForwarding.IgnoreThese.PushBack(new AuditLogInfo(
+            client.CurrentUser,
+            DiscordAuditLogActionType.Ban,
+            DateTime.Now
+        ));
         
-        
-        AuditLogInfo auditLogInfo = new(client.CurrentUser, DiscordAuditLogActionType.MemberUpdate, DateTime.Now);
-        AuditLogForwarding.IgnoreThese.PushBack(auditLogInfo);
         await AuditLogForwarding.LogModerationActionSlim(args.Guild,
             $"User {(cfg.kickInsteadOfBan ? "Kicked" : "Banned")} (via Honeypot)",
             args.Message.ToString(),
@@ -79,6 +77,9 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
         // Use with caution in a test environment/server first.
         try
         {
+            // Unconditionally ban so we can leverage messageDeleteDuration
+            // Use kickInsteadOfBan to make it ACT like a kick by allowing
+            // them to rejoin after being banned.
             await args.Guild.BanMemberAsync(args.Author, TimeSpan.FromMinutes(30), "Talked in the honeypot channel");
             
             if (cfg.kickInsteadOfBan)

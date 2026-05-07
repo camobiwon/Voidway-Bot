@@ -12,7 +12,7 @@ namespace Voidway.Modules.ModIO;
 
 internal partial class ModfileScanning
 {
-    private static async Task ScanZipForFlaggedFilenames(ZipArchive zip, Mod modData)
+    private async Task ScanZipForFlaggedFilenames(ZipArchive zip, Mod modData)
     {
         List<string> flaggedFilenames = [];
         
@@ -40,7 +40,7 @@ internal partial class ModfileScanning
         }
     }
 
-    private static async Task AnnounceFlaggedFiles(Mod modData, List<string> flaggedFilenames)
+    private async Task AnnounceFlaggedFiles(Mod modData, List<string> flaggedFilenames)
     {
         string desc = $"Flagged for...\n- {Logger.EnsureShorterThan(string.Join("\n- ", flaggedFilenames), 3950)}";
         
@@ -55,13 +55,22 @@ internal partial class ModfileScanning
             Title = $"{modData.Name} (ID: {modData.NameId})",
             Url = modData.ProfileUrl?.ToString()
         };
-        
-        foreach (var channel in Channels)
+
+        int successCount = 0;
+        foreach (var channel in Channels.Values)
         {
-            await channel.SendMessageAsync(deb.Build());
+            try
+            {
+                await channel.SendMessageAsync(deb.Build());
+                successCount++;
+            }
+            catch
+            {
+                // ignore
+            }
         }
         
-        Logger.Put($"Announced in {Channels.Count} channel(s) that mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) was flagged for:\n{string.Join(", ", flaggedFilenames)}", LogType.Normal, false);
+        Logger.Put($"Announced in {successCount} channel(s) that mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) was flagged for:\n{string.Join(", ", flaggedFilenames)}", LogType.Normal, false);
     }
     
     

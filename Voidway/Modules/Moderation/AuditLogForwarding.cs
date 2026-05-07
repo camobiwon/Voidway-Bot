@@ -34,40 +34,24 @@ public class ModerationLogOptions
 
 public partial class AuditLogForwarding(Bot bot) : ModuleBase(bot)
 {
-
-    public static CircularBuffer<AuditLogInfo> IgnoreThese = new(128);
-    // public static CircularBuffer<AuditLogInfo> ActionsTakenOnBehalfOfModerator = new(128);
-    private static readonly Dictionary<DiscordGuild, DiscordChannel> logChannels = [];
-
-    protected override async Task FetchGuildResources()
+    public static readonly CircularBuffer<AuditLogInfo> IgnoreThese = new(128);
+    
+    private readonly PerServer<DiscordChannel> logChannels = new(bot, async cfg =>
     {
-        if (bot.DiscordClient is null)
-            return;
-        
-        logChannels.Clear();
-        
-        foreach (var guildKvp in bot.DiscordClient.Guilds)
-        {
-            var cfg = ServerConfig.GetConfig(guildKvp.Key);
-            
-            if (cfg.moderationLogChannel == 0)
-                continue;
+        if (cfg.moderationLogChannel == 0)
+            return null;
 
-            try
-            {
-                var channel = await guildKvp.Value.GetChannelAsync(cfg.moderationLogChannel);
-                logChannels[guildKvp.Value] = channel;
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn($"Failed to fetch channel w/ ID {cfg.moderationLogChannel} from {guildKvp.Value}", ex);
-            }
-        }
-    }
+        if (bot.DiscordClient is null)
+            return null;
+        
+        return await bot.DiscordClient.GetChannelAsync(cfg.moderationLogChannel);
+    }, cfg => cfg.moderationLogChannel.ToString());
+
 
     public static async Task LogModerationAction(DiscordGuild guild, ModerationLogOptions options)
     {
-        if (!logChannels.TryGetValue(guild, out var logChannel))
+        var logChannel = Bot.FindModule<AuditLogForwarding>(guild)?.logChannels[guild];
+        if (logChannel is null)
             return;
 
         DiscordMessageBuilder dmb = new();
@@ -117,7 +101,8 @@ public partial class AuditLogForwarding(Bot bot) : ModuleBase(bot)
         string? description = null,
         string? footer = null)
     {
-        if (!logChannels.TryGetValue(guild, out var logChannel))
+        var logChannel = Bot.FindModule<AuditLogForwarding>(guild)?.logChannels[guild];
+        if (logChannel is null)
             return;
         
         var deb = new DiscordEmbedBuilder()

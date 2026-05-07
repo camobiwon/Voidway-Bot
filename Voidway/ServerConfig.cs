@@ -9,6 +9,11 @@ public class ServerConfig
     private const string CFG_PATH_FORMAT = "./servers/config-{0}.toml";
     private static Dictionary<ulong, ServerConfig> loadedConfigs = new();
     
+    /// <summary>
+    /// Fired whenever a config is read from disk, written to disk, or is created from scratch.
+    /// </summary>
+    public static event Func<ServerConfig, Task>? ConfigChanged;
+    
     [TomlNonSerialized]
     public ulong Id { get; private set; }
     // not readonly because newly created configs have their files written and
@@ -57,9 +62,9 @@ public class ServerConfig
         string path = string.Format(CFG_PATH_FORMAT, Id.ToString());
         if (!Path.Exists(path))
             return false;
-        FileInfo finf = new(path);
+        FileInfo fileInfo = new(path);
 
-        return loadedAt < finf.LastWriteTime;
+        return loadedAt < fileInfo.LastWriteTime;
     }
     
     public static ServerConfig GetConfig(ulong id)
@@ -70,7 +75,7 @@ public class ServerConfig
         
         cfg = new ServerConfig();
         cfg.Id = id;
-        WriteConfigToFile(cfg);
+        WriteConfigToFile(cfg); // implicitly fires InvokeListeners, so the extra call isn't needed here.
         cfg.loadedAt = DateTime.Now; // so IsOld doesnt return "true"
 
         return cfg;
@@ -89,9 +94,10 @@ public class ServerConfig
         {
             fileContent = File.ReadAllText(path);
             ServerConfig loadedCfg = TomletMain.To<ServerConfig>(fileContent);
-          
+            
             loadedCfg.Id = id;
             loadedConfigs[id] = loadedCfg;
+            InvokeListeners(loadedCfg);
             return loadedCfg;
         }
         catch (Exception e)
@@ -115,7 +121,39 @@ public class ServerConfig
         string tomlText = TomletMain.TomlStringFrom(cfg); 
         
         File.WriteAllText(path, tomlText);
+        InvokeListeners(cfg);
     }
-    
+
+    // ReSharper disable once AsyncVoidMethod
+    private static async void InvokeListeners(ServerConfig cfg)
+    {
+        if (ConfigChanged is null)
+            return;
+
+        Delegate[] listeners;
+        try
+        {
+            listeners = ConfigChanged.GetInvocationList();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to get listeners for ConfigChanged event!", ex);
+            return;
+        }
+
+        foreach (var listener in listeners)
+        {
+            if (listener is not Func<ServerConfig, Task> func)
+                continue;
+            try
+            {
+                await func.Invoke(cfg);
+            }
+            catch(Exception ex)
+            {
+                Logger.Warn($"Exception while invoking server listeners for server with ID '{cfg.Id}'", ex);
+            }
+        }
+    }
     
 }

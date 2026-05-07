@@ -10,9 +10,15 @@ namespace Voidway.Modules.Moderation;
 //TODO: add ExtraField setting to bans, kicks, and mutes (ALSO add to command handlers)
 public partial class AuditLogForwarding
 {
+    protected override Task MessagesBulkDeleted(DiscordClient client, MessagesBulkDeletedEventArgs args)
+    {
+        Logger.Put($"Discord fired off event -- messages bulk deleted in {args.Channel} ({args.Messages.Count})", LogType.Debug);
+        return Task.CompletedTask;
+    }
+
     protected override async Task GuildAuditLogCreated(DiscordClient client, GuildAuditLogCreatedEventArgs args)
     {
-        if (!logChannels.ContainsKey(args.Guild))
+        if (logChannels[args.Guild] is null)
             return;
 
         var logEntry = args.AuditLogEntry;

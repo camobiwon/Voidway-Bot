@@ -34,7 +34,7 @@ public enum ModContentHeuristic : ulong
 
 partial class ModfileScanning
 {
-    private static async Task ScanZipForHeuristics(ZipArchive zip, Mod modData)
+    private async Task ScanZipForHeuristics(ZipArchive zip, Mod modData)
     {
         var heuristics = ClassifyZipContents(zip);
         
@@ -47,7 +47,7 @@ partial class ModfileScanning
         await AnnounceHeuristicResult(modData, heuristics);
     }
     
-    private static async Task AnnounceHeuristicResult(Mod modData, ModContentHeuristic filenameHeuristic)
+    private async Task AnnounceHeuristicResult(Mod modData, ModContentHeuristic filenameHeuristic)
     {
         DiscordEmbedBuilder deb = new()
         {
@@ -61,11 +61,20 @@ partial class ModfileScanning
             Url = modData.ProfileUrl?.ToString()
         };
         
-        foreach (var channel in Channels)
+        int successCount = 0;
+        foreach (var channel in Channels.Values)
         {
-            await channel.SendMessageAsync(deb.Build());
+            try
+            {
+                await channel.SendMessageAsync(deb.Build());
+                successCount++;
+            }
+            catch
+            {
+                // ignore
+            }
         }
-        Logger.Put($"Announced in {Channels.Count} channel(s) that mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) contains: {filenameHeuristic}");
+        Logger.Put($"Announced in {successCount} channel(s) that mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) contains: {filenameHeuristic}");
     }
     
     private static ModContentHeuristic ClassifyZipContents(ZipArchive zip)
