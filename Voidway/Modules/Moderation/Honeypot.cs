@@ -93,6 +93,8 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
                 await args.Guild.UnbanMemberAsync(args.Author, "Kicked, not banned for getting honeypotted");
             }
 
+            TrackHoneypot(args.Guild, args.Author);
+
             cfg.honeypotKicks++;
 
             // Message already exists, so just edit it
@@ -110,6 +112,31 @@ public partial class Honeypot(Bot bot) : ModuleBase(bot)
             ServerConfig.WriteConfigToFile(cfg);
             return;
         }
+    }
+
+    private void TrackHoneypot(DiscordGuild guild, DiscordUser target)
+    {
+        if (!PersistentData.values.moderationActions.TryGetValue(guild.Id, out var guildActionCalendar))
+        {
+            guildActionCalendar = [];
+            PersistentData.values.moderationActions.Add(guild.Id, guildActionCalendar);
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        if (!guildActionCalendar.TryGetValue(today, out var userActions))
+        {
+            userActions = [];
+            guildActionCalendar[today] = userActions;
+        }
+
+        if (!userActions.TryGetValue(target.Id, out var actionList))
+        {
+            actionList = [];
+            userActions[target.Id] = actionList;
+        }
+
+        actionList.Add("Honeypotted");
+        PersistentData.WritePersistentData();
     }
 
     protected override async Task MessageDeleted(DiscordClient client, MessageDeletedEventArgs args)
