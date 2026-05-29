@@ -30,13 +30,14 @@ public enum ModContentHeuristic : ulong
     RobloxFile = 1 << 21, // This has happened at least once.
     UnrealProjectFiles  = 1 << 22, // This has also happened at least once.
     FilesOlderThan2Weeks = 1 << 23,
+    ReshadeFiles = 1 << 24,
 }
 
 partial class ModfileScanning
 {
     private async Task ScanZipForHeuristics(ZipArchive zip, Mod modData)
     {
-        var heuristics = ClassifyZipContents(zip);
+        var heuristics = ClassifyZipContents(zip, modData);
         
         if (heuristics.HasFlag(ModContentHeuristic.MarrowMod) || heuristics.HasFlag(ModContentHeuristic.MarrowReplacer))
         {
@@ -77,8 +78,9 @@ partial class ModfileScanning
         Logger.Put($"Announced in {successCount} channel(s) that mod {modData.Name} ({modData.NameId}, #ID {modData.Id}) contains: {filenameHeuristic}");
     }
     
-    private static ModContentHeuristic ClassifyZipContents(ZipArchive zip)
+    private static ModContentHeuristic ClassifyZipContents(ZipArchive zip, Mod? mod = null)
     {
+        string logTag = mod.LogTag();
         ModContentHeuristic ret = ModContentHeuristic.UnrecognizedNoMod;
         
         string[] textExts = [".txt", ".rtf", ".docx"];
@@ -90,6 +92,7 @@ partial class ModfileScanning
         string[] videoExts = [".mp4", ".webm", ".avi", ".mov"];
         string[] robloxExts = [".rbxl", ".rbxlx", ".rbxm", ".rbxmx"];
         string[] unrealExts = [".uasset", ".uproject", ".umap"];
+        string[] reshadeExts = [".fx"];
 
         string[] unityProjRoots = ["assets", "projectsettings", "packages",]; // only the explicitly required ones
             
@@ -97,7 +100,7 @@ partial class ModfileScanning
         HashSet<string> fileExtensions = filePaths.Select(Path.GetExtension).ToHashSet()!;
         DateTime oldestFileWriteTime = zip.Entries.Select(e => e.LastWriteTime).Min().DateTime;
         double oldestTimeDeltaDays = (DateTime.Now - oldestFileWriteTime).TotalDays;
-        Logger.Put($"Mod file's oldest file is {oldestTimeDeltaDays:0.00} days old (from {oldestFileWriteTime})");
+        Logger.Put($"Mod {logTag} file's oldest file is {oldestTimeDeltaDays:0.00} days old (from {oldestFileWriteTime})");
         
         bool hasBundle = fileExtensions.Contains(".bundle");
         bool hasJson = fileExtensions.Contains(".json"); // someone let that guy from Heavy Rain know
@@ -122,6 +125,8 @@ partial class ModfileScanning
         bool hasRobloxFile = robloxExts.Any(fileExtensions.Contains); // a kid uploaded his Roblox "place" file. really.
         bool hasUnrealAssets = unrealExts.Any(fileExtensions.Contains); // a kid made a sandbox map or something in UE and uploaded the project
         bool hasOldFiles = oldestTimeDeltaDays > 14;
+        bool hasReshadeFiles = reshadeExts.Any(fileExtensions.Contains) && filePaths.Any(p => p.Contains("shade"));
+        
         
         if (isLikelyValidMod)
             ret |= ModContentHeuristic.MarrowMod;
@@ -163,8 +168,10 @@ partial class ModfileScanning
             ret |= ModContentHeuristic.UnrealProjectFiles;
         if (hasOldFiles)
             ret |= ModContentHeuristic.FilesOlderThan2Weeks;
+        if (hasReshadeFiles)
+            ret |= ModContentHeuristic.ReshadeFiles;
         
-        Logger.Put($"Detected {ret} from file extensions: {string.Join(", ", fileExtensions)}", LogType.Trace);
+        Logger.Put($"Mod {logTag} - Detected {ret} from file extensions: {string.Join(", ", fileExtensions)}", LogType.Trace);
 
         return ret;
     }

@@ -85,7 +85,7 @@ public class ModNotes(Bot bot) : ModuleBase(bot)
 
     [Command("notes")]
     [RequireGuild]
-    [RequirePermissions(DiscordPermission.ModerateMembers)]
+    [RequirePermissions([], [ DiscordPermission.ModerateMembers ])]
     [SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
     // [AllowedProcessors(typeof(UserCommandProcessor))]
     public static async Task GetModNotes(SlashCommandContext ctx, DiscordMember targetMember)
