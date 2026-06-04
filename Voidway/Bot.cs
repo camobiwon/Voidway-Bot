@@ -55,8 +55,11 @@ public class Bot
         {
             if (string.IsNullOrEmpty(Config.values.modioApiKey))
                 return null;
-            
-            var options = new Client.Options(Config.values.modioApiKey);
+
+            var options = new Client.Options(Config.values.modioApiKey)
+            {
+                BaseUrl = new Uri($"https://g-{ModioHelper.GAME_NUMBER_ID}.modapi.io")
+            };
             if (!string.IsNullOrEmpty(Config.values.modioOAuth))
                 options.Token = Config.values.modioOAuth;
 

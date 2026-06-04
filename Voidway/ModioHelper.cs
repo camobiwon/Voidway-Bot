@@ -16,15 +16,14 @@ public static partial class ModioHelper
     public static ModsClient? ModsClient => BonelabClient?.Mods;
     
     private const string GAME_NAME_ID = "bonelab";
+    public const uint GAME_NUMBER_ID = 3809;
     public static event Func<ModioEventArgs, Task>? OnEvent;
     
     public static async Task Init(Client clint)
     {
         try
         {
-            var games = await clint.Games.Search().ToList();
-            var bonelabGame = games.First(g => g.NameId == GAME_NAME_ID);
-            BonelabClient = clint.Games[bonelabGame.Id];
+            BonelabClient = clint.Games[GAME_NUMBER_ID];
         }
         catch (Exception ex)
         {
