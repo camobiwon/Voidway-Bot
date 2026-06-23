@@ -38,8 +38,10 @@ partial class ModfileScanning
     private async Task ScanZipForHeuristics(ZipArchive zip, Mod modData)
     {
         var heuristics = ClassifyZipContents(zip, modData);
-        
-        if (heuristics.HasFlag(ModContentHeuristic.MarrowMod) || heuristics.HasFlag(ModContentHeuristic.MarrowReplacer))
+
+        bool isValidUpload = heuristics.HasFlag(ModContentHeuristic.MarrowMod) || heuristics.HasFlag(ModContentHeuristic.MarrowReplacer);
+        bool isReupload = heuristics.HasFlag(ModContentHeuristic.FilesOlderThan2Weeks);
+        if (isValidUpload && !isReupload)
         {
             return;
         }
