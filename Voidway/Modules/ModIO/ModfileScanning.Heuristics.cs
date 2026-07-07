@@ -82,6 +82,35 @@ partial class ModfileScanning
     
     private static ModContentHeuristic ClassifyZipContents(ZipArchive zip, Mod? mod = null)
     {
+        ModContentHeuristic filenameResults = CheckFilenames(zip, mod);
+        ModContentHeuristic timeResults = CheckFileTimes(zip, mod);
+        return filenameResults | timeResults;
+    }
+
+    private static ModContentHeuristic CheckFileTimes(ZipArchive zip, Mod? mod)
+    {
+        string logTag = mod.LogTag();
+        
+        var entryAges = zip.Entries.Select(entry => DateTime.Now - entry.LastWriteTime);
+        Dictionary<int, int> ageFrequencies = []; // (# of days ago) -> (# of files created that many days ago)
+        foreach (var timeSpan in entryAges)
+        {
+            int daysAgo = (int)Math.Round(timeSpan.TotalDays);
+            ageFrequencies[daysAgo]++;
+        }
+
+        var oldest = ageFrequencies.MaxBy(kvp => kvp.Key);
+        var mostFrequent = ageFrequencies.MaxBy(kvp => kvp.Value);
+
+        Logger.Put($"In {logTag} the oldest files were written ~{oldest.Key} days ago ({oldest.Value} of {zip.Entries.Count} files)");
+        Logger.Put($"Also in {logTag}, the plurality of files were written ~{mostFrequent.Key} days ago ({mostFrequent.Value} of {zip.Entries.Count} files)");
+        return mostFrequent.Key >= 14 // two weeks
+            ? ModContentHeuristic.FilesOlderThan2Weeks 
+            : default;
+    }
+
+    private static ModContentHeuristic CheckFilenames(ZipArchive zip, Mod? mod)
+    {
         string logTag = mod.LogTag();
         ModContentHeuristic ret = ModContentHeuristic.UnrecognizedNoMod;
         
@@ -100,9 +129,6 @@ partial class ModfileScanning
             
         string[] filePaths = zip.Entries.Select(ze => ze.FullName.ToLower()).ToArray();
         HashSet<string> fileExtensions = filePaths.Select(Path.GetExtension).ToHashSet()!;
-        DateTime oldestFileWriteTime = zip.Entries.Select(e => e.LastWriteTime).Min().DateTime;
-        double oldestTimeDeltaDays = (DateTime.Now - oldestFileWriteTime).TotalDays;
-        Logger.Put($"Mod {logTag} file's oldest file is {oldestTimeDeltaDays:0.00} days old (from {oldestFileWriteTime})");
         
         bool hasBundle = fileExtensions.Contains(".bundle");
         bool hasJson = fileExtensions.Contains(".json"); // someone let that guy from Heavy Rain know
@@ -126,7 +152,7 @@ partial class ModfileScanning
         bool hasVideo = videoExts.Any(fileExtensions.Contains);
         bool hasRobloxFile = robloxExts.Any(fileExtensions.Contains); // a kid uploaded his Roblox "place" file. really.
         bool hasUnrealAssets = unrealExts.Any(fileExtensions.Contains); // a kid made a sandbox map or something in UE and uploaded the project
-        bool hasOldFiles = oldestTimeDeltaDays > 14;
+        
         bool hasReshadeFiles = reshadeExts.Any(fileExtensions.Contains) && filePaths.Any(p => p.Contains("shade"));
         
         
@@ -168,8 +194,6 @@ partial class ModfileScanning
             ret |= ModContentHeuristic.RobloxFile;
         if (hasUnrealAssets)
             ret |= ModContentHeuristic.UnrealProjectFiles;
-        if (hasOldFiles)
-            ret |= ModContentHeuristic.FilesOlderThan2Weeks;
         if (hasReshadeFiles)
             ret |= ModContentHeuristic.ReshadeFiles;
         
