@@ -96,7 +96,8 @@ partial class ModfileScanning
         foreach (var timeSpan in entryAges)
         {
             int daysAgo = (int)Math.Round(timeSpan.TotalDays);
-            ageFrequencies[daysAgo]++;
+            int currCount = ageFrequencies.GetValueOrDefault(daysAgo);
+            ageFrequencies[daysAgo] = currCount + 1;
         }
 
         var oldest = ageFrequencies.MaxBy(kvp => kvp.Key);
