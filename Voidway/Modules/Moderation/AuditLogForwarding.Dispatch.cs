@@ -10,10 +10,22 @@ namespace Voidway.Modules.Moderation;
 //TODO: add ExtraField setting to bans, kicks, and mutes (ALSO add to command handlers)
 public partial class AuditLogForwarding
 {
-    protected override Task MessagesBulkDeleted(DiscordClient client, MessagesBulkDeletedEventArgs args)
+    protected override async Task MessagesBulkDeleted(DiscordClient client, MessagesBulkDeletedEventArgs args)
     {
         Logger.Put($"Discord fired off event -- messages bulk deleted in {args.Channel} ({args.Messages.Count})", LogType.Debug);
-        return Task.CompletedTask;
+        
+        string channelMention = (args.Channel?.Id ?? default) != default
+            ? Formatter.Mention(args.Channel!)
+            : $"unknown channel (Thanks Discord!) {args.Channel?.Name}";
+        ModerationLogOptions options = new()
+        {
+            Title = "Messages Purged",
+            UserResponsible = null, // it doesn't matter, it's done by a moderator either way, usually through Lum. 
+            Description = $"{args.Messages.Count} messages purged from {channelMention}",
+            Color = DiscordColor.Orange,
+        };
+                
+        await LogModerationAction(args.Guild, options);
     }
 
     protected override async Task GuildAuditLogCreated(DiscordClient client, GuildAuditLogCreatedEventArgs args)
@@ -41,23 +53,7 @@ public partial class AuditLogForwarding
         switch (logEntry.ActionType)
         {
             case DiscordAuditLogActionType.MessageBulkDelete:
-                DiscordAuditLogMessageEntry msgLog = (DiscordAuditLogMessageEntry)logEntry;
-                // Should this be handled in MessageRecorder?
-
-                string messageCount = msgLog.MessageCount?.ToString() ?? "Unknown amount (Thanks Discord!) of";
-                string channelMention = (msgLog.Channel?.Id ?? default) != default
-                                        ? Formatter.Mention(msgLog.Channel!)
-                                        : $"unknown channel (Thanks Discord!) {msgLog.Channel?.Name}";
-                options = new()
-                {
-                    Title = "Messages Purged",
-                    UserResponsible = logEntry.UserResponsible,
-                    Description = $"{messageCount} messages purged from {channelMention}",
-                    Reason = msgLog.Reason,
-                    Color = DiscordColor.Orange,
-                };
-                
-                await LogModerationAction(args.Guild, options);
+                // Ignore, handled in the actual message bulk deletion event handler 
                 break;
             case DiscordAuditLogActionType.Ban:
                 DiscordAuditLogBanEntry banLog = (DiscordAuditLogBanEntry)logEntry;

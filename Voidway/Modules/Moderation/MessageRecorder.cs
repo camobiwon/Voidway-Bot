@@ -86,6 +86,33 @@ public class MessageRecorder(Bot bot) : ModuleBase(bot)
         }
     }
 
+    protected override async Task MessagesBulkDeleted(DiscordClient client, MessagesBulkDeletedEventArgs args)
+    {
+        if (!logChannels.TryGetValue(args.Guild, out var channel))
+            return;
+
+        foreach (var msg in args.Messages)
+        {
+            DiscordMessageBuilder msgBuilder = new DiscordMessageBuilder();
+            var mainEmbed = Embedize(msg);
+            mainEmbed.WithColor(DiscordColor.Yellow)
+                .WithTitle("Message bulk deleted");
+
+            msgBuilder.AddEmbed(mainEmbed);
+
+            await MirrorAttachments(msg, msgBuilder);
+
+            try
+            {
+                await channel.SendMessageAsync(msgBuilder);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"Failed to log message('s bulk) deletion in {args.Guild} (msg: {msg})", ex);
+            }
+        }
+    }
+
     protected override async Task MessageDeleted(DiscordClient client, MessageDeletedEventArgs args)
     {
         if (!logChannels.TryGetValue(args.Guild, out var channel))
