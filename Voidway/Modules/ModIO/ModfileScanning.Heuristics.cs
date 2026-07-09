@@ -104,7 +104,8 @@ partial class ModfileScanning
         var mostFrequent = ageFrequencies.MaxBy(kvp => kvp.Value);
 
         Logger.Put($"In {logTag} the oldest files were written ~{oldest.Key} days ago ({oldest.Value} of {zip.Entries.Count} files)");
-        Logger.Put($"Also in {logTag}, the plurality of files were written ~{mostFrequent.Key} days ago ({mostFrequent.Value} of {zip.Entries.Count} files)");
+        if (mostFrequent.Key != oldest.Key) // dont bother logging again if they're the same, lol
+            Logger.Put($"Also in {logTag}, the plurality of files were written ~{mostFrequent.Key} days ago ({mostFrequent.Value} of {zip.Entries.Count} files)");
         return mostFrequent.Key >= 14 // two weeks
             ? ModContentHeuristic.FilesOlderThan2Weeks 
             : default;

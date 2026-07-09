@@ -99,6 +99,9 @@ namespace Voidway
             
             if (eventId.Name is not null) reason.name = $"{reason.name} @ {eventId.Name}";
 
+            if (exception is not null && reason.logCaller)
+                message += $"\n\t{exception.StackTrace}";
+            
             Logger.Put(catName + " => " + message, reason);
         }
     }
