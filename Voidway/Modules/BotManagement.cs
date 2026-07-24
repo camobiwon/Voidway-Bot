@@ -252,7 +252,7 @@ public class BotManagement(Bot bot) : ModuleBase(bot)
     }
 
 
-    [Command("getLogs")]
+    [Command("uptime")]
     [Description("Shows you how long the current process & system have been running")]
     [RequireApplicationOwner]
     public static async Task GetUptimeAsync(SlashCommandContext ctx)
