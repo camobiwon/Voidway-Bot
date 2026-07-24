@@ -258,8 +258,9 @@ public class BotManagement(Bot bot) : ModuleBase(bot)
     public static async Task GetUptimeAsync(SlashCommandContext ctx)
     {
         var process = Process.GetCurrentProcess();
+        var procStart = $"Started {process.StartTime} local time, (UTC {process.StartTime.ToUniversalTime()})";
         var procSpan = DateTime.Now - process.StartTime;
-        var procUptime = $"Started {process.StartTime}, up {procSpan.TotalDays}d, {procSpan.Hours}h{procSpan.Minutes}m";
+        var procUptime = $"{(int)procSpan.TotalDays}d, {procSpan.Hours}h{procSpan.Minutes}m";
 
         string sysUptime = "(Unable to run `uptime`)";
         try
@@ -279,6 +280,9 @@ public class BotManagement(Bot bot) : ModuleBase(bot)
             // Don't care
         }
 
-        await ctx.RespondAsync($"Process uptime: {procUptime}\nSystem uptime: {sysUptime}", true);
+        await ctx.RespondAsync($"Process uptime: {procUptime}\n" +
+                               $"Process started: {procStart}\n" +
+                               $"System uptime: {sysUptime}", 
+            true);
     }
 }
