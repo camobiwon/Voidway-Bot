@@ -107,6 +107,8 @@ internal partial class ModfileScanning
         };
 
         DontAnnounceThese.Add(modData.Id);
+        await ModAnnouncements.UnannounceMod(modData.Id);
+        
         int successCount = 0;
         int failureCount = 0;
         foreach (var channel in Channels.Values)

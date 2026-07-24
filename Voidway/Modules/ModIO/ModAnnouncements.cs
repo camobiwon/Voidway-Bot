@@ -262,6 +262,14 @@ internal class ModAnnouncements(Bot bot) : ModuleBase(bot)
         if (!announcedMods.TryGetValue(modId, out var messageList) || messageList.Count == 0)
             return;
 
+        // Likely unnecessary, but good to have the backup.
+        if (ModfileScanning.DontAnnounceThese.Contains(modId) && messageList.Count != 0)
+        {
+            await UnannounceMod(modId);
+            return;
+        }
+
+        
         int successCount = 0;
         int failCount = 0;
         foreach (var msg in messageList)

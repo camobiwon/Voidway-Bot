@@ -46,7 +46,11 @@ partial class ModfileScanning
             return;
         }
         
+
+        // Mod may have been announced while its zip was being scanned.
+        await ModAnnouncements.UnannounceMod(modData.Id);
         DontAnnounceThese.Add(modData.Id);
+        
         await AnnounceHeuristicResult(modData, heuristics);
     }
     

@@ -36,6 +36,8 @@ internal partial class ModfileScanning
         if (flaggedFilenames.Count != 0)
         {
             DontAnnounceThese.Add(modData.Id);
+            await ModAnnouncements.UnannounceMod(modData.Id);
+            
             await AnnounceFlaggedFiles(modData, flaggedFilenames);
         }
     }

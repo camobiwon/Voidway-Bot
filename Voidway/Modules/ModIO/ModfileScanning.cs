@@ -20,7 +20,7 @@ namespace Voidway.Modules.ModIO;
 [Command("modscanning")]
 internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
 {
-    public static HashSet<uint> DontAnnounceThese = [];
+    public static readonly HashSet<uint> DontAnnounceThese = [];
     
     private readonly PerServer<DiscordChannel> Channels = new(bot, async cfg =>
     {
