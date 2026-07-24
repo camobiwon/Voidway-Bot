@@ -250,4 +250,35 @@ public class BotManagement(Bot bot) : ModuleBase(bot)
         var str = sb.Length == 0 ? "-# No logs returned, try changing your filters?" : sb.ToString();
         await ctx.RespondAsync(str, true);
     }
+
+
+    [Command("getLogs")]
+    [Description("Shows you how long the current process & system have been running")]
+    [RequireApplicationOwner]
+    public static async Task GetUptimeAsync(SlashCommandContext ctx)
+    {
+        var process = Process.GetCurrentProcess();
+        var procSpan = DateTime.Now - process.StartTime;
+        var procUptime = $"Started {process.StartTime}, up {procSpan.TotalDays}d, {procSpan.Hours}h{procSpan.Minutes}m";
+
+        string sysUptime = "(Unable to run `uptime`)";
+        try
+        {
+            var startInfo = new ProcessStartInfo()
+            {
+                FileName = "uptime",
+                RedirectStandardOutput = true,
+            };
+            var uptimeProcess = Process.Start(startInfo)
+                                ?? throw new Exception("A new process wasn't started");
+            await uptimeProcess.WaitForExitAsync();
+            sysUptime = await uptimeProcess.StandardOutput.ReadToEndAsync();
+        }
+        catch
+        {
+            // Don't care
+        }
+
+        await ctx.RespondAsync($"Process uptime: {procUptime}\nSystem uptime: {sysUptime}", true);
+    }
 }
