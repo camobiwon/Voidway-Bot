@@ -18,7 +18,7 @@ using File = Modio.Models.File;
 namespace Voidway.Modules.ModIO;
 
 [Command("modscanning")]
-internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
+partial class ModfileScanning(Bot bot) : ModuleBase(bot)
 {
     public static readonly HashSet<uint> DontAnnounceThese = [];
     
@@ -156,6 +156,15 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
 
         try
         {
+            await ScanBundleAndAnnounce(zip, modData);
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"Caught exception while scanning assetbundle(s) (or announcing scan results) on {modData.LogTag()}", ex);
+        }
+
+        try
+        {
             if (modData.SubmittedBy?.NameId is not null
                 && PersistentData.values.trustedModders.Contains(modData.SubmittedBy.NameId))
             {
@@ -171,9 +180,9 @@ internal partial class ModfileScanning(Bot bot) : ModuleBase(bot)
         }
     }
 
-    private static async Task<ZipArchive?> GetZip(Download download)
+    private static async Task<ZipArchive?> GetZip(Download? download)
     {
-        if (download.BinaryUrl is null)
+        if (download?.BinaryUrl is null)
             return null;
         var stream = await DownloadClient.GetStreamAsync(download.BinaryUrl);
         ZipArchive zip = new(stream);

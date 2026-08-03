@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Text;
 using DSharpPlus.Entities;
 using Modio.Models;
 
@@ -115,5 +116,19 @@ public static class VoidwayExtensions
         }
         
         return $"{user.Username} ({user.NameId} #ID {user.Id})";
+    }
+
+    public static T AddStringFile<T>(this T builder, string filename, string content) where T : BaseDiscordMessageBuilder<T>
+    {
+        using var ms = new MemoryStream(content.Length);
+        using (var writer = new StreamWriter(ms, Encoding.UTF8, -1, true))
+        {
+            writer.Write(content);
+        }
+        
+        ms.Seek(0, SeekOrigin.Begin);
+        
+        builder.AddFile(filename, ms, AddFileOptions.CopyStream);
+        return builder;
     }
 }

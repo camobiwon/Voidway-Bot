@@ -29,6 +29,9 @@ internal class PersistentData
     public List<uint> modFilesInCatalog = [];
     // via Name ID
     public List<string> trustedModders = [];
+
+    public List<string> eventFlagRegexes = [];
+    public int bundleStringFlagThreshold = 1024;
     
     // plumbing
     static PersistentData()

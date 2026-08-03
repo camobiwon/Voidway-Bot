@@ -21,8 +21,7 @@ file class ReuploadCatalogOverride
     public Dictionary<string, string> hashesToOriginalBarcodes = [];
 }
 
-
-internal partial class ModfileScanning
+partial class ModfileScanning
 {
     [RequireApplicationOwner]
     [Command("cataloguser"), Description("(NOT EPHEMERAL) Scans a user's mods' files for new barcodes & hashes")]

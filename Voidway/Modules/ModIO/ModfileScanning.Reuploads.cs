@@ -15,7 +15,7 @@ using Newtonsoft.Json;
 
 namespace Voidway.Modules.ModIO;
 
-internal partial class ModfileScanning
+partial class ModfileScanning
 {
     private static readonly Encoding TextEncoding = Encoding.UTF8;
     

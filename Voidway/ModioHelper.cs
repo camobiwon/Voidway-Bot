@@ -52,6 +52,11 @@ public static partial class ModioHelper
                     ProcessEvent(modEvent);
                 }
             }
+            catch (RateLimitExceededException rlex)
+            {
+                Logger.Warn($"Modio sent a ratelimit exception to the fetch loop, waiting an extra minute and continuing.");
+                await Task.Delay(60 * 1000);
+            }
             catch (Exception ex)
             {
                 Logger.Warn("Exception in Mod.IO fetch loop", ex);
