@@ -136,10 +136,10 @@ partial class ModfileScanning
         return results;
     }
     
-    [Command("eventflag")]
+    [Command("eventFlag")]
     public class BundleFlagCommands
     {
-        [Command("malscan")]
+        [Command("malScan")]
         [Description("Scans a zip file for potentially malicious behavior")]
         [RequireApplicationOwner]
         public async Task ManuallyScanZipBundles(SlashCommandContext ctx, DiscordAttachment file)
@@ -249,15 +249,15 @@ partial class ModfileScanning
             {
                 PersistentData.values.bundleStringFlagThreshold = value.Value;
                 PersistentData.WritePersistentData();
-                await ctx.RespondAsync($"Got it! The bundle string length threshold is now set to {PersistentData.values.bundleStringFlagThreshold}");
+                await ctx.RespondAsync($"Got it! The bundle string length threshold is now set to {PersistentData.values.bundleStringFlagThreshold}", true);
             }
             else
             {
-                await ctx.RespondAsync($"The bundle string length threshold is currently set to {PersistentData.values.bundleStringFlagThreshold}");
+                await ctx.RespondAsync($"The bundle string length threshold is currently set to {PersistentData.values.bundleStringFlagThreshold}", true);
             }
         }
 
-        [Command("retroactiveMalscan"), Description("Scans all mods from a given range. Status msg will appear in this channel.")]
+        [Command("retroactiveMalScan"), Description("Scans all mods from a given range. Status msg will appear in this channel.")]
         [RequireApplicationOwner]
         public async Task RetroactiveScan(SlashCommandContext ctx, DiscordChannel sendIn,
             [Description("Date/time string, ex: '05/01/2008 6:00:00AM +5:00' (offset optional)")] DateTimeOffset begin,

@@ -92,6 +92,7 @@ namespace Voidway
 
             string message = formatter(state, exception);
             LogType reason = ToReason(logLevel);
+            bool cleanMultiline = logLevel < LogLevel.Warning;
 
             if (Config.values.ignoreDiscordLogsWith.Any(str =>
                     message.Contains(str, StringComparison.InvariantCultureIgnoreCase)))
@@ -102,7 +103,7 @@ namespace Voidway
             if (exception is not null && reason.logCaller)
                 message += $"\n\t{exception.StackTrace}";
             
-            Logger.Put(catName + " => " + message, reason);
+            Logger.Put(catName + " => " + message, reason, cleanMultiline);
         }
     }
 }
