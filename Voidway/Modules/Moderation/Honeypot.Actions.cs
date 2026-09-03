@@ -17,7 +17,9 @@ public partial class Honeypot : ModuleBase
     public async Task SetChannelCommand(
         SlashCommandContext ctx,
         [Description("The channel to use as a honeypot.")]
-        DiscordChannel channel)
+        DiscordChannel channel,
+        [Description("Whether or not to display a counter of everyone that got removed by the bot.")]
+        bool? sendCounterMessage = false)
     {
         if (ctx.Member is null || ctx.Guild is null)
         {
@@ -45,18 +47,29 @@ public partial class Honeypot : ModuleBase
 
         await ctx.RespondAsync("Set honeypot channel.", true);
         await AuditLogForwarding.LogModerationAction(ctx.Guild, options);
-
-        // Create the message if it doesn't already exist.
+        
+        // Create the message if it doesn't already exist, and if we want one.
         if (cfg.honeypotTallyMessageID == 0)
         {
-            DiscordMessage message = await channel.SendMessageAsync(GenerateKickUpdateMessage(cfg.honeypotKicks));
-            cfg.honeypotTallyMessageID = message.Id;
+            if (sendCounterMessage != null && sendCounterMessage.Value)
+            {
+                DiscordMessage message = await channel.SendMessageAsync(GenerateKickUpdateMessage(cfg.honeypotKicks));
+                cfg.honeypotTallyMessageID = message.Id;   
+            }   
         }
         else
         {
             DiscordMessage message = await channel.GetMessageAsync(cfg.honeypotTallyMessageID);
+            
+            // If the message already exists but we don't want to use it anymore,
+            // delete the counter message.
+            if (sendCounterMessage != null && !sendCounterMessage.Value)
+            {
+                await channel.DeleteMessageAsync(message);
+                cfg.honeypotTallyMessageID = 0;
+            }
             // The message was deleted somehow. Resend the message.
-            if (message.Id == 0)
+            else if (message.Id == 0)
             {
                 message = await channel.SendMessageAsync(GenerateKickUpdateMessage(cfg.honeypotKicks));
                 cfg.honeypotTallyMessageID = message.Id;
