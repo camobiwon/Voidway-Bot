@@ -17,7 +17,9 @@ public partial class Honeypot : ModuleBase
     public async Task SetChannelCommand(
         SlashCommandContext ctx,
         [Description("The channel to use as a honeypot.")]
-        DiscordChannel channel)
+        DiscordChannel channel,
+        [Description("Whether or not to display a counter of everyone that got removed by the bot.")]
+        bool sendCounterMessage = false)
     {
         if (ctx.Member is null || ctx.Guild is null)
         {
@@ -45,22 +47,18 @@ public partial class Honeypot : ModuleBase
 
         await ctx.RespondAsync("Set honeypot channel.", true);
         await AuditLogForwarding.LogModerationAction(ctx.Guild, options);
-
-        // Create the message if it doesn't already exist.
-        if (cfg.honeypotTallyMessageID == 0)
+        
+        // Create the message if it doesn't already exist, and if we want one.
+        if (cfg.honeypotTallyMessageID == 0 && sendCounterMessage)
         {
             DiscordMessage message = await channel.SendMessageAsync(GenerateKickUpdateMessage(cfg.honeypotKicks));
             cfg.honeypotTallyMessageID = message.Id;
         }
         else
         {
-            DiscordMessage message = await channel.GetMessageAsync(cfg.honeypotTallyMessageID);
-            // The message was deleted somehow. Resend the message.
-            if (message.Id == 0)
-            {
-                message = await channel.SendMessageAsync(GenerateKickUpdateMessage(cfg.honeypotKicks));
-                cfg.honeypotTallyMessageID = message.Id;
-            }
+            DiscordMessage? message = await TryFetchMessage(channel, cfg.honeypotTallyMessageID, true);
+            TryDeleteDontCare(message);
+            cfg.honeypotTallyMessageID = 0;
         }
         
         ServerConfig.WriteConfigToFile(cfg);
