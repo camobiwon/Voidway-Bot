@@ -126,6 +126,12 @@ public partial class Honeypot : ModuleBase
 
         List<ulong> list = cfg.honeypotRoleWhitelist.ToList();
 
+        if (list.Contains(role.Id))
+        {
+            await ctx.RespondAsync("That role is already in the whitelist.", true);
+            return;
+        }
+
         list.Add(role.Id);
 
         cfg.honeypotRoleWhitelist = list.ToArray();
@@ -162,7 +168,13 @@ public partial class Honeypot : ModuleBase
 
         List<ulong> list = cfg.honeypotRoleWhitelist.ToList();
 
-        list.Remove(role.Id);
+        bool wasRemoved = list.Remove(role.Id);
+
+        if (!wasRemoved)
+        {
+            await ctx.RespondAsync("That role wasn't whitelisted in the first place.", true);
+            return;
+        }
 
         cfg.honeypotRoleWhitelist = list.ToArray();
 
