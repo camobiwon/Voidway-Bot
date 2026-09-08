@@ -38,10 +38,10 @@ public class PerServer<TValue> : IEnumerable<(ulong, TValue)>
     }
     
     public bool TryGetValue(DiscordGuild guild, [MaybeNullWhen(false)] out TValue value)
-        => values.TryGetValue(guild.Id, out value);
+        => values.TryGetValue(guild.Id, out value) && value is not null;
     public bool TryGetValue(ulong serverId, [MaybeNullWhen(false)] out TValue value)
     {
-        return values.TryGetValue(serverId, out value);
+        return values.TryGetValue(serverId, out value) && value is not null;
     }
     
     
