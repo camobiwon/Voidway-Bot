@@ -50,7 +50,14 @@ partial class ModfileScanning(Bot bot) : ModuleBase(bot)
 
             foreach (var flagRegexStr in PersistentData.values.filenameFlagList)
             {
-                field.Add(new Regex(flagRegexStr, RegexOptions.IgnoreCase));
+                try
+                {
+                    field.Add(new Regex(flagRegexStr, RegexOptions.IgnoreCase));
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn($"Error while parsing/adding regex {flagRegexStr} (skipping!)", ex);
+                }
             }
 
             return field;

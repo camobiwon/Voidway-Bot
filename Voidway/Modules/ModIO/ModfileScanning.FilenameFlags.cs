@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.IO.Compression;
+using System.Text.RegularExpressions;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
@@ -129,11 +130,25 @@ partial class ModfileScanning
         
         [Command("addflag"), Description("Add something to the list of RegExes that will trigger the bot to flag an upload")]
         [RequirePermissions([], [DiscordPermission.Administrator])]
-        public async Task AddToAutoflagList(SlashCommandContext ctx, [Description("Don't escape markdown formatting, just paste it as you would from a regex tester.")] string flagToAdd)
+        public async Task AddToAutoflagList(SlashCommandContext ctx, [Description("Paste as-is from a tester (w/o outer slashes & flags).")] string flagToAdd)
         {
             if (PersistentData.values.filenameFlagList.Contains(flagToAdd))
             {
                 await ctx.RespondAsync("Uh, that was already in there, so now it's still there... Mission accomplished?", true);
+                return;
+            }
+
+            try
+            {
+                // This will throw if it's an invalid regex
+                _ = new Regex(flagToAdd, RegexOptions.IgnoreCase);
+            }
+            catch(Exception ex)
+            {
+                string exceptStr = Formatter.Sanitize(ex.ToString());
+                exceptStr = VoidwayExtensions.FootnoteLines(exceptStr);
+                await ctx.RespondAsync("There was an error checking that RegEx... Maybe you entered a wildcard?" +
+                                       $"\nIf you want more info, you can read the exception below:\n{exceptStr}");
                 return;
             }
             

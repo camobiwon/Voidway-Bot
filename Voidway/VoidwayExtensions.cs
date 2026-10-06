@@ -7,7 +7,7 @@ namespace Voidway;
 
 public static class VoidwayExtensions
 {
-    public static string FootnotePreviousLines(string content)
+    public static string FootnoteLines(string content)
     {
         string[] lines = content.Split(Environment.NewLine);
         var footnotedLines = lines.Select(str =>
@@ -65,7 +65,7 @@ public static class VoidwayExtensions
                 if (string.IsNullOrWhiteSpace(currentContent))
                     dwb.WithContent(newResponse);
 
-                existingTextEditor ??= FootnotePreviousLines;
+                existingTextEditor ??= FootnoteLines;
                 currentContent = existingTextEditor(currentContent);
 
                 dwb.WithContent(currentContent + "\n" + newResponse);
